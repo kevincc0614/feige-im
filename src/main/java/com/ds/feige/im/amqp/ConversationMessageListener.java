@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 
 
 /**
+ * 会话消息相关MQ处理
+ *
  * @author caedmon
  */
 @Component
