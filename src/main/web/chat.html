@@ -1,0 +1,170 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IM Web测试页面</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        let ws
+        function setCookie(name,value)
+        {
+            let Days = 30;
+            let exp = new Date();
+            exp.setTime(exp.getTime() + Days*24*60*60*1000);
+            document.cookie = name + "="+ escape (value) + ";expires=" + exp.toGMTString();
+        }
+        function getCookie(name)
+        {
+            let arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+            if(arr=document.cookie.match(reg))
+                return unescape(arr[2]);
+            else
+                return null;
+        }
+        function delCookie(name)
+        {
+            let exp = new Date();
+            exp.setTime(exp.getTime() - 1);
+            let cval=getCookie(name);
+            if(cval!=null)
+                document.cookie= name + "="+cval+";expires="+exp.toGMTString();
+        }
+        function connect() {
+            const url=document.getElementById("server_url").value
+            ws = new WebSocket(url);
+            //readyState属性返回实例对象的当前状态，共有四种。
+            //CONNECTING：值为0，表示正在连接。
+            //OPEN：值为1，表示连接成功，可以通信了。
+            //CLOSING：值为2，表示连接正在关闭。
+            //CLOSED：值为3，表示连接已经关闭，或者打开连接失败
+            //例如：if (ws.readyState == WebSocket.CONNECTING) { }
+            //【用于指定连接成功后的回调函数】
+            // private String requestId;
+            // private String path;
+            // private Map<String,String> headers;
+            // private String body;
+            ws.onopen = function (evt) {
+                console.log("Connection open ...");
+            };
+            //ws.addEventListener('open', function (event) {
+            //    ws.send('Hello Server!');
+            //};
+            //【用于指定收到服务器数据后的回调函数】
+            //【服务器数据有可能是文本，也有可能是二进制数据，需要判断】
+            ws.onmessage = function (event) {
+                if (typeof event.data == "string") {
+                    const response=JSON.parse(event.data)
+                    console.log("Received Server Response: " + event.data);
+                }
+
+            };
+            //[【于指定连接关闭后的回调函数。】
+            ws.onclose = function (evt) {
+                console.log("Connection closed.");
+            };
+            ws.onerror = function (event) {
+            };
+            ws.addEventListener("error", function (event) {
+            });
+        }
+        function send(path,payload) {
+            const socketRequest=new Object();
+            socketRequest.requestId=123456
+            socketRequest.path=path
+            socketRequest.payload=JSON.stringify(payload)
+            const requestText=JSON.stringify(socketRequest);
+            console.log('Send request text to server:'+requestText)
+            ws.send(requestText)
+        }
+        function sendToUser() {
+            const targetUserId=document.getElementById("target_user_id").value
+            const  messageText=document.getElementById("target_user_id").value;
+        }
+        function getToken() {
+            const loginName=document.getElementById("user_id_text").value
+            if(ws.readyState==WebSocket.OPEN){
+                const getTokenReq=new Object();
+                getTokenReq.loginName=loginName
+                getTokenReq.password='password'
+                send('/user/get-token',getTokenReq)
+            }else{
+                alert("WebSocket 未连接")
+            }
+        }
+        function loginWithToken() {
+            const loginToken=document.getElementById("login_token").value
+            const deviceId=document.getElementById('device_id').value
+            const loginReq=new Object()
+            loginReq.token=loginToken
+            loginReq.deviceId=deviceId
+            loginReq.deviceType=1
+            send('/user/login-with-token',loginReq)
+        }
+
+        //
+        // //发送文本
+        // ws.send("Hello WebSockets!");
+        //发送Blob数据
+        // var file = document
+        //     .querySelector('input[type="file"]')
+        //     .files[0];
+        // ws.send(file);
+        //发送ArrayBuffer
+        // var img = canvas_context.getImageData(0, 0, 400, 320);
+        // var binary = new Uint8Array(img.data.length);
+        // for (var i = 0; i < img.data.length; i++) {
+        //     binary[i] = img.data[i];
+        // }
+        // ws.send(binary.buffer);
+
+        //webSocket.bufferedAmount
+        //bufferedAmount属性，表示还有多少字节的二进制数据没有发送出去。它可以用来判断发送是否结束
+        // var data = new ArrayBuffer(10000000);
+        // ws.send(data);
+        //
+        // if (ws.bufferedAmount === 0) {
+        //     // 发送完毕
+        // } else {
+        //     // 发送还没结束
+        // }
+
+        //webSocket.onerror 用于指定报错时的回调函数
+
+    </script>
+</head>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<body>
+    <div class="container">
+        <table class="table table-bordered">
+            <caption>测试</caption>
+            <thead>
+            <tr>
+                <th>主题</th>
+                <th>内容</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>服务器地址</td>
+                <td><input id="server_url" type="text"></td>
+                <td><button class="btn btn-primary"  onclick="connect()">连接服务器</button></td>
+            </tr>
+            <tr>
+                <td>用户名</td>
+                <td><input id="login_name"  type="text"></td>
+                <td><button class="btn btn-primary" value="获取token" onclick="getToken()">登录</button></td>
+            </tr>
+            <tr>
+                <td>发送WebSocket</td>
+                <td><textarea type="text" id="request_text"></textarea></td>
+                <td><textarea type="text" id="response_text"></textarea></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

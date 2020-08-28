@@ -1,0 +1,36 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /feige-im
+spring:
+  application:
+    name: feige-im
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    username: root
+    password:
+    url: jdbc:mysql://localhost:3306/feige
+  redis:
+    database: 0
+    host: localhost
+    port: 6379
+    password: 123456
+nacos:
+  discovery:
+    enabled: true
+    server-addr: 127.0.0.1:8848
+    namespace: public
+
+#RabbitMQ Properties
+spring.rabbitmq.host: localhost
+spring.rabbitmq.port: 5672
+spring.rabbitmq.username: guest
+spring.rabbitmq.password: guest
+spring.rabbitmq.virtual-host: /
+spring.rabbitmq.publisher-returns: true
+spring.rabbitmq.connection-timeout: 30000
+discovery:
+  mq:
+    private-queues:
+      - forward.chat.message
+    exchange: feige.im
