@@ -1,7 +1,7 @@
 package com.ds.feige.im.test.group;
 
-import com.ds.feige.im.pojo.dto.group.GroupInfo;
-import com.ds.feige.im.service.group.GroupUserService;
+import com.ds.feige.im.chat.service.GroupUserService;
+import com.ds.feige.im.chat.dto.group.GroupInfo;
 import com.ds.feige.im.test.BaseTest;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;

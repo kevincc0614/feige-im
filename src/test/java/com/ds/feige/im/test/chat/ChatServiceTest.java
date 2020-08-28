@@ -1,15 +1,10 @@
 package com.ds.feige.im.test.chat;
 
+import com.ds.feige.im.chat.dto.*;
+import com.ds.feige.im.chat.service.ChatService;
 import com.ds.feige.im.common.util.JsonUtils;
 import com.ds.feige.im.constants.ConversationType;
 import com.ds.feige.im.constants.MsgType;
-import com.ds.feige.im.pojo.dto.ChatMsgRequest;
-import com.ds.feige.im.pojo.dto.chat.ChatMessage;
-import com.ds.feige.im.pojo.dto.chat.ChatMsgAckResult;
-import com.ds.feige.im.pojo.dto.chat.ConversationPreview;
-import com.ds.feige.im.pojo.dto.chat.PullConversationMsgRequest;
-import com.ds.feige.im.pojo.dto.message.SendMsgResult;
-import com.ds.feige.im.service.chat.ChatService;
 import com.ds.feige.im.test.BaseTest;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;

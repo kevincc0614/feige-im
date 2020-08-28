@@ -1,11 +1,11 @@
 package com.ds.feige.im.amqp;
 
+import com.ds.feige.im.chat.dto.ServerForwardMessage;
 import com.ds.feige.im.common.util.JsonUtils;
 import com.ds.feige.im.constants.DynamicQueues;
-import com.ds.feige.im.discovery.DiscoveryService;
-import com.ds.feige.im.pojo.domain.SessionUserFactory;
-import com.ds.feige.im.pojo.dto.ServerForwardMessage;
-import com.ds.feige.im.socket.connection.UserConnection;
+import com.ds.feige.im.gateway.DiscoveryService;
+import com.ds.feige.im.gateway.domain.SessionUserFactory;
+import com.ds.feige.im.gateway.socket.connection.UserConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;

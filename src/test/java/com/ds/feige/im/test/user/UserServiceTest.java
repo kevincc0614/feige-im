@@ -1,9 +1,9 @@
 package com.ds.feige.im.test.user;
 
 import com.ds.base.nodepencies.exception.WarnMessageException;
+import com.ds.feige.im.account.dto.UserRegisterRequest;
+import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.constants.FeigeWarn;
-import com.ds.feige.im.pojo.dto.user.UserRegisterRequest;
-import com.ds.feige.im.service.user.UserService;
 import com.ds.feige.im.test.BaseTest;
 import org.junit.Assert;
 import org.junit.Test;

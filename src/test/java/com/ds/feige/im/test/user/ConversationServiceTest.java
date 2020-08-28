@@ -1,10 +1,10 @@
 package com.ds.feige.im.test.user;
 
 import com.ds.base.nodepencies.exception.WarnMessageException;
+import com.ds.feige.im.chat.dto.UserConversationInfo;
+import com.ds.feige.im.chat.service.ConversationService;
 import com.ds.feige.im.constants.ConversationType;
 import com.ds.feige.im.constants.FeigeWarn;
-import com.ds.feige.im.pojo.dto.chat.UserConversationInfo;
-import com.ds.feige.im.service.chat.ConversationService;
 import com.ds.feige.im.test.BaseTest;
 import org.junit.Assert;
 import org.junit.Test;

@@ -1,9 +1,9 @@
 package com.ds.feige.im.amqp;
 
+import com.ds.feige.im.chat.dto.group.GroupCreatedEvent;
+import com.ds.feige.im.chat.dto.group.GroupUserJoinEvent;
+import com.ds.feige.im.chat.service.GroupUserService;
 import com.ds.feige.im.constants.DynamicQueues;
-import com.ds.feige.im.pojo.dto.group.GroupCreatedEvent;
-import com.ds.feige.im.pojo.dto.group.GroupUserJoinEvent;
-import com.ds.feige.im.service.group.GroupUserService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

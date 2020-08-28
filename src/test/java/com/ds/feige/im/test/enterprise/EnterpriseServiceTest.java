@@ -1,14 +1,14 @@
 package com.ds.feige.im.test.enterprise;
 
 import com.ds.base.nodepencies.exception.WarnMessageException;
+import com.ds.feige.im.account.dto.UserInfo;
+import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.constants.FeigeWarn;
-import com.ds.feige.im.pojo.dto.enterprise.CreateDepartmentRequest;
-import com.ds.feige.im.pojo.dto.enterprise.CreateEmployeeRequest;
-import com.ds.feige.im.pojo.dto.enterprise.DepartmentInfo;
-import com.ds.feige.im.pojo.dto.enterprise.EmployeeInfo;
-import com.ds.feige.im.pojo.dto.user.UserInfo;
-import com.ds.feige.im.service.enterprise.EnterpriseService;
-import com.ds.feige.im.service.user.UserService;
+import com.ds.feige.im.enterprise.dto.CreateDepartmentRequest;
+import com.ds.feige.im.enterprise.dto.CreateEmployeeRequest;
+import com.ds.feige.im.enterprise.dto.DepartmentInfo;
+import com.ds.feige.im.enterprise.dto.EmployeeInfo;
+import com.ds.feige.im.enterprise.service.EnterpriseService;
 import com.ds.feige.im.test.BaseTest;
 import org.junit.Assert;
 import org.junit.Test;

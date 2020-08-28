@@ -2,9 +2,9 @@ package com.ds.feige.im.test;
 
 import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
 import com.ds.base.nodepencies.strategy.id.IdKeyGeneratorFactory;
+import com.ds.feige.im.chat.dto.ChatMsgRequest;
 import com.ds.feige.im.common.util.JsonUtils;
-import com.ds.feige.im.pojo.dto.ChatMsgRequest;
-import com.ds.feige.im.socket.protocol.SocketRequest;
+import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
 
 public class JsonTest {
     public static void main(String[] args) throws Exception{
