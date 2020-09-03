@@ -2,8 +2,8 @@ package com.ds.feige.im.gateway.socket.websocket;
 
 import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.service.UserService;
+import com.ds.feige.im.constants.DeviceType;
 import com.ds.feige.im.constants.SessionAttributeKeys;
-import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,27 +28,31 @@ public class SimpleHandshakeInterceptor extends HttpSessionHandshakeInterceptor 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
         //获取登录token
-        String token=getParamFromRequest(request, SessionAttributeKeys.IM_AUTH_TOKEN);
-        if(token==null){
+        String token = getParamFromRequest(request, SessionAttributeKeys.IM_AUTH_TOKEN);
+        if (token == null) {
             response.setStatusCode(HttpStatus.FORBIDDEN);
             return false;
         }
         //获取设备号,设备类型信息
-        String deviceId=getParamFromRequest(request, SessionAttributeKeys.DEVICE_ID);
-        String deviceTypeStr=getParamFromRequest(request, SessionAttributeKeys.DEVICE_TYPE);
-        if(Strings.isNullOrEmpty(deviceId)||Strings.isNullOrEmpty(deviceTypeStr)){
+        String deviceId = getParamFromRequest(request, SessionAttributeKeys.DEVICE_ID);
+        String deviceTypeStr = getParamFromRequest(request, SessionAttributeKeys.DEVICE_TYPE);
+        try {
+            DeviceType deviceType = DeviceType.valueOf(deviceTypeStr);
+            attributes.put(SessionAttributeKeys.DEVICE_TYPE, deviceType);
+        } catch (Exception e) {
+            LOGGER.error("Device type value error:{}", deviceTypeStr);
             response.setStatusCode(HttpStatus.BAD_REQUEST);
             return false;
         }
-        attributes.put(SessionAttributeKeys.DEVICE_ID,deviceId);
-        attributes.put(SessionAttributeKeys.DEVICE_TYPE,Integer.parseInt(deviceTypeStr));
+        attributes.put(SessionAttributeKeys.DEVICE_ID, deviceId);
+
         //验证token是否合法
-        try{
-            UserInfo userInfo=userService.verifyToken(token);
-            attributes.put("userId",userInfo.getUserId());
-            LOGGER.info("Handshake and verify auth token success:userId={}",userInfo.getUserId());
-        }catch (Exception e){
-            LOGGER.error("When handshake verify token error:token={}",token,e);
+        try {
+            UserInfo userInfo = userService.verifyToken(token);
+            attributes.put("userId", userInfo.getUserId());
+            LOGGER.info("Handshake and verify auth token success:userId={}", userInfo.getUserId());
+        } catch (Exception e) {
+            LOGGER.error("When handshake verify token error:token={}", token, e);
             response.setStatusCode(HttpStatus.FORBIDDEN);
             return false;
         }

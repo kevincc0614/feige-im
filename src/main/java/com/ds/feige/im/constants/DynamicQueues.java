@@ -20,6 +20,7 @@ public class DynamicQueues {
         BINDINGS.put(RoutingKeys.GROUP_CREATED,new String[]{QueueNames.GROUP_CREATED_BROADCAST});
         BINDINGS.put(RoutingKeys.GROUP_USER_ROLE_UPDATED, new String[]{QueueNames.GROUP_USER_ROLE_UPDATED_BROADCAST});
         BINDINGS.put(RoutingKeys.CONVERSATION_SEND_MESSAGE, new String[]{QueueNames.CONVERSATION_SEND_MESSAGE_SYNC});
+        BINDINGS.put(RoutingKeys.CONVERSATION_READ_MESSAGE, new String[]{QueueNames.CONVERSATION_READ_MESSAGE_RECEIPT});
     }
     public static final class RoutingKeys{
         public static final String GROUP_CREATED="group.created";
@@ -29,6 +30,7 @@ public class DynamicQueues {
         public static final String GROUP_USER_KICKED="group.user.kicked";
         public static final String GROUP_USER_ROLE_UPDATED = "group.user.role-updated";
         public static final String CONVERSATION_SEND_MESSAGE = "conversation.send.message";
+        public static final String CONVERSATION_READ_MESSAGE = "conversation.read.message";
     }
     public static final class QueueNames{
         public static final String GROUP_CREATED_BROADCAST="group.created.broadcast";
@@ -38,5 +40,6 @@ public class DynamicQueues {
         public static final String GROUP_USER_KICKED_BROADCAST="group.user.kicked.broadcast";
         public static final String GROUP_USER_ROLE_UPDATED_BROADCAST = "group.user.role-updated.broadcast";
         public static final String CONVERSATION_SEND_MESSAGE_SYNC = "conversation.send.message.sync";
+        public static final String CONVERSATION_READ_MESSAGE_RECEIPT = "conversation.read.message.receipt";
     }
 }

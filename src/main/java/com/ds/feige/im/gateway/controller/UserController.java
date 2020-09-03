@@ -17,6 +17,6 @@ public class UserController {
 
     @SocketRequestMapping("/ping-pong")
     public void pingpong(WebSocketSession session) {
-
+        sessionUserService.pingPong(session);
     }
 }

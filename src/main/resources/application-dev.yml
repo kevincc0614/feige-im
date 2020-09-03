@@ -58,3 +58,13 @@ mybatis-plus:
 logging:
   level:
     com.ds.feige.im.mapper: debug
+oss:
+  domain: "http://35.220.161.103:8080"
+  group: group1
+  token-secret: OAaLBf1Ho87nDxGd
+  token-expire-seconds: 3600
+  #500M
+  max-file-size: 524288000
+user:
+  security:
+    secret:

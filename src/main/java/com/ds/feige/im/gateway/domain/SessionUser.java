@@ -6,6 +6,7 @@ import org.redisson.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -54,6 +55,18 @@ public class SessionUser {
         return metaMap;
     }
 
+    public boolean keepAlive(String deviceId) {
+        String key = CacheKeys.SESSION_USER_CONNECTION + deviceId;
+        RBucket<ConnectionMeta> bucket = redissonClient.getBucket(key);
+        ConnectionMeta meta = bucket.get();
+        if (meta == null) {
+            return false;
+        }
+        meta.setLastActiveTime(new Date());
+        bucket.set(meta, 60, TimeUnit.MINUTES);
+        return true;
+    }
+
     public Long getUserId() {
         return userId;
     }
@@ -62,9 +75,9 @@ public class SessionUser {
         this.userId = userId;
     }
 
-    public ConnectionMeta getConnectionMeta(int deviceType) {
+    public ConnectionMeta getConnectionMetaByType(int deviceType) {
         for (Map.Entry<String, ConnectionMeta> entry : getConnectionMetas().entrySet()) {
-            if (entry.getValue().getDeviceType() == deviceType) {
+            if (entry.getValue().getDeviceType().type == deviceType) {
                 return entry.getValue();
             }
         }

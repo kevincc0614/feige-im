@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.Date;
 
 @Configuration
-@MapperScan("com.ds.feige.im.mapper")
+@MapperScan("com.ds.feige.im.*.mapper")
 public class MyBatisConfiguration  {
 
     @Bean

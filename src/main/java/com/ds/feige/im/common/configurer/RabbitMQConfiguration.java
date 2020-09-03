@@ -1,8 +1,8 @@
 package com.ds.feige.im.common.configurer;
 
-import com.ds.feige.im.amqp.DynamicQueueListener;
 import com.ds.feige.im.constants.DynamicQueues;
 import com.ds.feige.im.gateway.DiscoveryService;
+import com.ds.feige.im.gateway.consumer.DynamicQueueListener;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

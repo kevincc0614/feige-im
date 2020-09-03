@@ -5,18 +5,35 @@ import com.ds.feige.im.common.entity.BaseEntity;
 
 @TableName("t_employee")
 public class Employee extends BaseEntity {
-    /**用户ID*/
+    /**
+     * 用户ID
+     */
     private Long userId;
-    /**姓名*/
+    /**
+     * 公司ID
+     */
+    private Long enterpriseId;
+    /**
+     * 姓名
+     */
     private String name;
-    /**工号*/
+    /**
+     * 工号
+     */
     private String employeeNo;
-    /**职位*/
+    /**
+     * 职位
+     */
     private String title;
-    /**工作邮箱*/
+    /**
+     * 工作邮箱
+     */
     private String workEmail;
-    /**角色*/
-    private Long roleId;
+    /**
+     * 角色
+     */
+    private String role;
+
     public Long getUserId() {
         return userId;
     }
@@ -49,12 +66,12 @@ public class Employee extends BaseEntity {
         this.workEmail = workEmail;
     }
 
-    public Long getRoleId() {
-        return roleId;
+    public String getRole() {
+        return role;
     }
 
-    public void setRoleId(Long roleId) {
-        this.roleId = roleId;
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public String getName() {
@@ -63,5 +80,13 @@ public class Employee extends BaseEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Long getEnterpriseId() {
+        return enterpriseId;
+    }
+
+    public void setEnterpriseId(Long enterpriseId) {
+        this.enterpriseId = enterpriseId;
     }
 }

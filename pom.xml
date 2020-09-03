@@ -176,6 +176,19 @@
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
         </dependency>
+        <!-- IOS 消息推送-->
+        <dependency>
+            <groupId>com.eatthepath</groupId>
+            <artifactId>pushy</artifactId>
+            <version>0.14.1</version>
+        </dependency>
+        <!-- hutool -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>4.4.3</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

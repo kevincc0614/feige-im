@@ -14,6 +14,9 @@ import com.ds.feige.im.account.entity.User;
 import com.ds.feige.im.account.mapper.UserMapper;
 import com.ds.feige.im.common.util.BeansConverter;
 import com.ds.feige.im.constants.FeigeWarn;
+import com.google.common.base.Charsets;
+import com.google.common.hash.Hashing;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,37 +45,47 @@ public class UserServiceImpl implements UserService {
     }
     @Override
     public String getToken(GetTokenRequest request) {
-        //查询数据库
-        User user=this.userMapper.getByMobileAndPassword(request.getLoginName(),request.getPassword());
-        //用户不存在
-        if(user==null){
-            throw new WarnMessageException(FeigeWarn.NAME_OR_PWD_ERROR);
+        String loginName = request.getLoginName();
+        User user = userMapper.getOne(loginName);
+        if (user == null) {
+            throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
-        LocalDateTime expireAt=LocalDateTime.now().plusDays(90);
-        Date expireDate=Date.from(expireAt.atZone(ZoneId.systemDefault()).toInstant());
+        byte[] key = user.getSalt().getBytes();
+        String password = Hashing.hmacMd5(key).newHasher().putString(request.getPassword(), Charsets.UTF_8).hash().toString();
+        //查询数据库
+        user = this.userMapper.getOne(loginName, password);
+        //用户不存在
+        if (user == null) {
+            throw new WarnMessageException(FeigeWarn.PWD_ERROR);
+        }
+        LocalDateTime expireAt = LocalDateTime.now().plusDays(90);
+        Date expireDate = Date.from(expireAt.atZone(ZoneId.systemDefault()).toInstant());
         //生成token
-        String token=JWT.create().withAudience(String.valueOf(user.getId()))
+        long userId = user.getId();
+        String token = JWT.create().withClaim("userId", userId)
                 .withExpiresAt(expireDate)
                 .sign(Algorithm.HMAC256(request.getPassword()));
-        LOGGER.info("User get token success:userId={},token={}",user.getId(),token);
+        //放入缓存
+
+        LOGGER.info("User get token success:userId={},token={}", user.getId(), token);
         return token;
     }
     @Override
     public UserInfo verifyToken(String token) {
         // 获取 token 中的 user id
         LOGGER.info("User verify token:token={}",token);
-        Long userId = Long.valueOf(JWT.decode(token).getAudience().get(0));
+        Long userId = Long.valueOf(JWT.decode(token).getClaim("userId").asLong());
         User user = userMapper.selectById(userId);
         if (user == null) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
-        // 验证 token
+        // 验证token合法性和签名
         JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256(user.getPassword())).build();
         try{
             DecodedJWT decodedJWT=jwtVerifier.verify(token);
         }catch (Exception e){//签名算法不匹配
             if(e instanceof TokenExpiredException){
-                throw new WarnMessageException(e,FeigeWarn.TOKEN_VERIFY_ERROR);
+                throw new WarnMessageException(e, FeigeWarn.TOKEN_EXPIRED);
             }
             throw new WarnMessageException(e,FeigeWarn.TOKEN_VERIFY_ERROR);
         }
@@ -86,22 +99,25 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public long register(UserRegisterRequest registerRequest) {
+    public long register(UserRegisterRequest request) {
         //判断手机号是否已存在
-        int i=userMapper.getByMobile(registerRequest.getMobile());
-        if(i>=1){
+        int i = userMapper.getByMobile(request.getMobile());
+        if (i >= 1) {
             throw new WarnMessageException(FeigeWarn.ACCOUNT_REGISTERD);
         }
-        long id=idKeyGenerator.generateId();
-        User user=new User();
-        user.setMobile(registerRequest.getMobile());
-        //TODO 密码加密
-        user.setPassword(registerRequest.getPassword());
-        user.setSource(registerRequest.getSource());
-        user.setNickName("用户"+id);
+        long id = idKeyGenerator.generateId();
+        //随机生成字符串
+        String salt = RandomStringUtils.randomAlphabetic(12);
+        User user = new User();
+        user.setMobile(request.getMobile());
+        String password = Hashing.hmacMd5(salt.getBytes()).newHasher().putString(request.getPassword(), Charsets.UTF_8).hash().toString();
+        user.setPassword(password);
+        user.setSalt(salt);
+        user.setSource(request.getSource());
+        user.setNickName("用户" + id);
         user.setGender(1);
-        String accountIdSrc=String.valueOf(id);
-        String accountId=Base64.getEncoder().encodeToString(accountIdSrc.getBytes());
+        String accountIdSrc = String.valueOf(id);
+        String accountId = Base64.getEncoder().encodeToString(accountIdSrc.getBytes());
         user.setAccountId(accountId);
         userMapper.insert(user);
         return user.getId();
@@ -114,16 +130,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserInfo getUserById(long userId) {
-        User user=userMapper.selectById(userId);
-        UserInfo userInfo= BeansConverter.userToUserInfo(user);
+        User user = userMapper.selectById(userId);
+        UserInfo userInfo = BeansConverter.userToUserInfo(user);
         return userInfo;
     }
 
     @Override
     public List<UserInfo> getUserByIds(List<Long> userIdList) {
-        List<User> users=userMapper.findUserByIds(userIdList);
-        List<UserInfo> userInfos=BeansConverter.usersToUserInfos(users);
+        List<User> users = userMapper.findUserByIds(userIdList);
+        List<UserInfo> userInfos = BeansConverter.usersToUserInfos(users);
         return userInfos;
+    }
+
+    @Override
+    public void unregisterUser(long userId, long operatorId) {
+        int i = userMapper.deleteById(userId);
+        if (i < 1) {
+            throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
+        }
+        LOGGER.info("Cancel user success:userId={},operatorId={}", userId, operatorId);
     }
 }
 

@@ -18,7 +18,7 @@ public class UserServiceTest extends BaseTest {
     @Test
     public void testRegister(){
         UserRegisterRequest userRegisterRequest=new UserRegisterRequest();
-        userRegisterRequest.setMobile("98392209");
+        userRegisterRequest.setMobile("110110110");
         userRegisterRequest.setPassword("123456");
         userRegisterRequest.setSource("enterprise");
         long userId=userService.register(userRegisterRequest);

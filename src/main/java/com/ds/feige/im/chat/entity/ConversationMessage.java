@@ -21,7 +21,6 @@ public class ConversationMessage extends BaseEntity {
     private String msgContent;
     /**消息类型  文本,图片,文件,语音等*/
     private Integer msgType;
-
     public Long getConversationId() {
         return conversationId;
     }

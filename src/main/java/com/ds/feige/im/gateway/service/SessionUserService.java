@@ -20,10 +20,8 @@ public interface SessionUserService {
 
     /**
      * 登出
-     *
-     * @param userId
      */
-    void logout(String userId, WebSocketSession session);
+    void logout(WebSocketSession session);
 
     /**
      * 网络连接断开时要主动调用此接口
@@ -46,11 +44,11 @@ public interface SessionUserService {
      * 服务器主动发消息给客户端
      * 如果客户端连接的是非本机服务器,则会通过其他服务器进行转发推送
      *
-     * @param userIds  用户ID
+     * @param userIds 用户ID
      * @param path
      * @param payload
      */
-    void sendToUsers(List<Long> userIds, String path, Object payload) throws IOException;
+    void sendToUsers(List<Long> userIds, String path, Object payload);
 
     void afterConnectionEstablished(WebSocketSession session) throws Exception;
 

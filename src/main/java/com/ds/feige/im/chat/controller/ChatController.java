@@ -35,7 +35,7 @@ public class ChatController {
      * 发送聊天消息
      */
     @SocketRequestMapping(SocketPaths.CS_SEND_CHAT_MESSAGE)
-    public SendMsgResult send(@RequestBody @Valid ChatMsgRequest request) {
+    public SendMessageResult send(@RequestBody @Valid SendMessageRequest request) {
         return this.chatService.sendMsg(request);
     }
 
@@ -43,20 +43,25 @@ public class ChatController {
      * 客户端确认收到聊天消息
      */
     @SocketRequestMapping(SocketPaths.CS_ACK_CHAT_MESSAGE)
-    public ChatMsgAckResult ack(@RequestBody @Valid ChatMsgAckRequest request) {
-        ChatMsgAckResult result = chatService.ackMsg(request.getUserId(), request.getMsgIds());
+    public ChatMessageAckResult ack(@RequestBody @Valid ChatMessageAckRequest request) {
+        ChatMessageAckResult result = chatService.ackMsg(request.getUserId(), request.getMsgIds());
         return result;
     }
 
     @SocketRequestMapping(SocketPaths.CS_PULL_CHAT_MESSAGE)
-    public List<ChatMessage> pull(@RequestBody @Valid PullConversationMsgRequest request) {
+    public List<ChatMessage> pull(@RequestBody @Valid PullConversationMessageRequest request) {
         List<ChatMessage> messages = chatService.pullMsg(request);
         return messages;
     }
 
     @SocketRequestMapping(SocketPaths.CS_CONVERSATION_PREVIEWS)
     public List<ConversationPreview> getConversationPreviews(@RequestBody UserRequest request) {
-        List<ConversationPreview> previews=chatService.getConversationPreviews(request.getUserId());
+        List<ConversationPreview> previews = chatService.getConversationPreviews(request.getUserId());
         return previews;
+    }
+
+    @SocketRequestMapping(value = SocketPaths.CS_READ_CHAT_MESSAGE, response = false)
+    public void readMessage() {
+
     }
 }

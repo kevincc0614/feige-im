@@ -39,9 +39,11 @@ public class UserAuthInterceptor extends HandlerInterceptorAdapter {
                     return false;
                 }
                 UserInfo userInfo = userService.verifyToken(authToken);
+                request.setAttribute("userId", userInfo.getUserId());
                 return true;
             }
         }
         return super.preHandle(request, response, handler);
     }
+
 }

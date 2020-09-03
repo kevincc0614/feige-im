@@ -5,6 +5,7 @@ import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
 import com.ds.feige.im.account.dto.LoginRequest;
 import com.ds.feige.im.account.dto.RemoteLoginMsg;
 import com.ds.feige.im.common.util.JsonUtils;
+import com.ds.feige.im.constants.DeviceType;
 import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.constants.SessionAttributeKeys;
 import com.ds.feige.im.gateway.DiscoveryService;
@@ -44,28 +45,30 @@ public class SessionUserServiceImpl implements SessionUserService{
     IdKeyGenerator<Long> longIdKeyGenerator;
     SessionUserFactory sessionUserFactory;
     static final Logger LOGGER= LoggerFactory.getLogger(SessionUserServiceImpl.class);
+
     @Autowired
     public SessionUserServiceImpl(RedissonClient redissonClient,
                                   DiscoveryService discoveryService,
                                   RabbitTemplate rabbitTemplate,
-                                  SessionUserFactory sessionUserFactory){
-        this.redissonClient=redissonClient;
+                                  SessionUserFactory sessionUserFactory) {
+        this.redissonClient = redissonClient;
         this.discoveryService = discoveryService;
-        this.rabbitTemplate=rabbitTemplate;
-        this.sessionUserFactory=sessionUserFactory;
+        this.rabbitTemplate = rabbitTemplate;
+        this.sessionUserFactory = sessionUserFactory;
     }
-    public void sendRemoteLoginMsg(ConnectionMeta oldConnMeta,ConnectionMeta newConnMeta) throws IOException{
+
+    public void remoteLoginDisconnect(ConnectionMeta oldConnMeta, ConnectionMeta newConnMeta) throws IOException {
         //通知用户其他链接,在其他设备登录
-        long userId=oldConnMeta.getUserId();
-        LOGGER.info("The user was remote login:userId={},oldConnMeta={},newConnMeta={}",userId,oldConnMeta,newConnMeta);
-        SocketRequest sendToClientRequest=new SocketRequest();
+        long userId = oldConnMeta.getUserId();
+        LOGGER.info("The user was remote login:userId={},oldConnMeta={},newConnMeta={}", userId, oldConnMeta, newConnMeta);
+        SocketRequest sendToClientRequest = new SocketRequest();
         sendToClientRequest.setPath("/user/remote-login");
         sendToClientRequest.setRequestId(longIdKeyGenerator.generateId());
-        RemoteLoginMsg msg=new RemoteLoginMsg();
+        RemoteLoginMsg msg = new RemoteLoginMsg();
         msg.setDeviceId(newConnMeta.getDeviceId());
         msg.setIpAddress(newConnMeta.getIpAddress());
         sendToClientRequest.setPayload(JsonUtils.toJson(msg));
-        UserConnection connection=sessionUserFactory.getConnection(oldConnMeta);
+        UserConnection connection = sessionUserFactory.getConnection(oldConnMeta);
         connection.disconnect(sendToClientRequest);
     }
     @Override
@@ -80,7 +83,7 @@ public class SessionUserServiceImpl implements SessionUserService{
             return sessionUser;
         }
         //构建链接元数据
-        ConnectionMeta newConnMeta=new ConnectionMeta();
+        ConnectionMeta newConnMeta = new ConnectionMeta();
         newConnMeta.setUserId(userId);
         newConnMeta.setDeviceId(request.getDeviceId());
         newConnMeta.setDeviceType(request.getDeviceType());
@@ -92,20 +95,20 @@ public class SessionUserServiceImpl implements SessionUserService{
         try {
             if (userLock.tryLock(10L, TimeUnit.SECONDS)) {
                 //同设备号设备在线
-                ConnectionMeta sameDeviceIdConnMeta=sessionUser.getMetaByDeviceId(request.getDeviceId());
-                if(sameDeviceIdConnMeta!=null){
-                    sendRemoteLoginMsg(sameDeviceIdConnMeta,newConnMeta);
+                ConnectionMeta sameDeviceIdConnMeta = sessionUser.getMetaByDeviceId(request.getDeviceId());
+                if (sameDeviceIdConnMeta != null) {
+                    remoteLoginDisconnect(sameDeviceIdConnMeta, newConnMeta);
                 }
                 //同类型设备在线
-                ConnectionMeta sameDeviceTypeConnMeta=sessionUser.getConnectionMeta(request.getDeviceType());
-                //TODO 强制断线
-                if(sameDeviceTypeConnMeta!=null){
-                    sendRemoteLoginMsg(sameDeviceTypeConnMeta,newConnMeta);
+                ConnectionMeta sameDeviceTypeConnMeta = sessionUser.getConnectionMetaByType(request.getDeviceType().type);
+                //强制断线
+                if (sameDeviceTypeConnMeta != null) {
+                    remoteLoginDisconnect(sameDeviceTypeConnMeta, newConnMeta);
                 }
                 //添加新的链接
                 sessionUser.addConnectionMeta(newConnMeta);
                 //标记为已登录
-                sessionAttributes.put(SessionAttributeKeys.LOGIN,true);
+                sessionAttributes.put(SessionAttributeKeys.LOGIN, true);
             }else{
                 // 超时未获取到锁,返回异常
                 LOGGER.error("Get session user lock timeout:userId={}",userId);
@@ -121,8 +124,8 @@ public class SessionUserServiceImpl implements SessionUserService{
     }
 
     @Override
-    public void logout(String userId,WebSocketSession session) {
-        //token作废
+    public void logout(WebSocketSession session) {
+        //TODO token作废
     }
 
     @Override
@@ -171,9 +174,14 @@ public class SessionUserServiceImpl implements SessionUserService{
     }
 
     @Override
-    public void sendToUsers(List<Long> userIds, String path, Object payload) throws IOException {
+    public void sendToUsers(List<Long> userIds, String path, Object payload) {
         for (Long userId : userIds) {
-            sendToUser(userId,path,payload);
+            try {
+                sendToUser(userId, path, payload);
+            } catch (Exception e) {
+                LOGGER.error("Send to user error:userId={}", userId, e);
+            }
+
         }
     }
 
@@ -200,7 +208,7 @@ public class SessionUserServiceImpl implements SessionUserService{
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setUserId(userId);
         loginRequest.setDeviceId((String) attributes.get(SessionAttributeKeys.DEVICE_ID));
-        loginRequest.setDeviceType((Integer) attributes.get(SessionAttributeKeys.DEVICE_TYPE));
+        loginRequest.setDeviceType((DeviceType) attributes.get(SessionAttributeKeys.DEVICE_TYPE));
         login(loginRequest, session);
     }
 
@@ -212,6 +220,13 @@ public class SessionUserServiceImpl implements SessionUserService{
 
     @Override
     public void pingPong(WebSocketSession session) {
-        //TODO 心跳
+        Long userId = (Long) session.getAttributes().get(SessionAttributeKeys.USER_ID);
+        String deviceId = (String) session.getAttributes().get(SessionAttributeKeys.DEVICE_ID);
+        SessionUser sessionUser = sessionUserFactory.getSessionUser(userId);
+        if (sessionUser == null) {
+            disconnect(session);
+        } else {
+            sessionUser.keepAlive(deviceId);
+        }
     }
 }

@@ -1,6 +1,6 @@
 package com.ds.feige.im.gateway.domain;
 
-import com.ds.feige.im.chat.dto.ServerForwardMessage;
+import com.ds.feige.im.chat.dto.event.MessageForwardEvent;
 import com.ds.feige.im.constants.DynamicQueues;
 import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.ds.feige.im.gateway.socket.connection.UserConnection;
@@ -25,8 +25,8 @@ public class RUserConnection implements UserConnection {
     @Override
     public boolean send(SocketRequest request) throws IOException {
         //非本机服务器通过MQ推送
-        String routeKey= DynamicQueues.SERVER_FORWARD_MESSAGE_QUEUE +meta.getInstanceId();
-        ServerForwardMessage message=new ServerForwardMessage();
+        String routeKey = DynamicQueues.SERVER_FORWARD_MESSAGE_QUEUE + meta.getInstanceId();
+        MessageForwardEvent message = new MessageForwardEvent();
         message.setMeta(this.meta);
 //        message.setSourceInstanceId(discoveryMQService.getInstanceId());
         message.setRequest(request);
@@ -37,8 +37,8 @@ public class RUserConnection implements UserConnection {
 
     @Override
     public boolean disconnect(SocketRequest reason) throws IOException {
-        String routeKey= DynamicQueues.SERVER_FORWARD_DISCONNECT_MESSAGE_QUEUE +meta.getInstanceId();
-        ServerForwardMessage message=new ServerForwardMessage();
+        String routeKey = DynamicQueues.SERVER_FORWARD_DISCONNECT_MESSAGE_QUEUE + meta.getInstanceId();
+        MessageForwardEvent message = new MessageForwardEvent();
         message.setMeta(this.meta);
         message.setRequest(reason);
         this.rabbitTemplate.convertAndSend(routeKey,message);

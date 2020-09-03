@@ -20,7 +20,7 @@ public class ChatServiceTest extends BaseTest {
     @Test
     public void testSend(){
         for(int i=0;i<100;i++){
-            ChatMsgRequest request=new ChatMsgRequest();
+            SendMessageRequest request = new SendMessageRequest();
             if(i%2==0){
                 request.setUserId(USER_ID_1);
                 request.setTargetId(USER_ID_2);
@@ -32,14 +32,14 @@ public class ChatServiceTest extends BaseTest {
             }
             request.setConversationType(ConversationType.SINGLE_CONVERSATION_TYPE);
             request.setMsgType(MsgType.TEXT);
-            SendMsgResult result=chatService.sendMsg(request);
+            SendMessageResult result = chatService.sendMsg(request);
             System.out.println("发送消息结果:"+result.toString());
         }
 
     }
     @Test
     public void testPullMessage() throws Exception{
-        PullConversationMsgRequest request=new PullConversationMsgRequest();
+        PullConversationMessageRequest request = new PullConversationMessageRequest();
         request.setConversationId(2008141888938344448l);
         request.setMaxMsgId(Long.MAX_VALUE);
         request.setPageSize(2);
@@ -55,7 +55,7 @@ public class ChatServiceTest extends BaseTest {
     }
     @Test
     public void testAck(){
-        PullConversationMsgRequest request=new PullConversationMsgRequest();
+        PullConversationMessageRequest request = new PullConversationMessageRequest();
         request.setConversationId(2008141888938344448l);
         request.setMaxMsgId(Long.MAX_VALUE);
         request.setPageSize(100);
@@ -67,7 +67,7 @@ public class ChatServiceTest extends BaseTest {
             System.out.println("消息内容:"+msg.getMsgContent());
             msgIds.add(msg.getMsgId());
         }
-        ChatMsgAckResult result=chatService.ackMsg(USER_ID_1,msgIds);
+        ChatMessageAckResult result = chatService.ackMsg(USER_ID_1, msgIds);
         System.out.println(result);
     }
     @Test

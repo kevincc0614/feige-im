@@ -42,16 +42,18 @@ public class GroupController {
         groupUserService.exitGroup(request.getGroupId(),request.getUserId());
     }
     @SocketRequestMapping(SocketPaths.CS_KICK_GROUP_USER)
-    public void kickUser(@RequestBody @Valid KickGroupUserRequest request){
-        groupUserService.kickUser(request.getGroupId(),request.getKickUserId(),request.getUserId());
+    public void kickUser(@RequestBody @Valid KickGroupUserRequest request) {
+        groupUserService.kickUser(request.getGroupId(), request.getKickUserId(), request.getUserId());
     }
+
     @SocketRequestMapping(SocketPaths.CS_SET_GROUP_USER_ROLE)
-    public void setRole(@RequestBody @Valid SetGroupUserRoleRequest request){
-        GroupUserRole role=GroupUserRole.valueOf(request.getRole());
-        groupUserService.setUserRole(request.getGroupId(),request.getUserId(),role,request.getUserId());
+    public void setRole(@RequestBody @Valid SetUserRoleRequest request) {
+        GroupUserRole role = GroupUserRole.valueOf(request.getRole());
+        groupUserService.setUserRole(request.getGroupId(), request.getUserId(), role, request.getUserId());
     }
+
     @SocketRequestMapping(SocketPaths.CS_GET_GROUP_INFO)
-    public GroupInfo getInfo(@RequestParam("groupId") @Valid long groupId){
+    public GroupInfo getInfo(@RequestParam("groupId") @Valid long groupId) {
         return groupUserService.getGroupInfo(groupId);
     }
     @SocketRequestMapping(SocketPaths.CS_GET_GROUP_USERS)

@@ -19,8 +19,10 @@ public interface UserMapper extends BaseMapper<User> {
     int getByMobile(@Param("mobile") String mobile);
 
     @Select("SELECT * FROM t_user where mobile=#{mobile} and password=#{password}")
-    User getByMobileAndPassword(@Param("mobile") String mobile, @Param("password") String password);
+    User getOne(@Param("mobile") String mobile, @Param("password") String password);
 
+    @Select("SELECT * FROM t_user where mobile=#{mobile}")
+    User getOne(@Param("mobile") String mobile);
 
     @Select({"<script> ",
             "SELECT * FROM t_user WHERE id IN",

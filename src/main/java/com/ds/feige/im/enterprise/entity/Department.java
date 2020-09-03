@@ -9,7 +9,7 @@ public class Department extends BaseEntity {
     private Long parentId;
     private Integer priority;
     private String enName;
-
+    private Long enterpriseId;
     public String getName() {
         return name;
     }
@@ -40,5 +40,13 @@ public class Department extends BaseEntity {
 
     public void setEnName(String enName) {
         this.enName = enName;
+    }
+
+    public Long getEnterpriseId() {
+        return enterpriseId;
+    }
+
+    public void setEnterpriseId(Long enterpriseId) {
+        this.enterpriseId = enterpriseId;
     }
 }

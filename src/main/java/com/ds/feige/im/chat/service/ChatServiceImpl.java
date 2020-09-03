@@ -1,12 +1,16 @@
 package com.ds.feige.im.chat.service;
 
+import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
 import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.chat.dto.*;
+import com.ds.feige.im.chat.dto.event.ReadMessageEvent;
 import com.ds.feige.im.chat.entity.ConversationMessage;
-import com.ds.feige.im.chat.mapper.ConversationMsgMapper;
+import com.ds.feige.im.chat.entity.UserConversation;
+import com.ds.feige.im.chat.mapper.ConversationMessageMapper;
 import com.ds.feige.im.chat.mapper.UserConversationMapper;
 import com.ds.feige.im.constants.DynamicQueues;
+import com.ds.feige.im.constants.FeigeWarn;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
@@ -27,7 +31,7 @@ public class ChatServiceImpl implements ChatService {
     @Autowired
     UserConversationMapper userConversationMapper;
     @Autowired
-    ConversationMsgMapper conversationMsgMapper;
+    ConversationMessageMapper conversationMessageMapper;
     @Autowired
     UserService userService;
     @Autowired
@@ -39,8 +43,9 @@ public class ChatServiceImpl implements ChatService {
     ConversationService conversationService;
     @Autowired
     UserMessageService userMessageService;
+
     @Override
-    public SendMsgResult sendMsg(ChatMsgRequest request) {
+    public SendMessageResult sendMsg(SendMessageRequest request) {
         final int conversationType = request.getConversationType();
         final long senderId = request.getUserId();
         final long targetId = request.getTargetId();
@@ -56,13 +61,13 @@ public class ChatServiceImpl implements ChatService {
         conversationMsg.setMsgType(request.getMsgType());
         conversationMsg.setSenderId(senderId);
         conversationMsg.setTargetId(targetId);
-        int insertMsg = conversationMsgMapper.insert(conversationMsg);
+        int insertMsg = conversationMessageMapper.insert(conversationMsg);
         if (insertMsg != 1) {
             throw new IllegalStateException("Store message into t_conversation_message error :" + conversationMsg.toString());
         }
         template.convertAndSend(DynamicQueues.RoutingKeys.CONVERSATION_SEND_MESSAGE, conversationMsg);
         //消息推送
-        SendMsgResult result = new SendMsgResult();
+        SendMessageResult result = new SendMessageResult();
         result.setConversationId(conversationMsg.getConversationId());
         result.setMsgId(conversationMsg.getMsgId());
         return result;
@@ -71,14 +76,14 @@ public class ChatServiceImpl implements ChatService {
 
 
     @Override
-    public List<ChatMessage> pullMsg(PullConversationMsgRequest request) {
-        List<ChatMessage> messages = conversationMsgMapper.selectMessages(request.getUserId(),
+    public List<ChatMessage> pullMsg(PullConversationMessageRequest request) {
+        List<ChatMessage> messages = conversationMessageMapper.selectMessages(request.getUserId(),
                 request.getConversationId(), request.getMaxMsgId(), request.getPageSize());
         return messages;
     }
 
     @Override
-    public ChatMsgAckResult ackMsg(long userId, List<Long> msgIds) {
+    public ChatMessageAckResult ackMsg(long userId, List<Long> msgIds) {
         return userMessageService.ackMsg(userId, msgIds);
     }
 
@@ -92,11 +97,26 @@ public class ChatServiceImpl implements ChatService {
             msgIds.add(preview.getLastMsgId());
 
         });
-        List<ChatMessage> conversationLastMessages = conversationMsgMapper.findByMsgIds(msgIds);
+        List<ChatMessage> conversationLastMessages = conversationMessageMapper.findByMsgIds(msgIds);
         conversationLastMessages.forEach(lastMsg -> {
             ConversationPreview preview = previewMap.get(lastMsg.getConversationId());
             preview.setLastMsg(lastMsg);
         });
         return previews;
+    }
+
+    @Override
+    public void readMessage(ReadMessageRequest request) {
+        //TODO 更新最大已读消息ID
+        UserConversation conversation = userConversationMapper.getConversation(request.getUserId(), request.getConversationId());
+        if (conversation == null) {
+            throw new WarnMessageException(FeigeWarn.CONVERSATION_NOT_EXISTS);
+        }
+        Map<Long, List<Long>> readMsgResult = userMessageService.readMsg(request.getUserId(), request.getMsgIds());
+        ReadMessageEvent event = new ReadMessageEvent();
+        event.setReaderId(request.getUserId());
+        event.setSenderAndMsgIds(readMsgResult);
+        //TODO 推送已读回执,MQ异步处理
+        template.convertAndSend(DynamicQueues.RoutingKeys.CONVERSATION_READ_MESSAGE, event);
     }
 }

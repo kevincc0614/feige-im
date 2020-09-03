@@ -9,11 +9,12 @@ public class SocketPaths {
     public static final String CS_SEND_CHAT_MESSAGE = "/chat/message/send";
     public static final String CS_ACK_CHAT_MESSAGE = "/chat/message/ack";
     public static final String CS_PULL_CHAT_MESSAGE = "/chat/message/pull";
+    public static final String CS_READ_CHAT_MESSAGE = "/chat/message/read";
     public static final String CS_CONVERSATION_PREVIEWS = "/conversation/previews";
 
 
     public static final String SC_PUSH_CHAT_MESSAGE = "/chat/message/receive";
-
+    public static final String SC_CHAT_MESSAGE_READ_RECEIPT = "/chat/message/read-receipt";
 
     public static final String CS_CREATE_GROUP="/group/create";
     public static final String CS_DISBAND_GROUP="/group/disband";

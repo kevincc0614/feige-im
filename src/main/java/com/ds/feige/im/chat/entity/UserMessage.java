@@ -6,6 +6,7 @@ import com.ds.feige.im.common.entity.BaseEntity;
 @TableName("t_user_message")
 public class UserMessage extends BaseEntity {
     private Long userId;
+    private Long senderId;
     private Long conversationId;
     private Long msgId;
     private Integer state;
@@ -40,5 +41,13 @@ public class UserMessage extends BaseEntity {
 
     public void setState(Integer state) {
         this.state = state;
+    }
+
+    public Long getSenderId() {
+        return senderId;
+    }
+
+    public void setSenderId(Long senderId) {
+        this.senderId = senderId;
     }
 }
