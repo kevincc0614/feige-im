@@ -2,6 +2,7 @@ package com.ds.feige.im.chat.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ds.feige.im.common.entity.BaseEntity;
+import lombok.Data;
 
 import java.util.Date;
 
@@ -9,6 +10,7 @@ import java.util.Date;
  * @author DC
  */
 @TableName("t_group_user")
+@Data
 public class GroupUser extends BaseEntity {
     private Long groupId;
     private Long userId;
@@ -30,60 +32,4 @@ public class GroupUser extends BaseEntity {
     private Date joinTime;
     /**邀请人*/
     private Long inviteUserId;
-
-    public Long getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(Long groupId) {
-        this.groupId = groupId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public String getJoinType() {
-        return joinType;
-    }
-
-    public void setJoinType(String joinType) {
-        this.joinType = joinType;
-    }
-
-    public Date getJoinTime() {
-        return joinTime;
-    }
-
-    public void setJoinTime(Date joinTime) {
-        this.joinTime = joinTime;
-    }
-
-    public Long getInviteUserId() {
-        return inviteUserId;
-    }
-
-    public void setInviteUserId(Long inviteUserId) {
-        this.inviteUserId = inviteUserId;
-    }
 }

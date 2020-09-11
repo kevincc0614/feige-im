@@ -22,8 +22,11 @@ public interface GroupUserMapper extends BaseMapper<GroupUser> {
     int disbandGroup(long groupId);
 
     @Select("SELECT * FROM t_group_user WHERE group_id=#{groupId} and user_id=#{userId}")
-    GroupUser getGroupUser(long groupId,long userId);
+    GroupUser getGroupUser(long groupId, long userId);
 
-    @Update("UPDATE FROM t_group_user SET role=#{role} WHERE group_id=#{groupId} and user_id=#{userId}")
-    int updateUserRole(long groupId,long userId,String role);
+    @Update("UPDATE t_group_user SET role=#{role} WHERE group_id=#{groupId} and user_id=#{userId}")
+    int updateUserRole(long groupId, long userId, String role);
+
+    @Delete("DELETE FROM t_group_user where group_id=#{groupId} and user_id=#{userId}")
+    int deleteByGroupAndUserId(long groupId, long userId);
 }

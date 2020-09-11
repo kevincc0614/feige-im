@@ -1,4 +1,4 @@
-package com.ds.feige.im.chat.dto.group;
+package com.ds.feige.im.chat.dto.event;
 
 import com.ds.feige.im.account.dto.UserRequest;
 

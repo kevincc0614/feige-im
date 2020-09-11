@@ -28,6 +28,7 @@ spring:
   rabbitmq:
     template:
       exchange: feige.im
+    requested-heartbeat: 0
 
 nacos:
   discovery:
@@ -39,7 +40,7 @@ spring.http.encoding.charset: UTF-8
 spring.http.encoding.enabled: true
 server.tomcat.uri-encoding: UTF-8
 #RabbitMQ Properties
-spring.rabbitmq.host: localhost
+spring.rabbitmq.host: 127.0.0.1
 spring.rabbitmq.port: 5672
 spring.rabbitmq.username: guest
 spring.rabbitmq.password: guest

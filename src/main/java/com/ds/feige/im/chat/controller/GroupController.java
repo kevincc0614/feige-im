@@ -1,5 +1,6 @@
 package com.ds.feige.im.chat.controller;
 
+import com.ds.feige.im.chat.dto.event.InviteUserJoinGroupRequest;
 import com.ds.feige.im.chat.dto.group.*;
 import com.ds.feige.im.chat.service.GroupUserService;
 import com.ds.feige.im.constants.GroupUserRole;

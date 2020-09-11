@@ -1,13 +1,9 @@
 package com.ds.feige.im.test.group;
 
-import com.ds.feige.im.chat.service.GroupUserService;
-import com.ds.feige.im.chat.dto.group.GroupInfo;
+import com.ds.feige.im.account.dto.UserRegisterRequest;
 import com.ds.feige.im.test.BaseTest;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * 群聊测试类
@@ -15,14 +11,15 @@ import java.util.List;
  * @author DC
  */
 public class GroupUserServiceTest extends BaseTest {
-    @Autowired
-    GroupUserService groupUserService;
-    static final long USER_ID_1=2008141150478262272L;
-    static final long USER_ID_2=2008141140050280448L;
     @Test
-    public void testCreateGroup(){
-        List<Long> userIds= Arrays.asList(USER_ID_1,USER_ID_2);
-        GroupInfo result =groupUserService.createGroup(userIds,null,USER_ID_1);
-        System.out.println(result);
+    public void testJoinGroup() {
+        UserRegisterRequest registerRequest = new UserRegisterRequest();
+        registerRequest.setSource("enterprise");
+        registerRequest.setPassword("123456");
+        String mobile = RandomStringUtils.randomNumeric(10);
+        registerRequest.setMobile(mobile);
+        long userId = userService.register(registerRequest);
+        groupUserService.inviteJoinGroup(group_id, userId, user_ids.get(0));
     }
+
 }

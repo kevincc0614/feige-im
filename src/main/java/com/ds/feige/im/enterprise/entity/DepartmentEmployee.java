@@ -6,6 +6,7 @@ import com.ds.feige.im.common.entity.BaseEntity;
 @TableName("t_department_employee")
 public class DepartmentEmployee extends BaseEntity {
     private Long userId;
+    private Long enterpriseId;
     private Long departmentId;
     private Boolean leader;
 
@@ -31,5 +32,13 @@ public class DepartmentEmployee extends BaseEntity {
 
     public void setLeader(Boolean leader) {
         this.leader = leader;
+    }
+
+    public Long getEnterpriseId() {
+        return enterpriseId;
+    }
+
+    public void setEnterpriseId(Long enterpriseId) {
+        this.enterpriseId = enterpriseId;
     }
 }

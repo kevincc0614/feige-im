@@ -9,11 +9,13 @@ import java.util.List;
 public interface UserService {
 
 
+    UserInfo getUserByMobile(String mobile);
 
     /**
      * 用户名密码获取token
+     *
      * @param request
-     * */
+     */
     String getToken(GetTokenRequest request);
 
     /**

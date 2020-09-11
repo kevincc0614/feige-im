@@ -7,6 +7,7 @@ public enum FeigeWarn implements WarnMessageEntry {
     REQUEST_VALIDATE_ERROR("SYS_400", "参数校验错误:[{1}]", "参数校验错误:[{1}]"),
     PATH_NOT_FOUND("SYS_404", "PATH不合法", "PATH不合法"),
     PERMISSION_DIED("SYS_403", "没有权限", "没有权限"),
+    SYSTEM_BUSY("SYS_503", "系统忙,请稍后再试", "锁定失败或超时"),
 
     PWD_ERROR("User_10001", "密码错误", "密码错误"),
     USER_NOT_EXISTS("User_10002", "用户不存在", "用户不存在"),
@@ -17,7 +18,7 @@ public enum FeigeWarn implements WarnMessageEntry {
     TOKEN_EXPIRED("User_100007", "Token已过期", "Token已过期"),
     DEVICE_NOT_EXISTS("User_100008", "设备不存在", "设备不存在{1}"),
 
-    GROUP_NOT_EXISTS("Group_100001", "群聊不存在", "群聊不存在"),
+    GROUP_NOT_EXISTS("Group_100001", "群聊不存在{1}", "群聊不存在{1}"),
     GROUP_USER_OVER_LIMIT("Group_100002", "已超过最大人数限制", "已超过最大人数限制"),
     GROUP_PERMISSION_NOT_ALLOWED("Group_100003", "没有操作权限", "没有操作权限"),
     GROUP_USER_NOT_EXISTS("Group_100004", "用户不在群组{1}", "用户不在群组{1}"),
@@ -26,13 +27,18 @@ public enum FeigeWarn implements WarnMessageEntry {
     DEPARTMENT_NAME_EXISTS("Department_100002", "部门名不能重复", "部门名不能重复"),
     EMPLOYEE_EXISTS_IN_DEPARTMENT("Department_100003", "员工已经在部门内", "员工已经在部门内"),
     DEPARTMENT_NOT_EXISTS("Department_100004", "部门不存在", "部门不存在"),
+    HAS_CHILD_DEPS_CAN_NOT_DELETE("Department_100005", "存在子部门,不能直接删除", "存在子部门,不能直接删除"),
 
     EMPLOYEE_NOT_EXISTS("Employee_100001", "员工不存在", "员工不存在"),
     EMPLOYEE_IS_EXISTS("Employee_100002", "员工已存在", "员工已存在"),
     EMPLOYEE_ROLE_NOT_ADMIN("Employee_100003", "只有管理员才能进行操作", "只有管理员才能进行操作"),
 
     CHAT_MSG_ID_EXISTS("CHAT_100001", "消息ID已存在", "消息ID已存在"),
-    CONVERSATION_NOT_EXISTS("CHAT_100002", "会话不存在", "会话不存在");
+    CONVERSATION_NOT_EXISTS("CHAT_100002", "会话不存在", "会话不存在"),
+    CONVERSATION_HAS_BEEN_CREATED("CHAT_100003", "会话已经被创建", "会话已经被创建"),
+    CHAT_MSG_NOT_EXISTS("CHAT_100004", "消息不存在", "消息不存在"),
+
+    FAVORITE_MARK_MESSAGE_NOT_EXISTS("FAVORITE_100001", "备注不存在", "备注不存在");
     private String code;
     private String originalMessage;
     private String displayMessage;

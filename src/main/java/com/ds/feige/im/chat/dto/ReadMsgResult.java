@@ -1,5 +1,7 @@
 package com.ds.feige.im.chat.dto;
 
+import lombok.Data;
+
 import java.util.List;
 
 /**
@@ -7,6 +9,7 @@ import java.util.List;
  *
  * @author DC
  */
+@Data
 public class ReadMsgResult {
     private List<Long> senderIds;
 

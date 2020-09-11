@@ -2,13 +2,15 @@ package com.ds.feige.im.chat.service;
 
 import com.ds.feige.im.chat.dto.*;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface ChatService {
+
     /**
      * 发送聊天消息
      */
-    SendMessageResult sendMsg(SendMessageRequest request);
+    SendMessageResult sendMsg(ConversationMessageRequest request);
 
     /**
      * 客户端收到消息存到本地后Ack
@@ -21,7 +23,10 @@ public interface ChatService {
      *
      * @param request
      */
-    List<ChatMessage> pullMsg(PullConversationMessageRequest request);
+    List<ChatMessage> pullMsg(ConversationMessageQueryRequest request);
+
+
+    ChatMessage getMessage(long msgId);
 
     /**
      * 获取会话预览列表
@@ -29,7 +34,7 @@ public interface ChatService {
      * @param userId
      * @return 会话预览
      */
-    List<ConversationPreview> getConversationPreviews(long userId);
+    Collection<ConversationPreview> getConversationPreviews(long userId);
 
 
     void readMessage(ReadMessageRequest request);

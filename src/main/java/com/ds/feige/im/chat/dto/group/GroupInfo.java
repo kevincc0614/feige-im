@@ -12,6 +12,7 @@ public class GroupInfo {
     private String name;
     private String avatar;
     private int type;
+    private Long conversationId;
     private int maxUserLimit;
     private String announcement;
     private long announcePubUser;
@@ -79,5 +80,28 @@ public class GroupInfo {
 
     public void setAnnouncementPubTime(Date announcementPubTime) {
         this.announcementPubTime = announcementPubTime;
+    }
+
+    public Long getConversationId() {
+        return conversationId;
+    }
+
+    public void setConversationId(Long conversationId) {
+        this.conversationId = conversationId;
+    }
+
+    @Override
+    public String toString() {
+        return "GroupInfo{" +
+                "groupId=" + groupId +
+                ", name='" + name + '\'' +
+                ", avatar='" + avatar + '\'' +
+                ", type=" + type +
+                ", conversationId=" + conversationId +
+                ", maxUserLimit=" + maxUserLimit +
+                ", announcement='" + announcement + '\'' +
+                ", announcePubUser=" + announcePubUser +
+                ", announcementPubTime=" + announcementPubTime +
+                '}';
     }
 }

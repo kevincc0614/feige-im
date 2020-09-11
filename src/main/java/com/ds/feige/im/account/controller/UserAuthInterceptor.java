@@ -35,8 +35,11 @@ public class UserAuthInterceptor extends HandlerInterceptorAdapter {
             if (annotation == null) {
                 String authToken = request.getHeader(SessionAttributeKeys.IM_AUTH_TOKEN);
                 if (Strings.isNullOrEmpty(authToken)) {
-                    response.setStatus(HttpStatus.FORBIDDEN.value());
-                    return false;
+                    authToken = request.getParameter(SessionAttributeKeys.IM_AUTH_TOKEN);
+                    if (Strings.isNullOrEmpty(authToken)) {
+                        response.setStatus(HttpStatus.FORBIDDEN.value());
+                        return false;
+                    }
                 }
                 UserInfo userInfo = userService.verifyToken(authToken);
                 request.setAttribute("userId", userInfo.getUserId());

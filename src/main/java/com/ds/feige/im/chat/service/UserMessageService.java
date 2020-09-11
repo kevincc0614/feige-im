@@ -1,8 +1,8 @@
 package com.ds.feige.im.chat.service;
 
 import com.ds.feige.im.chat.dto.ChatMessageAckResult;
-import com.ds.feige.im.chat.dto.ConversationPreview;
 import com.ds.feige.im.chat.dto.MessageToUser;
+import com.ds.feige.im.chat.po.UnreadMessagePreview;
 
 import java.util.List;
 import java.util.Map;
@@ -47,7 +47,7 @@ public interface UserMessageService {
      * @param userId
      * @return 主要包括会话未读消息数, 最新一条消息msgId
      */
-    List<ConversationPreview> getConversationPreview(long userId);
+    List<UnreadMessagePreview> getConversationUnreadPreview(long userId);
 
 
 }

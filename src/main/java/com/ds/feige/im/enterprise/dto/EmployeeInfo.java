@@ -1,11 +1,16 @@
 package com.ds.feige.im.enterprise.dto;
 
+import java.util.List;
+
 public class EmployeeInfo {
     private long userId;
     private String name;
+    private String avatar;
     private String title;
     private String workEmail;
-    private boolean leader;
+    private Boolean leader;
+    private List<Long> departments;
+
     public long getUserId() {
         return userId;
     }
@@ -38,12 +43,28 @@ public class EmployeeInfo {
         this.workEmail = workEmail;
     }
 
-    public boolean isLeader() {
+    public Boolean getLeader() {
         return leader;
     }
 
-    public void setLeader(boolean leader) {
+    public void setLeader(Boolean leader) {
         this.leader = leader;
+    }
+
+    public List<Long> getDepartments() {
+        return departments;
+    }
+
+    public void setDepartments(List<Long> departments) {
+        this.departments = departments;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 
     @Override
@@ -54,6 +75,7 @@ public class EmployeeInfo {
                 ", title='" + title + '\'' +
                 ", workEmail='" + workEmail + '\'' +
                 ", leader=" + leader +
+                ", departments=" + departments +
                 '}';
     }
 }

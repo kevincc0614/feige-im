@@ -17,6 +17,8 @@ public class Employee extends BaseEntity {
      * 姓名
      */
     private String name;
+
+    private String avatar;
     /**
      * 工号
      */
@@ -88,5 +90,13 @@ public class Employee extends BaseEntity {
 
     public void setEnterpriseId(Long enterpriseId) {
         this.enterpriseId = enterpriseId;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 }

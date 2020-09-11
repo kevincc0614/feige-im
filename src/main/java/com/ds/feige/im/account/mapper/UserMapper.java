@@ -12,20 +12,20 @@ import java.util.List;
  */
 public interface UserMapper extends BaseMapper<User> {
 
-    @Select("select count(1) from t_user where id=#{id}")
+    @Select("select count(1) from t_user where id=#{id} and deleted=0")
     int getCountById(@Param("id") long userId);
 
-    @Select("select count(1) from t_user where mobile=#{mobile}")
+    @Select("select count(1) from t_user where mobile=#{mobile} and deleted=0")
     int getByMobile(@Param("mobile") String mobile);
 
-    @Select("SELECT * FROM t_user where mobile=#{mobile} and password=#{password}")
+    @Select("SELECT * FROM t_user where mobile=#{mobile} and password=#{password} and deleted=0")
     User getOne(@Param("mobile") String mobile, @Param("password") String password);
 
-    @Select("SELECT * FROM t_user where mobile=#{mobile}")
-    User getOne(@Param("mobile") String mobile);
+    @Select("SELECT * FROM t_user where mobile=#{mobile} and deleted=0")
+    User getOneByMobile(@Param("mobile") String mobile);
 
     @Select({"<script> ",
-            "SELECT * FROM t_user WHERE id IN",
+            "SELECT * FROM t_user WHERE deleted=0 and id IN",
             "<foreach item='item' index='index' collection='userIds' open='(' separator=',' close=')'>",
             "#{item}",
             "</foreach>",

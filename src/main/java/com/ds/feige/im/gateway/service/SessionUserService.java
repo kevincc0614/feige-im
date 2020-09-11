@@ -6,7 +6,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collection;
 
 public interface SessionUserService {
     /**
@@ -48,7 +48,7 @@ public interface SessionUserService {
      * @param path
      * @param payload
      */
-    void sendToUsers(List<Long> userIds, String path, Object payload);
+    void sendToUsers(Collection<Long> userIds, String path, Object payload);
 
     void afterConnectionEstablished(WebSocketSession session) throws Exception;
 

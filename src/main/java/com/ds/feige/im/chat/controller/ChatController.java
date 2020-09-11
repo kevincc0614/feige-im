@@ -35,7 +35,8 @@ public class ChatController {
      * 发送聊天消息
      */
     @SocketRequestMapping(SocketPaths.CS_SEND_CHAT_MESSAGE)
-    public SendMessageResult send(@RequestBody @Valid SendMessageRequest request) {
+    public SendMessageResult send(@RequestBody @Valid ConversationMessageRequest request) {
+
         return this.chatService.sendMsg(request);
     }
 
@@ -49,7 +50,7 @@ public class ChatController {
     }
 
     @SocketRequestMapping(SocketPaths.CS_PULL_CHAT_MESSAGE)
-    public List<ChatMessage> pull(@RequestBody @Valid PullConversationMessageRequest request) {
+    public List<ChatMessage> pull(@RequestBody @Valid ConversationMessageQueryRequest request) {
         List<ChatMessage> messages = chatService.pullMsg(request);
         return messages;
     }
@@ -61,7 +62,7 @@ public class ChatController {
     }
 
     @SocketRequestMapping(value = SocketPaths.CS_READ_CHAT_MESSAGE, response = false)
-    public void readMessage() {
-
+    public void readMessage(@RequestBody ReadMessageRequest req) {
+        chatService.readMessage(req);
     }
 }

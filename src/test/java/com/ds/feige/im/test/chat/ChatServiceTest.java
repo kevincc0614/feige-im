@@ -20,7 +20,7 @@ public class ChatServiceTest extends BaseTest {
     @Test
     public void testSend(){
         for(int i=0;i<100;i++){
-            SendMessageRequest request = new SendMessageRequest();
+            ConversationMessageRequest request = new ConversationMessageRequest();
             if(i%2==0){
                 request.setUserId(USER_ID_1);
                 request.setTargetId(USER_ID_2);
@@ -39,7 +39,7 @@ public class ChatServiceTest extends BaseTest {
     }
     @Test
     public void testPullMessage() throws Exception{
-        PullConversationMessageRequest request = new PullConversationMessageRequest();
+        ConversationMessageQueryRequest request = new ConversationMessageQueryRequest();
         request.setConversationId(2008141888938344448l);
         request.setMaxMsgId(Long.MAX_VALUE);
         request.setPageSize(2);
@@ -55,7 +55,7 @@ public class ChatServiceTest extends BaseTest {
     }
     @Test
     public void testAck(){
-        PullConversationMessageRequest request = new PullConversationMessageRequest();
+        ConversationMessageQueryRequest request = new ConversationMessageQueryRequest();
         request.setConversationId(2008141888938344448l);
         request.setMaxMsgId(Long.MAX_VALUE);
         request.setPageSize(100);
@@ -72,7 +72,7 @@ public class ChatServiceTest extends BaseTest {
     }
     @Test
     public void testChatPreview() throws Exception{
-        List<ConversationPreview> previews=chatService.getConversationPreviews(USER_ID_1);
+        List<ConversationPreview> previews = chatService.getConversationPreviews(377665490283353088L);
         System.out.println(JsonUtils.toJson(previews));
     }
 }

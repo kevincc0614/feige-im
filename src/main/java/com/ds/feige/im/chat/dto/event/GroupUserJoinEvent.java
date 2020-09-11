@@ -1,4 +1,4 @@
-package com.ds.feige.im.chat.dto.group;
+package com.ds.feige.im.chat.dto.event;
 
 /**
  * 用户进群事件
@@ -7,9 +7,10 @@ package com.ds.feige.im.chat.dto.group;
  */
 public class GroupUserJoinEvent {
     private long userId;
+    private String userName;
     private long groupId;
     private long inviteUserId;
-
+    private String inviteUserName;
     public long getUserId() {
         return userId;
     }
@@ -32,5 +33,21 @@ public class GroupUserJoinEvent {
 
     public void setInviteUserId(long inviteUserId) {
         this.inviteUserId = inviteUserId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getInviteUserName() {
+        return inviteUserName;
+    }
+
+    public void setInviteUserName(String inviteUserName) {
+        this.inviteUserName = inviteUserName;
     }
 }

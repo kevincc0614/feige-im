@@ -1,5 +1,6 @@
 package com.ds.feige.im.chat.service;
 
+import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.chat.dto.group.GroupInfo;
 import com.ds.feige.im.constants.GroupUserRole;
 
@@ -31,8 +32,8 @@ public interface GroupUserService {
      * 添加用户进群
      *
      * @param groupId
-     * @param inviteeId
-     * @param operatorId
+     * @param inviteeId  被邀请人ID
+     * @param operatorId 邀请人ID
      */
     void inviteJoinGroup(long groupId, long inviteeId,long operatorId);
 
@@ -57,6 +58,9 @@ public interface GroupUserService {
      * 设置用户群权限,比如设置管理员
      *
      * @param groupId
+     * @param userId
+     * @param role
+     * @param operatorId
      * @param role
      * @param operatorId
      */
@@ -77,6 +81,12 @@ public interface GroupUserService {
     /**
      * @param groupId
      * @return GroupInfo
+     * @throws WarnMessageException 群不存在时会抛出异常
      */
     GroupInfo getGroupInfo(long groupId);
+
+    /**
+     * 更新群组会话创建状态
+     */
+    void groupConversationsCreated(long groupId, long conversationId);
 }

@@ -1,7 +1,10 @@
 package com.ds.feige.im.gateway.socket.protocol;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.Map;
 
+@JsonIgnoreProperties
 public class SocketRequest {
     /**消息ID*/
     protected long requestId;

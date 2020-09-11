@@ -16,18 +16,18 @@ public class ConversationServiceTest extends BaseTest {
 
     @Test
     public void testGetOrCreateConversation(){
-        Long senderId=2008141140050280448L;
-        Long targetId=2008141150478262272L;
-        UserConversationInfo conversationInfo=conversationService.getOrCreateConversation(senderId,targetId, ConversationType.SINGLE_CONVERSATION_TYPE);
-        Assert.assertEquals(senderId,conversationInfo.getUserId());
-        Assert.assertEquals(targetId,conversationInfo.getTargetId());
+        Long senderId = 2008141140050280448L;
+        Long targetId = 2008141150478262272L;
+        UserConversationInfo conversationInfo = conversationService.getUserConversation(senderId, targetId, ConversationType.SINGLE_CONVERSATION_TYPE);
+        Assert.assertEquals(senderId, conversationInfo.getUserId());
+        Assert.assertEquals(targetId, conversationInfo.getTargetId());
     }
     @Test
     public void testNoExistsUserCreateConversation(){
         Long senderId=0L;
         Long targetId=0L;
         try{
-            UserConversationInfo conversationInfo=conversationService.getOrCreateConversation(senderId,targetId, ConversationType.SINGLE_CONVERSATION_TYPE);
+            UserConversationInfo conversationInfo = conversationService.getUserConversation(senderId, targetId, ConversationType.SINGLE_CONVERSATION_TYPE);
         }catch (WarnMessageException e){
             Assert.assertEquals("用户不存在,不能创建会话", FeigeWarn.USER_NOT_EXISTS.code(),e.getCode());
         }

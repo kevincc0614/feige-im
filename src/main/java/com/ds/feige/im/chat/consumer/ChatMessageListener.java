@@ -45,18 +45,20 @@ public class ChatMessageListener {
         long conversationId = message.getConversationId();
         long msgId = message.getMsgId();
         long targetId = message.getTargetId();
+        long senderId = message.getSenderId();
+        int msgType = message.getMsgType();
         ChatMessage chatMessage = BeansConverter.conversationMsgToChatMsg(message);
         switch (conversationType) {
             //单聊
             case ConversationType.SINGLE_CONVERSATION_TYPE:
                 //存入用户收件箱
-                userMessageService.store(buildMessageOfUser(targetId, conversationId, msgId));
+                userMessageService.store(buildMessageOfUser(targetId, senderId, conversationId, msgId, msgType));
                 sessionUserService.sendToUser(targetId, SocketPaths.SC_PUSH_CHAT_MESSAGE, chatMessage);
                 break;
             case ConversationType.GROUP_CONVERSATION_TYPE:
                 //给群用户收件箱写消息
                 List<Long> userIds = groupUserService.getUserIds(targetId);
-                List<MessageToUser> list = userIds.stream().map(userId -> buildMessageOfUser(userId, conversationId, msgId)).collect(Collectors.toList());
+                List<MessageToUser> list = userIds.stream().map(userId -> buildMessageOfUser(userId, senderId, conversationId, msgId, msgType)).collect(Collectors.toList());
                 userMessageService.store(list);
                 sessionUserService.sendToUsers(userIds, SocketPaths.SC_PUSH_CHAT_MESSAGE, chatMessage);
                 break;
@@ -85,11 +87,14 @@ public class ChatMessageListener {
         });
     }
 
-    public static MessageToUser buildMessageOfUser(long userId, long conversationId, long msgId) {
+    public static MessageToUser buildMessageOfUser(long userId, long senderId, long conversationId, long msgId, int msgType) {
         MessageToUser userMessage = new MessageToUser();
         userMessage.setConversationId(conversationId);
         userMessage.setMsgId(msgId);
         userMessage.setUserId(userId);
+        userMessage.setSenderId(senderId);
+        userMessage.setMsgType(msgType);
         return userMessage;
+
     }
 }

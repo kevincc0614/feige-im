@@ -27,7 +27,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -174,7 +174,7 @@ public class SessionUserServiceImpl implements SessionUserService{
     }
 
     @Override
-    public void sendToUsers(List<Long> userIds, String path, Object payload) {
+    public void sendToUsers(Collection<Long> userIds, String path, Object payload) {
         for (Long userId : userIds) {
             try {
                 sendToUser(userId, path, payload);

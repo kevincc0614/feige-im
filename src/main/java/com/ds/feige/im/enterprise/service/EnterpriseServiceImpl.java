@@ -1,6 +1,8 @@
 package com.ds.feige.im.enterprise.service;
 
 import com.ds.base.nodepencies.exception.WarnMessageException;
+import com.ds.feige.im.account.dto.UserInfo;
+import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.common.util.BeansConverter;
 import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.enterprise.constants.EmployeeRole;
@@ -32,7 +34,30 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     EmployeeMapper employeeMapper;
     @Autowired
     EnterpriseMapper enterpriseMapper;
+    @Autowired
+    UserService userService;
     static final Logger LOGGER = LoggerFactory.getLogger(EnterpriseServiceImpl.class);
+
+    @Override
+    public long createEnterprise(String name, String description, long operatorId) {
+        //判断用户是否存在
+        UserInfo creator = userService.getUserById(operatorId);
+        if (creator == null) {
+            throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
+        }
+        Enterprise enterprise = new Enterprise();
+        enterprise.setName(name);
+        enterprise.setDescription(description);
+        enterpriseMapper.insert(enterprise);
+        //创建员工
+        Employee employee = new Employee();
+        employee.setUserId(creator.getUserId());
+        employee.setName(creator.getNickName());
+        employee.setRole(EmployeeRole.SUPER_ADMIN);
+        employee.setEnterpriseId(enterprise.getId());
+        employeeMapper.insert(employee);
+        return enterprise.getId();
+    }
 
     @Override
     public List<EnterpriseInfo> getEnterprises(long userId) {
@@ -55,7 +80,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
             }
         }
         //判断同级部门中是否存在名称相同的
-        int existsCount = departmentMapper.countByParentIdAndName(parentId, request.getDepartmentName());
+        int existsCount = departmentMapper.countSameNameDepartment(request.getEnterpriseId(), parentId, request.getDepartmentName());
         if (existsCount > 0) {
             throw new WarnMessageException(FeigeWarn.DEPARTMENT_NAME_EXISTS);
         }
@@ -64,6 +89,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         department.setEnName(request.getDepartmentEnName());
         department.setParentId(parentId);
         department.setPriority(request.getPriority());
+        department.setEnterpriseId(request.getEnterpriseId());
         departmentMapper.insert(department);
         return department.getId();
     }
@@ -85,6 +111,11 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         }
         if (department.getEnterpriseId() != enterpriseId) {
             throw new WarnMessageException(FeigeWarn.PERMISSION_DIED);
+        }
+        //判断是有还有下级部门,如果有下级部门,则不能直接删除
+        List<DepartmentInfo> childs = departmentMapper.findByParentId(enterpriseId, request.getDepartmentId());
+        if (childs != null && !childs.isEmpty()) {
+            throw new WarnMessageException(FeigeWarn.HAS_CHILD_DEPS_CAN_NOT_DELETE);
         }
         //删除部门数据
         departmentMapper.deleteById(departmentId);
@@ -182,7 +213,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         BeanUtils.copyProperties(department, info);
         if (queryChild) {
             //查询子部门
-            List<DepartmentInfo> child = departmentMapper.findByParentId(departmentId);
+            List<DepartmentInfo> child = departmentMapper.findByParentId(enterpriseId, departmentId);
             info.setDepartments(child);
         }
         List<EmployeeInfo> employeeInfos = employeeMapper.findByDepartmentId(enterpriseId, departmentId);
@@ -191,15 +222,28 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     }
 
     @Override
+    public List<SimpleDepartmentInfo> getDepartments(long enterpriseId) {
+        List<Department> departments = departmentMapper.findByEnterpriseId(enterpriseId);
+        return BeansConverter.departmentsToSimpleDepartmentInfos(departments);
+    }
+
+    @Override
     public long createEmployee(CreateEmpRequest request) {
+        //判断用户是否存在
+        UserInfo userInfo = userService.getUserById(request.getUserId());
+        if (userInfo == null) {
+            throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
+        }
         //判断员工是否已存在
         Employee employee = employeeMapper.getByUserId(request.getEnterpriseId(), request.getUserId());
         if (employee != null) {
             throw new WarnMessageException(FeigeWarn.EMPLOYEE_IS_EXISTS);
         }
         employee = new Employee();
+        employee.setEnterpriseId(request.getEnterpriseId());
         employee.setUserId(request.getUserId());
-        employee.setName(request.getName());
+        employee.setName(request.getName() == null ? userInfo.getNickName() : request.getName());
+        employee.setAvatar(userInfo.getAvatar());
         employee.setEmployeeNo(request.getEmployeeNo());
         employee.setTitle(request.getTitle());
         employee.setRole(request.getRole());
@@ -209,16 +253,24 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     }
 
     @Override
+    public void deleteEmployee(long enterpriseId, long userId) {
+        employeeMapper.deleteEmployee(enterpriseId, userId);
+    }
+
+    @Override
     public EmployeeInfo getEmployeeByUserId(long enterpriseId, long userId) {
         Employee employee = employeeMapper.getByUserId(enterpriseId, userId);
+        List<Long> departmentIds = departmentEmployeeMapper.findDepartments(userId);
         EmployeeInfo employeeInfo = new EmployeeInfo();
         BeanUtils.copyProperties(employee, employeeInfo);
+        employeeInfo.setDepartments(departmentIds);
         return employeeInfo;
     }
 
     @Override
     public List<EmployeeInfo> getEmployees(long enterpriseId) {
-        return null;
+        List<Employee> employees = employeeMapper.findByEnterpriseId(enterpriseId);
+        return BeansConverter.empsToEmpInfos(employees);
     }
 
     @Override
@@ -229,6 +281,6 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         }
         String role = employee.getRole();
         //角色权限校验
-        return EmployeeRole.ADMIN.equals(role) && EmployeeRole.SUPER_ADMIN.equals(role);
+        return EmployeeRole.ADMIN.equals(role) || EmployeeRole.SUPER_ADMIN.equals(role);
     }
 }

@@ -39,14 +39,25 @@ public class UserServiceImpl implements UserService {
     @Autowired
     @Qualifier("longIdKeyGenerator")
     IdKeyGenerator<Long> idKeyGenerator;
+
     @Autowired
-    public UserServiceImpl(UserMapper userMapper){
-        this.userMapper=userMapper;
+    public UserServiceImpl(UserMapper userMapper) {
+        this.userMapper = userMapper;
     }
+
+    @Override
+    public UserInfo getUserByMobile(String mobile) {
+        User user = userMapper.getOneByMobile(mobile);
+        if (user == null) {
+            return null;
+        }
+        return BeansConverter.userToUserInfo(user);
+    }
+
     @Override
     public String getToken(GetTokenRequest request) {
         String loginName = request.getLoginName();
-        User user = userMapper.getOne(loginName);
+        User user = userMapper.getOneByMobile(loginName);
         if (user == null) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
@@ -64,7 +75,7 @@ public class UserServiceImpl implements UserService {
         long userId = user.getId();
         String token = JWT.create().withClaim("userId", userId)
                 .withExpiresAt(expireDate)
-                .sign(Algorithm.HMAC256(request.getPassword()));
+                .sign(Algorithm.HMAC256(password));
         //放入缓存
 
         LOGGER.info("User get token success:userId={},token={}", user.getId(), token);
@@ -73,18 +84,19 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserInfo verifyToken(String token) {
         // 获取 token 中的 user id
-        LOGGER.info("User verify token:token={}",token);
-        Long userId = Long.valueOf(JWT.decode(token).getClaim("userId").asLong());
+        LOGGER.info("User verify token:token={}", token);
+        
+        Long userId = JWT.decode(token).getClaim("userId").asLong();
         User user = userMapper.selectById(userId);
         if (user == null) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
         // 验证token合法性和签名
         JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256(user.getPassword())).build();
-        try{
-            DecodedJWT decodedJWT=jwtVerifier.verify(token);
-        }catch (Exception e){//签名算法不匹配
-            if(e instanceof TokenExpiredException){
+        try {
+            DecodedJWT decodedJWT = jwtVerifier.verify(token);
+        } catch (Exception e) {//签名算法不匹配
+            if (e instanceof TokenExpiredException) {
                 throw new WarnMessageException(e, FeigeWarn.TOKEN_EXPIRED);
             }
             throw new WarnMessageException(e,FeigeWarn.TOKEN_VERIFY_ERROR);
@@ -144,6 +156,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void unregisterUser(long userId, long operatorId) {
+        //TODO 缺少权限校验
         int i = userMapper.deleteById(userId);
         if (i < 1) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);

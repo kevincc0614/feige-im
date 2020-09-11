@@ -4,7 +4,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.service.UserService;
-import com.ds.feige.im.chat.dto.group.*;
+import com.ds.feige.im.chat.dto.event.*;
+import com.ds.feige.im.chat.dto.group.GroupInfo;
 import com.ds.feige.im.chat.entity.Group;
 import com.ds.feige.im.chat.entity.GroupUser;
 import com.ds.feige.im.chat.mapper.GroupMapper;
@@ -15,6 +16,8 @@ import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.constants.GroupUserRole;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author DC
@@ -32,31 +36,37 @@ public class GroupUserUserServiceImpl extends ServiceImpl<GroupUserMapper, Group
     GroupMapper groupMapper;
     UserService userService;
     RabbitTemplate rabbitTemplate;
-    static final Logger LOGGER= LoggerFactory.getLogger(GroupUserUserServiceImpl.class);
+    static final Logger LOGGER = LoggerFactory.getLogger(GroupUserUserServiceImpl.class);
+    RedissonClient redissonClient;
+
     @Autowired
-    public GroupUserUserServiceImpl(GroupMapper groupMapper, UserService userService, RabbitTemplate rabbitTemplate){
-        this.groupMapper=groupMapper;
-        this.userService=userService;
-        this.rabbitTemplate=rabbitTemplate;
+    public GroupUserUserServiceImpl(GroupMapper groupMapper, UserService userService, RabbitTemplate rabbitTemplate, RedissonClient redissonClient) {
+        this.groupMapper = groupMapper;
+        this.userService = userService;
+        this.rabbitTemplate = rabbitTemplate;
+        this.redissonClient = redissonClient;
     }
+
     @Override
     public GroupInfo createGroup(List<Long> userIds, String groupName, long createUserId) {
-        LOGGER.info("Ready to create group:userIds={},groupName={},createUserId={}",userIds,groupName,createUserId);
-        UserInfo createUser=userService.getUserById(createUserId);
-        if(createUser==null){
+        LOGGER.info("Ready to create group:userIds={},groupName={},createUserId={}", userIds, groupName, createUserId);
+        UserInfo createUser = userService.getUserById(createUserId);
+        if (createUser == null) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
         //要把userIds里面的createUserId排除掉
-        List<UserInfo> existsUsers=userService.getUserByIds(userIds);
-        Group group=new Group();
-        if(Strings.isNullOrEmpty(groupName)){
+        List<UserInfo> existsUsers = userService.getUserByIds(userIds);
+        Group group = new Group();
+        Map<Long, String> members = Maps.newHashMap();
+        if (Strings.isNullOrEmpty(groupName)) {
             //自动生成群名
-            StringBuilder groupNameBuilder=new StringBuilder();
-            for(UserInfo userInfo:existsUsers){
+            StringBuilder groupNameBuilder = new StringBuilder();
+            for (UserInfo userInfo : existsUsers) {
                 groupNameBuilder.append(userInfo.getNickName());
-                if(groupNameBuilder.length()<50){
+                members.put(userInfo.getUserId(), userInfo.getNickName());
+                if (groupNameBuilder.length() < 50) {
                     groupNameBuilder.append(",");
-                }else{
+                } else {
                     break;
                 }
             }
@@ -77,22 +87,27 @@ public class GroupUserUserServiceImpl extends ServiceImpl<GroupUserMapper, Group
             groupUsers.add(buildGroupUser(createUser,groupId,createUserId));
         }
         existsUsers.forEach(userInfo -> {
-            GroupUser groupUser=buildGroupUser(userInfo,groupId,createUserId);
-            if(groupUser.getUserId()==createUserId){
+            GroupUser groupUser = buildGroupUser(userInfo, groupId, createUserId);
+            if (groupUser.getUserId() == createUserId) {
                 groupUser.setRole(GroupUserRole.ADMIN.name());
-            }else{
+            } else {
                 groupUser.setRole(GroupUserRole.ORDINARY.name());
             }
             groupUsers.add(groupUser);
         });
-        boolean batchSaveResult=saveBatch(groupUsers);
-        if(batchSaveResult){
-            GroupCreatedEvent event=new GroupCreatedEvent();
+        boolean batchSaveResult = saveBatch(groupUsers);
+        if (batchSaveResult) {
+            GroupCreatedEvent event = new GroupCreatedEvent();
             event.setGroupId(group.getId());
-            //TODO 要创建聊天会话,不确定是同步创建还是异步创建
-            rabbitTemplate.convertAndSend(DynamicQueues.RoutingKeys.GROUP_CREATED,event);
+            event.setGroupName(groupName);
+            event.setOperatorName(createUser.getNickName());
+            event.setOperatorId(createUserId);
+            event.setMembers(members);
+            rabbitTemplate.convertAndSend(DynamicQueues.RoutingKeys.GROUP_CREATED, event);
         }
-        group=groupMapper.selectById(group.getId());
+        group = groupMapper.selectById(group.getId());
+//        RBucket<Group> groupInfoRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
+//        groupInfoRBucket.set(group,30, TimeUnit.DAYS);
         return BeansConverter.groupToGroupInfo(group);
     }
     private GroupUser buildGroupUser(UserInfo userInfo,long groupId,long createUserId){
@@ -107,63 +122,88 @@ public class GroupUserUserServiceImpl extends ServiceImpl<GroupUserMapper, Group
     @Override
     public void disbandGroup(long groupId, long operatorId) {
         //判断用户权限
-        GroupUser operator=baseMapper.getGroupUser(groupId, operatorId);
-        if(!GroupUserRole.ADMIN.equals(operator)){
+        GroupUser operator = baseMapper.getGroupUser(groupId, operatorId);
+        if (!GroupUserRole.ADMIN.equals(operator)) {
             throw new WarnMessageException(FeigeWarn.GROUP_PERMISSION_NOT_ALLOWED);
         }
+        //清理缓存
+//        RBucket<Group> groupRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
+//        boolean deleteCache=groupRBucket.delete();
+//        if(deleteCache){
+//            LOGGER.info("Delete group cache:groupId={}",groupId);
+//        }
         //删除群组
         groupMapper.deleteById(groupId);
         //删除关系
         baseMapper.disbandGroup(groupId);
         //发布事件
-        GroupDisbandEvent event=new GroupDisbandEvent();
+        GroupDisbandEvent event = new GroupDisbandEvent();
         event.setGroupId(groupId);
         event.setOperatorId(operatorId);
-        rabbitTemplate.convertAndSend(DynamicQueues.RoutingKeys.GROUP_DISBANDED,event);
+        rabbitTemplate.convertAndSend(DynamicQueues.RoutingKeys.GROUP_DISBANDED, event);
     }
 
     @Override
     public void inviteJoinGroup(long groupId, long inviteeId,long operatorId) {
         //查询user是否存在
-        UserInfo inviteeUserInfo=userService.getUserById(inviteeId);
-        if(inviteeUserInfo==null){
+        UserInfo inviteeUserInfo = userService.getUserById(inviteeId);
+        if (inviteeUserInfo == null) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
-        //TODO inviteUserId
-
+        GroupUser operatorGroupUser = baseMapper.getGroupUser(groupId, operatorId);
+        if (operatorGroupUser == null) {
+            throw new WarnMessageException(FeigeWarn.GROUP_USER_NOT_EXISTS);
+        }
         //查询group是否存在
-        Group group=groupMapper.selectById(groupId);
-        if(group==null){
+        Group group = groupMapper.selectById(groupId);
+        if (group == null) {
             throw new WarnMessageException(FeigeWarn.GROUP_NOT_EXISTS);
         }
         //判断群人数是否超限
-        List<Long> groupUserIds=baseMapper.findUserIdsByGroup(groupId);
-        if(groupUserIds.contains(inviteeId)){
-            LOGGER.warn("The user already in the group:inviteeId={},groupId={}",inviteeId,groupId);
+        List<Long> groupUserIds = baseMapper.findUserIdsByGroup(groupId);
+        if (groupUserIds.contains(inviteeId)) {
+            LOGGER.warn("The user already in the group:inviteeId={},groupId={}", inviteeId, groupId);
             return;
         }
-        if(groupUserIds.size()>=group.getMaxUserLimit()){
+        if (groupUserIds.size() >= group.getMaxUserLimit()) {
             throw new WarnMessageException(FeigeWarn.GROUP_USER_OVER_LIMIT);
         }
-        GroupUser groupUser=new GroupUser();
+        GroupUser groupUser = new GroupUser();
+        groupUser.setGroupId(groupId);
         groupUser.setUserName(inviteeUserInfo.getNickName());
         groupUser.setUserId(inviteeUserInfo.getUserId());
         groupUser.setJoinTime(new Date());
         groupUser.setInviteUserId(operatorId);
         groupUser.setJoinType("USER_INVITE");
+        groupUser.setRole(GroupUserRole.ORDINARY.name());
         save(groupUser);
-        LOGGER.info("Add user to group success:userId={},groupId={}",inviteeId,groupId);
+        LOGGER.info("Add user to group success:userId={},groupId={}", inviteeId, groupId);
         //MQ通知
-        GroupUserJoinEvent event=new GroupUserJoinEvent();
+        GroupUserJoinEvent event = new GroupUserJoinEvent();
         event.setGroupId(groupId);
         event.setUserId(inviteeId);
         event.setInviteUserId(operatorId);
-        rabbitTemplate.convertAndSend(DynamicQueues.RoutingKeys.GROUP_USER_JOINED,event);
+        event.setUserName(groupUser.getUserName());
+        event.setInviteUserName(operatorGroupUser.getUserName());
+        rabbitTemplate.convertAndSend(DynamicQueues.RoutingKeys.GROUP_USER_JOINED, event);
     }
 
     @Override
     public void exitGroup(long groupId, long userId) {
-//        rabbitTemplate.convertAndSend("group.user.exited");
+        GroupUser groupUser = baseMapper.getGroupUser(groupId, userId);
+        if (groupUser == null) {
+            LOGGER.error("User not in the group,can not exit:groupId={},userId={}", groupId, userId);
+            return;
+        }
+        int i = baseMapper.deleteByGroupAndUserId(groupId, userId);
+        if (i > 0) {
+            GroupUserExitEvent event = new GroupUserExitEvent();
+            event.setGroupId(groupId);
+            event.setUserId(userId);
+            event.setUserName(groupUser.getUserName());
+            //TODO 如果是唯一管理员退出,需要重新设置一名管理员
+            rabbitTemplate.convertAndSend(DynamicQueues.RoutingKeys.GROUP_USER_EXITED, event);
+        }
     }
 
     @Override
@@ -197,21 +237,35 @@ public class GroupUserUserServiceImpl extends ServiceImpl<GroupUserMapper, Group
 
     @Override
     public GroupInfo getGroupInfo(long groupId) {
-        Group group=groupMapper.selectById(groupId);
-        if(group==null){
-            throw new WarnMessageException(FeigeWarn.GROUP_NOT_EXISTS);
+//        RBucket<Group> groupRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
+//        Group group=null;
+//        if(groupRBucket==null){
+//            group=groupMapper.selectById(groupId);
+//            groupRBucket.set(group,30,TimeUnit.DAYS);
+//        }else {
+//            group=groupRBucket.get();
+//        }
+        Group group = groupMapper.selectById(groupId);
+        if (group == null) {
+            throw new WarnMessageException(FeigeWarn.GROUP_NOT_EXISTS, String.valueOf(groupId));
         }
         return BeansConverter.groupToGroupInfo(group);
     }
 
     @Override
     public boolean groupExists(long groupId) {
-        return groupMapper.selectById(groupId)!=null;
+        return groupMapper.selectById(groupId) != null;
     }
 
     @Override
     public List<Long> getUserIds(long groupId) {
-        List<Long> userIds=baseMapper.findUserIdsByGroup(groupId);
+        List<Long> userIds = baseMapper.findUserIdsByGroup(groupId);
         return userIds;
+    }
+
+    @Override
+    public void groupConversationsCreated(long groupId, long conversationId) {
+        groupMapper.conversationCreated(groupId, conversationId);
+        LOGGER.info("Group conversations created:groupId={}", groupId);
     }
 }

@@ -21,7 +21,7 @@ public interface ConversationMessageMapper extends BaseMapper<ConversationMessag
     ChatMessage getMsgById(long msgId);
 
     @Select({"<script> ",
-            "SELECT conversation_id,sender_id,send_seq_id,msg_id,msg_content,msg_type,create_time FROM t_conversation_message WHERE msg_id IN",
+            "SELECT conversation_id,sender_id,send_seq_id,msg_id,msg_content,msg_type,create_time FROM t_conversation_message WHERE msg_id IN ",
             "<foreach item='item' index='index' collection='msgIds' open='(' separator=',' close=')'>",
             "#{item}",
             "</foreach>",

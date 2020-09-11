@@ -2,11 +2,11 @@ package com.ds.feige.im.chat.service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ds.feige.im.chat.dto.ChatMessageAckResult;
-import com.ds.feige.im.chat.dto.ConversationPreview;
 import com.ds.feige.im.chat.dto.MessageToUser;
 import com.ds.feige.im.chat.entity.UserMessage;
 import com.ds.feige.im.chat.mapper.UserMessageMapper;
 import com.ds.feige.im.chat.po.SenderAndMsg;
+import com.ds.feige.im.chat.po.UnreadMessagePreview;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +50,7 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
         entity.setConversationId(message.getConversationId());
         entity.setSenderId(message.getSenderId());
         entity.setState(0);
+        entity.setMsgType(message.getMsgType());
         return entity;
     }
 
@@ -78,12 +79,12 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
     }
 
     @Override
-    public List<ConversationPreview> getConversationPreview(long userId) {
+    public List<UnreadMessagePreview> getConversationUnreadPreview(long userId) {
         Long minUnAckMsgId = baseMapper.getMinUnAckMsgId(userId);
         if (minUnAckMsgId == null) {
             minUnAckMsgId = 0L;
         }
-        List<ConversationPreview> previews = baseMapper.getConversationPreview(userId, minUnAckMsgId);
+        List<UnreadMessagePreview> previews = baseMapper.getConversationUnreadPreview(userId, minUnAckMsgId);
         return previews;
     }
 }

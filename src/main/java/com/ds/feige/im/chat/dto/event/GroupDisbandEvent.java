@@ -1,4 +1,4 @@
-package com.ds.feige.im.chat.dto.group;
+package com.ds.feige.im.chat.dto.event;
 
 /**
  * 群聊解散事件
@@ -8,6 +8,7 @@ package com.ds.feige.im.chat.dto.group;
 public class GroupDisbandEvent {
     private long groupId;
     private long operatorId;
+    private String operatorName;
     public long getGroupId() {
         return groupId;
     }
@@ -22,5 +23,13 @@ public class GroupDisbandEvent {
 
     public void setOperatorId(long operatorId) {
         this.operatorId = operatorId;
+    }
+
+    public String getOperatorName() {
+        return operatorName;
+    }
+
+    public void setOperatorName(String operatorName) {
+        this.operatorName = operatorName;
     }
 }

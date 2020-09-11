@@ -2,13 +2,17 @@ package com.ds.feige.im.chat.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ds.feige.im.common.entity.BaseEntity;
+import lombok.Data;
 
 @TableName("t_user_conversation")
+@Data
 public class UserConversation extends BaseEntity {
     /**
      * 会话ID,双方保持一致
      */
     private Long conversationId;
+    private String conversationName;
+    private String conversationAvatar;
     /**
      * 用户ID
      */
@@ -25,72 +29,16 @@ public class UserConversation extends BaseEntity {
      * 会话展示优先级
      */
     private Integer priority;
-    /**其他针对会话的配置信息**/
-    private String meta;
-    /**最后已读消息ID*/
+    /**
+     * 其他针对会话的配置信息
+     **/
+    private String option;
+    /**
+     * 最后已读消息ID
+     */
     private Long maxReadMsgId;
-    /**客户端已确认最大消息ID*/
+    /**
+     * 客户端已确认最大消息ID
+     */
     private Long maxAckMsgId;
-    public Long getConversationId() {
-        return conversationId;
-    }
-    public void setConversationId(Long conversationId) {
-        this.conversationId = conversationId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public Long getTargetId() {
-        return targetId;
-    }
-
-    public void setTargetId(Long targetId) {
-        this.targetId = targetId;
-    }
-
-    public Integer getConversationType() {
-        return conversationType;
-    }
-
-    public void setConversationType(Integer conversationType) {
-        this.conversationType = conversationType;
-    }
-
-    public Integer getPriority() {
-        return priority;
-    }
-
-    public void setPriority(Integer priority) {
-        this.priority = priority;
-    }
-
-    public Long getMaxReadMsgId() {
-        return maxReadMsgId;
-    }
-
-    public void setMaxReadMsgId(Long maxReadMsgId) {
-        this.maxReadMsgId = maxReadMsgId;
-    }
-
-    public String getMeta() {
-        return meta;
-    }
-
-    public void setMeta(String meta) {
-        this.meta = meta;
-    }
-
-    public Long getMaxAckMsgId() {
-        return maxAckMsgId;
-    }
-
-    public void setMaxAckMsgId(Long maxAckMsgId) {
-        this.maxAckMsgId = maxAckMsgId;
-    }
 }
