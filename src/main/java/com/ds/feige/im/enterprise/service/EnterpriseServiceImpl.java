@@ -2,8 +2,6 @@ package com.ds.feige.im.enterprise.service;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,7 +23,10 @@ import com.ds.feige.im.enterprise.mapper.DepartmentMapper;
 import com.ds.feige.im.enterprise.mapper.EmployeeMapper;
 import com.ds.feige.im.enterprise.mapper.EnterpriseMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class EnterpriseServiceImpl implements EnterpriseService {
     @Autowired
     DepartmentMapper departmentMapper;
@@ -37,7 +38,6 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     EnterpriseMapper enterpriseMapper;
     @Autowired
     UserService userService;
-    static final Logger LOGGER = LoggerFactory.getLogger(EnterpriseServiceImpl.class);
 
     @Override
     public long createEnterprise(String name, String description, long operatorId) {
@@ -105,7 +105,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         if (!isAdmin(request.getEnterpriseId(), request.getOperatorId())) {
             throw new WarnMessageException(FeigeWarn.EMPLOYEE_ROLE_NOT_ADMIN);
         }
-        LOGGER.info("Delete department start:departmentId={}", departmentId);
+        log.info("Delete department start:departmentId={}", departmentId);
         // 判断部门是否属于该企业下
         Department department = departmentMapper.selectById(departmentId);
         if (department == null) {
@@ -123,13 +123,13 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         departmentMapper.deleteById(departmentId);
         // 解除员工和部门的关系
         departmentEmployeeMapper.deleteByDepartmentId(departmentId);
-        LOGGER.info("Delete department success:departmentId={}", departmentId);
+        log.info("Delete department success:departmentId={}", departmentId);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void editEmployee(EditEmpRequest request) {
-        LOGGER.info("Edit employee start:request={}", request.toString());
+        log.info("Edit employee start:request={}", request.toString());
         final long userId = request.getUserId();
         // 判断是否具备权限
         if (!isAdmin(request.getEnterpriseId(), request.getOperatorId())) {
@@ -147,12 +147,12 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         employee.setWorkEmail(request.getWorkEmail());
         employee.setName(request.getName());
         employeeMapper.updateById(employee);
-        LOGGER.info("Edit employee success:request={}", request.toString());
+        log.info("Edit employee success:request={}", request.toString());
     }
 
     @Override
     public void editDepartment(EditDepRequest request) {
-        LOGGER.info("Edit department start:request={}", request);
+        log.info("Edit department start:request={}", request);
         // 判断是否具备权限
         if (!isAdmin(request.getEnterpriseId(), request.getOperatorId())) {
             throw new WarnMessageException(FeigeWarn.EMPLOYEE_ROLE_NOT_ADMIN);
@@ -164,7 +164,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         department.setName(request.getName());
         department.setParentId(request.getParentId());
         departmentMapper.updateById(department);
-        LOGGER.info("Edit department success:request={}", request);
+        log.info("Edit department success:request={}", request);
     }
 
     @Override
@@ -204,7 +204,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     public void removeDepartmentEmployee(EditDepEmpRequest request) {
         departmentEmployeeMapper.deleteDepartmentEmployee(request.getEnterpriseId(), request.getDepartmentId(),
             request.getUserId());
-        LOGGER.info("Delete department employee success:request={}", request);
+        log.info("Delete department employee success:request={}", request);
     }
 
     @Override
@@ -258,7 +258,11 @@ public class EnterpriseServiceImpl implements EnterpriseService {
 
     @Override
     public void deleteEmployee(long enterpriseId, long userId) {
+        // 删除员工表数据
         employeeMapper.deleteEmployee(enterpriseId, userId);
+        // 删除部门关联数据
+        departmentEmployeeMapper.deleteByUserId(enterpriseId, userId);
+        log.info("Delete employee success:enterpriseId={},userId={}", enterpriseId, userId);
     }
 
     @Override

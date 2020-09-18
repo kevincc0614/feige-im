@@ -29,11 +29,15 @@ import com.ds.feige.im.constants.GroupUserRole;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author DC
  */
 @Service
+@Slf4j
 public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser> implements GroupUserService {
     GroupMapper groupMapper;
     UserService userService;
@@ -58,12 +62,12 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
         userIds.add(createUserId);
-        //要把userIds里面的createUserId排除掉
+        // 要把userIds里面的createUserId排除掉
         List<UserInfo> memberUsers = userService.getUserByIds(userIds);
         Group group = new Group();
         Map<Long, String> members = Maps.newHashMap();
         if (Strings.isNullOrEmpty(groupName)) {
-            //自动生成群名
+            // 自动生成群名
             StringBuilder groupNameBuilder = new StringBuilder();
             for (UserInfo member : memberUsers) {
                 groupNameBuilder.append(member.getNickName());
@@ -78,9 +82,9 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
         } else {
             group.setName(groupName);
         }
-        //TODO 生成群聊头像缩略图
-        //TODO 群类型
-        //TODO 群人数限制取配置
+        // TODO 生成群聊头像缩略图
+        // TODO 群类型
+        // TODO 群人数限制取配置
         group.setAvatar("");
         group.setType(0);
         group.setMaxUserLimit(500);
@@ -109,8 +113,8 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
             rabbitTemplate.convertAndSend(AMQPConstants.RoutingKeys.GROUP_CREATED, event);
         }
         group = groupMapper.selectById(group.getId());
-//        RBucket<Group> groupInfoRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
-//        groupInfoRBucket.set(group,30, TimeUnit.DAYS);
+        // RBucket<Group> groupInfoRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
+        // groupInfoRBucket.set(group,30, TimeUnit.DAYS);
         return BeansConverter.groupToGroupInfo(group);
     }
 
@@ -136,22 +140,22 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
     @Override
     public void disbandGroup(long groupId, long operatorId) {
         Group group = checkGroupExists(groupId);
-        //判断用户权限
+        // 判断用户权限
         GroupUser operator = baseMapper.getGroupUser(groupId, operatorId);
         if (!GroupUserRole.ADMIN.name().equals(operator.getRole())) {
             throw new WarnMessageException(FeigeWarn.GROUP_PERMISSION_NOT_ALLOWED);
         }
-        //清理缓存
-//        RBucket<Group> groupRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
-//        boolean deleteCache=groupRBucket.delete();
-//        if(deleteCache){
-//            LOGGER.info("Delete group cache:groupId={}",groupId);
-//        }
-        //删除群组
+        // 清理缓存
+        // RBucket<Group> groupRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
+        // boolean deleteCache=groupRBucket.delete();
+        // if(deleteCache){
+        // LOGGER.info("Delete group cache:groupId={}",groupId);
+        // }
+        // 删除群组
         groupMapper.deleteById(groupId);
-        //删除关系
+        // 删除关系
         baseMapper.disbandGroup(groupId);
-        //发布事件
+        // 发布事件
         GroupDisbandEvent event = new GroupDisbandEvent();
         event.setGroupId(groupId);
         event.setOperatorId(operatorId);
@@ -167,7 +171,7 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
         if (operatorGroupUser == null) {
             throw new WarnMessageException(FeigeWarn.GROUP_USER_NOT_EXISTS);
         }
-        //判断群人数是否超限
+        // 判断群人数是否超限
         Set<Long> groupMembers = baseMapper.findUserIdsByGroup(groupId);
         if (groupMembers.size() >= group.getMaxUserLimit()) {
             throw new WarnMessageException(FeigeWarn.GROUP_USER_OVER_LIMIT);
@@ -217,23 +221,27 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
             event.setGroupId(groupId);
             event.setUserId(userId);
             event.setUserName(groupUser.getUserName());
-            //TODO 如果是唯一管理员退出,需要重新设置一名管理员
+            // TODO 如果是唯一管理员退出,需要重新设置一名管理员
             rabbitTemplate.convertAndSend(AMQPConstants.RoutingKeys.GROUP_USER_EXITED, event);
         }
     }
 
     @Override
-    public void kickUser(long groupId, long kickUserId, long operatorId) {
-        GroupUser groupUser = baseMapper.getGroupUser(groupId, kickUserId);
-        if (groupUser == null) {
-            throw new WarnMessageException(FeigeWarn.GROUP_NOT_EXISTS, String.valueOf(kickUserId));
+    public void kickUser(long groupId, Set<Long> kickUsers, long operatorId) {
+        List<GroupUser> groupUsers = baseMapper.getGroupUsers(groupId, kickUsers);
+        if (groupUsers == null || groupUsers.isEmpty()) {
+            log.warn("Kick operation has users:groupId={},kickUsers={},operatorId={}", groupId, kickUsers, operatorId);
+            return;
         }
-        int deleted = baseMapper.deleteById(groupUser.getId());
-        if (deleted == 1) {
-            LOGGER.info("Kick group user:groupId={},userId={}", groupId, kickUserId);
+        // 确定要被踢的用户
+        Set<Long> kickedUsers = Sets.newHashSet();
+        groupUsers.forEach(u -> kickedUsers.add(u.getUserId()));
+        int deleted = baseMapper.deleteBatchIds(kickUsers);
+        if (deleted >= 1) {
+            LOGGER.info("Kick group user:groupId={},kickUsers={}", groupId, kickedUsers);
             GroupUserKickEvent event = new GroupUserKickEvent();
             event.setGroupId(groupId);
-            event.setKickUserId(kickUserId);
+            event.setKickedUsers(kickUsers);
             event.setOperatorId(operatorId);
             rabbitTemplate.convertAndSend(AMQPConstants.RoutingKeys.GROUP_USER_KICKED, event);
         }
@@ -242,26 +250,26 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
     @Override
     public void setUserRole(long groupId, long userId, GroupUserRole role, long operatorId) {
         GroupUser operator = baseMapper.getGroupUser(groupId, operatorId);
-        //判断是否有操作权限
+        // 判断是否有操作权限
         if (!GroupUserRole.ADMIN.name().equals(operator.getRole())) {
             throw new WarnMessageException(FeigeWarn.GROUP_PERMISSION_NOT_ALLOWED);
         }
         int i = baseMapper.updateUserRole(groupId, userId, role.name());
         LOGGER.info("Update group user role:groupId={},userId={},role={}", groupId, userId, role);
-//        rabbitTemplate.convertAndSend("");
+        // rabbitTemplate.convertAndSend("");
     }
 
     @Override
     public GroupInfo getGroupInfo(long groupId) {
-//        RBucket<Group> groupRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
-//        Group group=null;
-//        if(groupRBucket==null){
-//            group=groupMapper.selectById(groupId);
-//            groupRBucket.set(group,30,TimeUnit.DAYS);
-//        }else {
-//            group=groupRBucket.get();
-//        }
-Group group = checkGroupExists(groupId);
+        // RBucket<Group> groupRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
+        // Group group=null;
+        // if(groupRBucket==null){
+        // group=groupMapper.selectById(groupId);
+        // groupRBucket.set(group,30,TimeUnit.DAYS);
+        // }else {
+        // group=groupRBucket.get();
+        // }
+        Group group = checkGroupExists(groupId);
         return BeansConverter.groupToGroupInfo(group);
     }
 

@@ -1,26 +1,24 @@
 package com.ds.feige.im.chat.service;
 
-import com.ds.feige.im.chat.dto.*;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.ds.feige.im.chat.dto.*;
+
 public interface ChatService {
 
     /**
-     * 发送消息
-     * ①同步操作存入存储库t_conversation_message
-     * ②MQ异步操作存入同步库t_user_message
-     * ③实时推送消息到客户端
+     * 发送消息 ①同步操作存入存储库t_conversation_message ②MQ异步操作存入同步库t_user_message ③实时推送消息到客户端
      * 方法包含会话逻辑,既消息接收对象通过内部逻辑查询得来,而非直接定向推送。所以调用此方法时需要考虑会话关系状态是否正确
      */
-    SendMessageResult sendToConversation(MessageToConversation request);
+    MessageToUser sendToConversation(MessageToConversation request);
 
     /**
      * 客户端收到消息存到本地后Ack,但Ack不代表着已读
      *
-     * @param msgIds 列表不能太大,否则影响性能
+     * @param msgIds
+     *            列表不能太大,否则影响性能
      * @param userId
      */
     ChatMessageAckResult ackMessages(long userId, List<Long> msgIds);
@@ -32,7 +30,6 @@ public interface ChatService {
      */
     List<MessageToUser> pullMessages(ConversationMessageQueryRequest request);
 
-
     MessageToUser getMessage(long msgId);
 
     /**
@@ -42,7 +39,6 @@ public interface ChatService {
      * @return 会话预览
      */
     Collection<ConversationPreview> getConversationPreviews(long userId);
-
 
     void readMessage(ReadMessageRequest request);
 

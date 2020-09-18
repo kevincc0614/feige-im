@@ -1,17 +1,18 @@
 package com.ds.feige.im.test.chat;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.ds.feige.im.chat.dto.*;
 import com.ds.feige.im.chat.service.ChatService;
 import com.ds.feige.im.common.util.JsonUtils;
 import com.ds.feige.im.constants.ConversationType;
 import com.ds.feige.im.constants.MsgType;
 import com.ds.feige.im.test.BaseTest;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class ChatServiceTest extends BaseTest {
     @Autowired
@@ -33,7 +34,7 @@ public class ChatServiceTest extends BaseTest {
             }
             request.setConversationType(ConversationType.SINGLE_CONVERSATION_TYPE);
             request.setMsgType(MsgType.TEXT);
-            SendMessageResult result = chatService.sendToConversation(request);
+            MessageToUser result = chatService.sendToConversation(request);
             System.out.println("发送消息结果:"+result.toString());
         }
 

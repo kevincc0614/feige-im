@@ -1,5 +1,10 @@
 package com.ds.feige.im.common.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.BeanUtils;
+
 import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.entity.User;
 import com.ds.feige.im.chat.dto.MessageToUser;
@@ -19,10 +24,6 @@ import com.ds.feige.im.favorite.dto.MarkMessageInfo;
 import com.ds.feige.im.favorite.entity.MarkMessage;
 import com.ds.feige.im.oss.dto.UploadCompleteRequest;
 import com.ds.feige.im.oss.entity.OSSFile;
-import org.springframework.beans.BeanUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Bean转换工具类
@@ -50,7 +51,7 @@ public class BeansConverter {
         return groupInfo;
     }
 
-    public static MessageToUser conversationMsgToChatMsg(ConversationMessageEvent message) {
+    public static MessageToUser conversationMsgToMessageToUser(ConversationMessageEvent message) {
         MessageToUser chatMessage = new MessageToUser();
         BeanUtils.copyProperties(message, chatMessage);
         return chatMessage;

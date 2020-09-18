@@ -1,5 +1,18 @@
 package com.ds.feige.im.chat.service;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
@@ -13,25 +26,16 @@ import com.ds.feige.im.constants.CacheKeys;
 import com.ds.feige.im.constants.ConversationType;
 import com.ds.feige.im.constants.FeigeWarn;
 import com.google.common.collect.Lists;
-import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author DC
  */
 @Service
 @Slf4j
-public class ConversationServiceImpl extends ServiceImpl<UserConversationMapper, UserConversation> implements ConversationService {
+public class ConversationServiceImpl extends ServiceImpl<UserConversationMapper, UserConversation>
+    implements ConversationService {
     @Autowired
     @Qualifier("longIdKeyGenerator")
     IdKeyGenerator<Long> longIdKeyGenerator;
@@ -68,15 +72,17 @@ public class ConversationServiceImpl extends ServiceImpl<UserConversationMapper,
 
     @Override
     public UserConversationInfo createSingleConversation(long userId, long targetId) {
-        //判断会话是否已经存在
-        UserConversation conversation = baseMapper.getByUserTargetAndTyppe(userId, targetId, ConversationType.SINGLE_CONVERSATION_TYPE);
+        // 判断会话是否已经存在
+        UserConversation conversation =
+            baseMapper.getByUserTargetAndTyppe(userId, targetId, ConversationType.SINGLE_CONVERSATION_TYPE);
         if (conversation != null) {
             UserConversationInfo result = new UserConversationInfo();
             BeanUtils.copyProperties(conversation, result);
-            log.warn("Conversation already exists:userId={},targetId={},conversationType={},conversationId={}", userId, targetId, conversation, conversation.getConversationId());
+            log.warn("Conversation already exists:userId={},targetId={},conversationType={},conversationId={}", userId,
+                targetId, conversation, conversation.getConversationId());
             return result;
         }
-        //判断userId是否存在
+        // 判断userId是否存在
         UserInfo createUser = userService.getUserById(userId);
         UserInfo targetUser = null;
         targetUser = userService.getUserById(targetId);
@@ -84,22 +90,26 @@ public class ConversationServiceImpl extends ServiceImpl<UserConversationMapper,
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
         String conversationLockId = userId >= targetId ? userId + "" + targetId : targetId + "" + userId;
-        //加分布式锁
+        // 加分布式锁
         RLock lock = redissonClient.getLock(CacheKeys.CONVERSATION_LOCK_PREFIX + conversationLockId);
         try {
             if (lock.tryLock(10, 10, TimeUnit.SECONDS)) {
-                conversation = baseMapper.getByUserTargetAndTyppe(userId, targetId, ConversationType.SINGLE_CONVERSATION_TYPE);
-                //双重检查
+                conversation =
+                    baseMapper.getByUserTargetAndTyppe(userId, targetId, ConversationType.SINGLE_CONVERSATION_TYPE);
+                // 双重检查
                 if (conversation == null) {
                     long conversationId = longIdKeyGenerator.generateId();
                     List<UserConversation> conversations = Lists.newArrayList();
-                    //如果是单聊,则需要为双方共同创建会话
-                    conversation = buildConversation(userId, targetId, conversationId, ConversationType.SINGLE_CONVERSATION_TYPE, targetUser.getNickName(), targetUser.getAvatar());
-                    UserConversation targetConversation = buildConversation(targetId, userId, conversationId, ConversationType.SINGLE_CONVERSATION_TYPE, createUser.getNickName(), createUser.getNickName());
+                    // 如果是单聊,则需要为双方共同创建会话
+                    conversation = buildConversation(userId, targetId, conversationId,
+                        ConversationType.SINGLE_CONVERSATION_TYPE, targetUser.getNickName(), targetUser.getAvatar());
+                    UserConversation targetConversation = buildConversation(targetId, userId, conversationId,
+                        ConversationType.SINGLE_CONVERSATION_TYPE, createUser.getNickName(), createUser.getNickName());
                     conversations.add(conversation);
                     conversations.add(targetConversation);
                     saveBatch(conversations);
-                    log.info("Create conversations success:conversationId={},count={},senderId={},targetId={}", conversationId, conversations.size(), userId, targetId);
+                    log.info("Create conversations success:conversationId={},count={},senderId={},targetId={}",
+                        conversationId, conversations.size(), userId, targetId);
                 } else {
                     log.warn("Conversation already exits after lock:userId={},targetId={}", userId, targetId);
                 }
@@ -126,8 +136,16 @@ public class ConversationServiceImpl extends ServiceImpl<UserConversationMapper,
     }
 
     @Override
-    public long deleteGroupConversations(long groupId) {
-        List<UserConversation> conversations = baseMapper.findByTargetIdAndType(groupId, ConversationType.GROUP_CONVERSATION_TYPE);
+    public int deleteConversations(Collection<Long> userIds, long targetId, int conversationType) {
+        int i = baseMapper.deleteByUsersAndTargetAndType(userIds, targetId, conversationType);
+        log.info("Delete conversations success:userIds={},targetId={},count={}", userIds, targetId, i);
+        return i;
+    }
+
+    @Override
+    public long deleteConversations(long groupId) {
+        List<UserConversation> conversations =
+            baseMapper.findByTargetIdAndType(groupId, ConversationType.GROUP_CONVERSATION_TYPE);
         if (conversations.isEmpty()) {
             return 0;
         }
@@ -151,7 +169,8 @@ public class ConversationServiceImpl extends ServiceImpl<UserConversationMapper,
         List<UserConversation> conversations = new ArrayList<>();
         Long finalConversationId = conversationId;
         members.forEach(uid -> {
-            UserConversation uc = buildConversation(uid, groupId, finalConversationId, ConversationType.GROUP_CONVERSATION_TYPE, name, avatar);
+            UserConversation uc = buildConversation(uid, groupId, finalConversationId,
+                ConversationType.GROUP_CONVERSATION_TYPE, name, avatar);
             conversations.add(uc);
         });
         saveBatch(conversations);
@@ -184,7 +203,8 @@ public class ConversationServiceImpl extends ServiceImpl<UserConversationMapper,
 
     }
 
-    public static UserConversation buildConversation(long userId, long targetId, long conversationId, int conversationType, String conversationName, String conversationAvatar) {
+    public static UserConversation buildConversation(long userId, long targetId, long conversationId,
+        int conversationType, String conversationName, String conversationAvatar) {
         UserConversation conversation = new UserConversation();
         conversation.setConversationId(conversationId);
         conversation.setUserId(userId);

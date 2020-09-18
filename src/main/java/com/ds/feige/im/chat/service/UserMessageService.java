@@ -1,17 +1,18 @@
 package com.ds.feige.im.chat.service;
 
+import java.util.List;
+import java.util.Map;
+
 import com.ds.feige.im.chat.dto.ChatMessageAckResult;
 import com.ds.feige.im.chat.dto.MessageOfUser;
 import com.ds.feige.im.chat.po.UnreadMessagePreview;
-
-import java.util.List;
-import java.util.Map;
 
 public interface UserMessageService {
     /**
      * 存储消息到用户收件箱
      *
-     * @param message 会话消息
+     * @param message
+     *            会话消息
      * @return msgId
      */
     long store(MessageOfUser message);
@@ -19,7 +20,8 @@ public interface UserMessageService {
     /**
      * 批量存储消息到用户收件箱s
      *
-     * @param messages 会话消息
+     * @param messages
+     *            会话消息
      */
     void store(List<MessageOfUser> messages);
 

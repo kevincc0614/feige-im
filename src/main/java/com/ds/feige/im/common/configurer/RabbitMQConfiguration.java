@@ -3,8 +3,6 @@ package com.ds.feige.im.common.configurer;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
@@ -25,12 +23,14 @@ import com.ds.feige.im.gateway.DiscoveryService;
 import com.ds.feige.im.gateway.consumer.DynamicQueueListener;
 import com.google.common.collect.Lists;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Configuration
 @EnableRabbit
+@Slf4j
 public class RabbitMQConfiguration {
     @Value("${spring.rabbitmq.template.exchange}")
     private String exchange;
-    static final Logger LOGGER = LoggerFactory.getLogger(RabbitMQConfiguration.class);
 
     @Bean
     RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory, @Autowired DiscoveryService discoveryService) {
@@ -42,7 +42,7 @@ public class RabbitMQConfiguration {
             rabbitAdmin.declareQueue(dynamicQueue);
             Binding binding = new Binding(queueName, Binding.DestinationType.QUEUE, exchange, queueName, null);
             rabbitAdmin.declareBinding(binding);
-            LOGGER.info("RabbitMQ binding dynamic queue:routingKey={},queue={}", queueName, queueName);
+            log.info("RabbitMQ binding dynamic queue:routingKey={},queue={}", queueName, queueName);
         }
         Map<String, String[]> routeKeyQueues = AMQPConstants.BINDINGS;
         for (Map.Entry<String, String[]> entry : routeKeyQueues.entrySet()) {
@@ -52,7 +52,7 @@ public class RabbitMQConfiguration {
                 Binding binding =
                     new Binding(queueName, Binding.DestinationType.QUEUE, this.exchange, entry.getKey(), null);
                 rabbitAdmin.declareBinding(binding);
-                LOGGER.info("RabbitMQ binding static queue:routingKey={},queue={}", entry.getKey(), queueName);
+                log.info("RabbitMQ binding static queue:routingKey={},queue={}", entry.getKey(), queueName);
             }
 
         }
@@ -62,9 +62,9 @@ public class RabbitMQConfiguration {
     List<String> buildDynamicQueueNames(DiscoveryService discoveryService) {
         String[] privateQueues = AMQPConstants.ALL_DYNAMIC_QUEUES;
         List<String> result = Lists.newArrayListWithCapacity(privateQueues.length);
-        for (int i = 0; i < privateQueues.length; i++) {
+        for (String privateQueue : privateQueues) {
             // 声明专属队列
-            result.add(privateQueues[i] + discoveryService.getInstanceId());
+            result.add(privateQueue + discoveryService.getInstanceId());
         }
         return result;
     }

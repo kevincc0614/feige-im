@@ -22,6 +22,7 @@ import com.ds.feige.im.chat.dto.event.ReadMessageEvent;
 import com.ds.feige.im.chat.entity.ConversationMessage;
 import com.ds.feige.im.chat.mapper.ConversationMessageMapper;
 import com.ds.feige.im.chat.po.UnreadMessagePreview;
+import com.ds.feige.im.common.util.BeansConverter;
 import com.ds.feige.im.constants.AMQPConstants;
 import com.ds.feige.im.constants.CacheKeys;
 import com.ds.feige.im.constants.ConversationType;
@@ -51,14 +52,15 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
     RedissonClient redissonClient;
 
     @Override
-    public SendMessageResult sendToConversation(MessageToConversation request) {
+    public MessageToUser sendToConversation(MessageToConversation request) {
         final int conversationType = request.getConversationType();
         final long senderId = request.getUserId();
         final long targetId = request.getTargetId();
         log.info("Send conversation message start:request={}", request);
-        //判断消息类型
-        UserConversationInfo userConversation = conversationService.getUserConversation(senderId, targetId, conversationType);
-        //只有单聊才可以用户发消息时触发创建会话,群聊必须是系统自动创建会话
+        // 判断消息类型
+        UserConversationInfo userConversation =
+            conversationService.getUserConversation(senderId, targetId, conversationType);
+        // 只有单聊才可以用户发消息时触发创建会话,群聊必须是系统自动创建会话
         if (userConversation == null) {
             if (conversationType == ConversationType.SINGLE_CONVERSATION_TYPE) {
                 userConversation = conversationService.createSingleConversation(senderId, targetId);
@@ -67,7 +69,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
             }
 
         }
-        //入存储库,t_conversation_message
+        // 入存储库,t_conversation_message
         ConversationMessage message = new ConversationMessage();
         long msgId = longIdKeyGenerator.generateId();
         message.setConversationId(userConversation.getConversationId());
@@ -80,7 +82,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         message.setReadCount(0);
         Set<Long> receiverIds;
         // 消息接收人数位置为会话人数-1
-        int receiverCount = 0;
+        int receiverCount;
         switch (conversationType) {
             case ConversationType.SINGLE_CONVERSATION_TYPE:
                 receiverCount = 1;
@@ -98,10 +100,8 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         save(message);
         ConversationMessageEvent event = buildEvent(message, receiverIds);
         template.convertAndSend(AMQPConstants.RoutingKeys.CONVERSATION_SEND_MESSAGE, event);
-        SendMessageResult result = new SendMessageResult();
-        result.setConversationId(message.getConversationId());
-        result.setMsgId(message.getMsgId());
-        return result;
+
+        return BeansConverter.conversationMsgToMessageToUser(event);
 
     }
 
@@ -123,8 +123,8 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
 
     @Override
     public List<MessageToUser> pullMessages(ConversationMessageQueryRequest request) {
-        List<MessageToUser> messages = baseMapper.findMessages(request.getUserId(),
-                request.getConversationId(), request.getMaxMsgId(), request.getPageSize());
+        List<MessageToUser> messages = baseMapper.findMessages(request.getUserId(), request.getConversationId(),
+            request.getMaxMsgId(), request.getPageSize());
         return messages;
     }
 
@@ -141,7 +141,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
 
     @Override
     public Collection<ConversationPreview> getConversationPreviews(long userId) {
-        //获取未读消息数据
+        // 获取未读消息数据
         List<UnreadMessagePreview> previews = userMessageService.getConversationUnreadPreview(userId);
         if (previews.isEmpty()) {
             return Lists.newArrayListWithCapacity(0);
@@ -156,20 +156,20 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
             msgIds.add(unreadMessagePreview.getLastMsgId());
 
         });
-        //获取会话里的最后一条消息内容
+        // 获取会话里的最后一条消息内容
         List<MessageToUser> conversationLastMessages = baseMapper.findMessagesByIds(msgIds);
         conversationLastMessages.forEach(lastMsg -> {
             ConversationPreview preview = previewMap.get(lastMsg.getConversationId());
             preview.setLastMsg(lastMsg);
         });
-        //数据合并
+        // 数据合并
         return previewMap.values();
     }
 
     @Override
     public void readMessage(ReadMessageRequest request) {
         addMessageReadReceipts(request.getUserId(), request.getMsgIds());
-        //TODO 更新最大已读消息ID
+        // TODO 更新最大已读消息ID
         UserConversationInfo conversation =
             conversationService.getUserConversation(request.getUserId(), request.getConversationId());
         if (conversation == null) {

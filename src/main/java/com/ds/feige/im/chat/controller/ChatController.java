@@ -39,7 +39,7 @@ public class ChatController {
      * 发送聊天消息
      */
     @SocketRequestMapping(SocketPaths.CS_SEND_CHAT_MESSAGE)
-    public SendMessageResult send(@RequestBody @Valid MessageToConversation request) {
+    public MessageToUser send(@RequestBody @Valid MessageToConversation request) {
 
         return this.chatService.sendToConversation(request);
     }

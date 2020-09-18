@@ -8,10 +8,10 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
 import com.ds.feige.im.chat.dto.CreateGroupConversations;
+import com.ds.feige.im.chat.dto.MessageContent;
 import com.ds.feige.im.chat.dto.MessageToConversation;
 import com.ds.feige.im.chat.dto.event.*;
 import com.ds.feige.im.chat.dto.group.GroupInfo;
@@ -23,12 +23,15 @@ import com.ds.feige.im.constants.ConversationType;
 import com.ds.feige.im.constants.MsgType;
 import com.ds.feige.im.gateway.service.SessionUserService;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 群聊MQ消费者
  *
  * @author DC
  */
 @Component
+@Slf4j
 public class GroupUserListener {
     @Autowired
     GroupUserService groupUserService;
@@ -48,7 +51,7 @@ public class GroupUserListener {
         LOGGER.info("Group created event broadcast start:{}", event);
         long groupId = event.getGroupId();
         GroupInfo groupInfo = groupUserService.getGroupInfo(groupId);
-        //判断会话是否已创建
+        // 判断会话是否已创建
         if (groupInfo.getConversationId() != null) {
             LOGGER.error("Group conversations has already created:groupId={}", groupId);
             return;
@@ -61,7 +64,9 @@ public class GroupUserListener {
         createGroupConversations.setMembers(members);
         long conversationId = conversationService.createGroupConversations(createGroupConversations);
         groupUserService.groupConversationsCreated(groupId, conversationId);
-        sendGroupNotice(event.getOperatorId(), event.getGroupId(), event.getOperatorName() + " 创建了群聊");
+        MessageContent.GroupCreatedMessage message =
+            new MessageContent.GroupCreatedMessage(event.getGroupId(), event.getOperatorId(), conversationId);
+        sendGroupNotice(event.getOperatorId(), event.getGroupId(), message);
         LOGGER.info("Group created event broadcast success:{}", event);
 
     }
@@ -69,14 +74,16 @@ public class GroupUserListener {
     @RabbitListener(queues = AMQPConstants.QueueNames.GROUP_DISBANDED_BROADCAST)
     public void broadcastGroupDisbanded(GroupDisbandEvent event) throws Exception {
         // 群关系已经不存在,但是会话关系还在,先发完消息,再删除会话关系
-        sendGroupNotice(event.getOperatorId(), event.getGroupId(), event.getOperatorName() + " 解散了群聊");
-        long conversationId = conversationService.deleteGroupConversations(event.getGroupId());
+        MessageContent.GroupDisbandMessage message =
+            new MessageContent.GroupDisbandMessage(event.getGroupId(), event.getOperatorId());
+        sendGroupNotice(event.getOperatorId(), event.getGroupId(), message);
+        long conversationId = conversationService.deleteConversations(event.getGroupId());
         LOGGER.info("Group disbanded event broadcast success:conversationId={}", conversationId);
     }
 
     @RabbitListener(queues = AMQPConstants.QueueNames.GROUP_USER_JOINED_BROADCAST)
     public void broadcastUserJoinGroup(GroupInviteUsersJoinEvent event) throws Exception {
-        //创建会话
+        // 创建会话
         GroupInfo groupInfo = groupUserService.getGroupInfo(event.getGroupId());
         if (groupInfo == null) {
             LOGGER.error("Group not exists:groupId={}", event.getGroupId());
@@ -88,34 +95,40 @@ public class GroupUserListener {
         createGroupConversations.setName(groupInfo.getName());
         createGroupConversations.setGroupId(event.getGroupId());
         conversationService.createGroupConversations(createGroupConversations);
-        String memberNames = StringUtils.collectionToDelimitedString(event.getInviteUsers().values(), ",");
-        sendGroupNotice(event.getOperatorId(), event.getGroupId(),
-            event.getOperatorName() + " 邀请 " + memberNames + " 加入了群聊");
+        // String memberNames = StringUtils.collectionToDelimitedString(event.getInviteUsers().values(), ",");
+        MessageContent.GroupUserJoinMessage joinMessage = new MessageContent.GroupUserJoinMessage(event.getGroupId(),
+            event.getInviteUsers().keySet(), event.getOperatorId(), 0);
+        sendGroupNotice(event.getOperatorId(), event.getGroupId(), joinMessage);
         LOGGER.info("Group user join event broadcast success:{}", event);
     }
 
     @RabbitListener(queues = AMQPConstants.QueueNames.GROUP_USER_EXITED_BROADCAST)
-    public void broadcastUserExitGroup(GroupUserExitEvent event) {
-        //删除会话
-        conversationService.deleteConversation(event.getUserId(), event.getGroupId(), ConversationType.GROUP_CONVERSATION_TYPE);
-        sendGroupNotice(event.getUserId(), event.getGroupId(), event.getUserName() + " 退出了群聊");
+    public void broadcastUserExitGroup(GroupUserExitEvent event) throws Exception {
+        // 删除会话
+        conversationService.deleteConversation(event.getUserId(), event.getGroupId(),
+            ConversationType.GROUP_CONVERSATION_TYPE);
+        MessageContent.GroupUserExitedMessage message =
+            new MessageContent.GroupUserExitedMessage(event.getGroupId(), event.getUserId());
+        sendGroupNotice(event.getUserId(), event.getGroupId(), message);
         LOGGER.info("Group user exit event broadcast success:{}", event);
     }
 
     @RabbitListener(queues = AMQPConstants.QueueNames.GROUP_USER_KICKED_BROADCAST)
     public void broadcastUserKickedGroup(GroupUserKickEvent event) throws Exception {
-        // 通知
-        sendGroupNotice(event.getOperatorId(), event.getGroupId(),
-            event.getKickUserName() + " 已被 " + event.getOperatorName() + " 踢出群聊");
-        //删除会话
-        conversationService.deleteConversation(event.getKickUserId(), event.getGroupId(), ConversationType.GROUP_CONVERSATION_TYPE);
+        // 构建通知消息内容
+        MessageContent.GroupUserKickedMessage kickedMessage = new MessageContent.GroupUserKickedMessage(
+            event.getGroupId(), event.getKickedUsers(), event.getOperatorId());
+        sendGroupNotice(event.getOperatorId(), event.getGroupId(), kickedMessage);
+        // 删除会话
+        conversationService.deleteConversations(event.getKickedUsers(), event.getGroupId(),
+            ConversationType.GROUP_CONVERSATION_TYPE);
         LOGGER.info("Group user kicked event broadcast success:{}", event);
     }
 
-    public void sendGroupNotice(long senderId, long groupId, String msgContent) {
+    public void sendGroupNotice(long senderId, long groupId, MessageContent msgContent) throws Exception {
         MessageToConversation req = new MessageToConversation();
         req.setTargetId(groupId);
-        req.setMsgContent(msgContent);
+        req.setMsgContent(msgContent.toJson());
         req.setMsgType(MsgType.NOTICE);
         req.setConversationType(ConversationType.GROUP_CONVERSATION_TYPE);
         req.setUserId(senderId);

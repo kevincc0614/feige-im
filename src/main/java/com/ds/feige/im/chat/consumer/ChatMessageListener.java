@@ -46,7 +46,7 @@ public class ChatMessageListener {
         long msgId = event.getMsgId();
         long senderId = event.getSenderId();
         int msgType = event.getMsgType();
-        MessageToUser chatMessage = BeansConverter.conversationMsgToChatMsg(event);
+        MessageToUser chatMessage = BeansConverter.conversationMsgToMessageToUser(event);
         // 给群用户收件箱写消息
         Set<Long> receiverIds = event.getReceiverIds();
         List<MessageOfUser> list =

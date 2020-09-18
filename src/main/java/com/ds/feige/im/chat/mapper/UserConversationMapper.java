@@ -1,12 +1,15 @@
 package com.ds.feige.im.chat.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ds.feige.im.chat.entity.UserConversation;
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Select;
-
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.ds.feige.im.chat.entity.UserConversation;
 
 public interface UserConversationMapper extends BaseMapper<UserConversation> {
     @Select("SELECT * FROM t_user_conversation where user_id=#{userId} and target_id=#{targetId} and conversation_type=#{conversationType}")
@@ -32,6 +35,12 @@ public interface UserConversationMapper extends BaseMapper<UserConversation> {
 
     @Delete("DELETE FROM t_user_conversation WHERE user_id=#{userId} AND target_id=#{targetId} and conversation_type=#{conversationType}")
     int deleteByUserAndTargetAndType(long userId, long targetId, int conversationType);
+
+    @Delete({"<script> ",
+        "DELETE FROM t_user_conversation WHERE target_id=#{targetId} and conversation_type=#{conversationType} and user_id IN",
+        "<foreach item='item' index='index' collection='userIds' open='(' separator=',' close=')'>", "#{item}",
+        "</foreach>", "</script>"})
+    int deleteByUsersAndTargetAndType(@Param("userIds") Collection<Long> userIds, long targetId, int conversationType);
 
     @Select("SELECT COUNT(*) FROM t_user_conversation WHERE conversation_id=#{conversationId}")
     int getMembersNum(long conversationId);

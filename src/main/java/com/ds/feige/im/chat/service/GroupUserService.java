@@ -1,11 +1,11 @@
 package com.ds.feige.im.chat.service;
 
+import java.util.List;
+import java.util.Set;
+
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.chat.dto.group.GroupInfo;
 import com.ds.feige.im.constants.GroupUserRole;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author DC
@@ -50,10 +50,10 @@ public interface GroupUserService {
      * 踢出用户
      *
      * @param groupId
-     * @param kickUserId
+     * @param kickUsers
      * @param operatorId
      */
-    void kickUser(long groupId, long kickUserId, long operatorId);
+    void kickUser(long groupId, Set<Long> kickUsers, long operatorId);
 
     /**
      * 设置用户群权限,比如设置管理员

@@ -50,7 +50,7 @@ public class GroupController {
 
     @SocketRequestMapping(SocketPaths.CS_KICK_GROUP_USER)
     public void kickUser(@RequestBody @Valid KickGroupUserRequest request) {
-        groupUserService.kickUser(request.getGroupId(), request.getKickUserId(), request.getUserId());
+        groupUserService.kickUser(request.getGroupId(), request.getKickUserIds(), request.getUserId());
     }
 
     @SocketRequestMapping(SocketPaths.CS_SET_GROUP_USER_ROLE)

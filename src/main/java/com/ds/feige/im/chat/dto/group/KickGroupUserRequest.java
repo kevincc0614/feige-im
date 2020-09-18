@@ -1,5 +1,7 @@
 package com.ds.feige.im.chat.dto.group;
 
+import java.util.Set;
+
 import javax.validation.constraints.Positive;
 
 import lombok.Data;
@@ -12,5 +14,5 @@ import lombok.Data;
 @Data
 public class KickGroupUserRequest extends GroupUserRequest {
     @Positive
-    private long kickUserId;
+    private Set<Long> kickUserIds;
 }
