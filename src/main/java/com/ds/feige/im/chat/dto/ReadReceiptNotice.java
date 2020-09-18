@@ -1,8 +1,8 @@
 package com.ds.feige.im.chat.dto;
 
-import lombok.Data;
-
 import java.util.List;
+
+import lombok.Data;
 
 /**
  * 已读回执通知
@@ -13,20 +13,4 @@ import java.util.List;
 public class ReadReceiptNotice {
     private long readerId;
     private List<Long> msgIds;
-
-    public long getReaderId() {
-        return readerId;
-    }
-
-    public void setReaderId(long readerId) {
-        this.readerId = readerId;
-    }
-
-    public List<Long> getMsgIds() {
-        return msgIds;
-    }
-
-    public void setMsgIds(List<Long> msgIds) {
-        this.msgIds = msgIds;
-    }
 }

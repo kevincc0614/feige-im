@@ -7,6 +7,6 @@ import org.springframework.context.annotation.Configuration;
  * @author DC
  */
 @Configuration
-@EnableConfigurationProperties(UserSecurityProperties.class)
+@EnableConfigurationProperties(AccountSecurityProperties.class)
 public class UserConfiguration {
 }

@@ -18,52 +18,54 @@ public class SessionUser {
     private Long userId;
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionUser.class);
     private RedissonClient redissonClient;
-
     public SessionUser(long userId, RedissonClient redissonClient) {
         this.userId = userId;
         this.redissonClient = redissonClient;
     }
 
-    public SessionUser(Long userId, RedissonClient redissonClient, ConnectionMeta meta) {
-        this(userId, redissonClient);
-        this.addConnectionMeta(meta);
-    }
-
-    public void addConnectionMeta(ConnectionMeta connectionMeta) {
+    public void connectionEstablished(ConnectionMeta connectionMeta) {
         TransactionOptions transactionOptions = TransactionOptions.defaults();
         RTransaction transaction = redissonClient.createTransaction(transactionOptions);
+        String deviceConnectionKey = getDeviceConnectionKey(connectionMeta.getDeviceId());
         //获取用户链接列表<sessionId>
         RSet<String> connectionKeys = transaction.getSet(CacheKeys.SESSION_USER_CONNECTIONS + this.userId);
-        connectionKeys.add(connectionMeta.getDeviceId());
+        connectionKeys.add(deviceConnectionKey);
         //单个Connection的缓存
-        RBucket<ConnectionMeta> metaRBucket = transaction.getBucket(CacheKeys.SESSION_USER_CONNECTION + connectionMeta.getDeviceId());
-        metaRBucket.set(connectionMeta,60,TimeUnit.MINUTES);
+        RBucket<ConnectionMeta> metaRBucket = transaction.getBucket(deviceConnectionKey);
+        metaRBucket.set(connectionMeta, 60, TimeUnit.MINUTES);
         transaction.commit();
-        LOGGER.info("Add connection meta:userId={},deviceId={},sessionId={}",userId,connectionMeta.getDeviceId(),connectionMeta.getSessionId());
+        //更新state
+        RBucket<UserState> stateRBucket = redissonClient.getBucket(CacheKeys.SESSION_USER_STATE + userId);
+        UserState state = stateRBucket.get();
+        if (state == null) {
+            state = new UserState();
+        }
+        state.setOnline(true);
+        stateRBucket.set(state);
+        LOGGER.info("Add connection meta:userId={},connectionKey={},sessionId={}", userId, deviceConnectionKey, connectionMeta.getSessionId());
     }
 
     public Map<String, ConnectionMeta> getConnectionMetas() {
         RSet<String> deviceIds = redissonClient.getSet(CacheKeys.SESSION_USER_CONNECTIONS + this.userId);
-        String[] deviceIdArray = new String[deviceIds.size()];
+        String[] deviceConnectionKeys = new String[deviceIds.size()];
         int i = 0;
-        for (String deviceId : deviceIds) {
-            deviceIdArray[i] = CacheKeys.SESSION_USER_CONNECTION + deviceId;
+        for (String key : deviceIds) {
+            deviceConnectionKeys[i] = key;
             i++;
         }
-        Map<String, ConnectionMeta> metaMap = redissonClient.getBuckets().get(deviceIdArray);
-
+        Map<String, ConnectionMeta> metaMap = redissonClient.getBuckets().get(deviceConnectionKeys);
         return metaMap;
     }
 
     public boolean keepAlive(String deviceId) {
-        String key = CacheKeys.SESSION_USER_CONNECTION + deviceId;
-        RBucket<ConnectionMeta> bucket = redissonClient.getBucket(key);
+        String deviceConnectionKey = getDeviceConnectionKey(deviceId);
+        RBucket<ConnectionMeta> bucket = redissonClient.getBucket(deviceConnectionKey);
         ConnectionMeta meta = bucket.get();
         if (meta == null) {
             return false;
         }
         meta.setLastActiveTime(new Date());
-        bucket.set(meta, 60, TimeUnit.MINUTES);
+        bucket.set(meta, 6, TimeUnit.MINUTES);
         return true;
     }
 
@@ -84,23 +86,29 @@ public class SessionUser {
         return null;
     }
 
-    public ConnectionMeta getMetaByDeviceId(String deviceId) {
-        String key = CacheKeys.SESSION_USER_CONNECTION + deviceId;
+    public ConnectionMeta getConnectionMetaByDeviceId(String deviceId) {
+        String key = getDeviceConnectionKey(deviceId);
         RBucket<ConnectionMeta> bucket = redissonClient.getBucket(key);
         return bucket.get();
     }
 
-    public boolean removeConnectionMeta(String deviceId) {
+    public boolean disconnectConnection(String deviceId) {
         //删除ConnectionMeta缓存
-        String key = CacheKeys.SESSION_USER_CONNECTION + deviceId;
+        String key = getDeviceConnectionKey(deviceId);
         RTransaction transaction = redissonClient.createTransaction(TransactionOptions.defaults());
         RBucket<ConnectionMeta> bucket = transaction.getBucket(key);
         boolean metaDeleted = bucket.delete();
         //删除集合中的key
         RSet<String> sessionIdSet = transaction.getSet(CacheKeys.SESSION_USER_CONNECTIONS + this.userId);
-        boolean setDeleted = sessionIdSet.remove(deviceId);
+        boolean setDeleted = sessionIdSet.remove(key);
         transaction.commit();
-        LOGGER.info("Remove connection meta:userId={},deviceId={}",userId,deviceId);
+        //更新state
+        UserState userState = new UserState();
+        userState.setOnline(isOnline());
+        userState.setOfflineTime(System.currentTimeMillis());
+        RBucket<UserState> stateRBucket = redissonClient.getBucket(CacheKeys.SESSION_USER_STATE + userId);
+        stateRBucket.set(userState);
+        LOGGER.info("Remove connection meta:userId={},connectionKey={}", userId, key);
         return metaDeleted && setDeleted;
     }
 
@@ -110,9 +118,19 @@ public class SessionUser {
         return sessionLock;
     }
 
+    public String getDeviceConnectionKey(String deviceId) {
+        return CacheKeys.SESSION_USER_CONNECTION + this.userId + "." + deviceId;
+    }
+
     public boolean isOnline() {
         Map<String, ConnectionMeta> map = getConnectionMetas();
         return map != null && !map.isEmpty();
     }
+
+    public UserState getState() {
+        RBucket<UserState> bucket = redissonClient.getBucket(CacheKeys.SESSION_USER_STATE + userId);
+        return bucket.get();
+    }
+
 }
 

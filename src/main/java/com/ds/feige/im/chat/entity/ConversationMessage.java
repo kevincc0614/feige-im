@@ -24,10 +24,6 @@ public class ConversationMessage extends BaseEntity {
      */
     private Long targetId;
     /**
-     * 客户端消息ID,去重,排序
-     */
-    private Long sendSeqId;
-    /**
      * 消息ID
      */
     private Long msgId;
@@ -43,4 +39,12 @@ public class ConversationMessage extends BaseEntity {
      * 消息相关参数配置,比如是否漫游,是否离线推送,是否计入未读等等
      */
     private String option;
+    /**
+     * 已读人数
+     */
+    private Integer readCount;
+    /**
+     * 接收人数
+     */
+    private Integer receiverCount;
 }

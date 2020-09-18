@@ -2,10 +2,10 @@ package com.ds.feige.im.common.util;
 
 import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.entity.User;
-import com.ds.feige.im.chat.dto.ChatMessage;
+import com.ds.feige.im.chat.dto.MessageToUser;
 import com.ds.feige.im.chat.dto.UserConversationInfo;
+import com.ds.feige.im.chat.dto.event.ConversationMessageEvent;
 import com.ds.feige.im.chat.dto.group.GroupInfo;
-import com.ds.feige.im.chat.entity.ConversationMessage;
 import com.ds.feige.im.chat.entity.Group;
 import com.ds.feige.im.chat.entity.UserConversation;
 import com.ds.feige.im.enterprise.dto.DepartmentInfo;
@@ -50,8 +50,8 @@ public class BeansConverter {
         return groupInfo;
     }
 
-    public static ChatMessage conversationMsgToChatMsg(ConversationMessage message) {
-        ChatMessage chatMessage = new ChatMessage();
+    public static MessageToUser conversationMsgToChatMsg(ConversationMessageEvent message) {
+        MessageToUser chatMessage = new MessageToUser();
         BeanUtils.copyProperties(message, chatMessage);
         return chatMessage;
     }

@@ -1,10 +1,13 @@
 package com.ds.feige.im.gateway.socket.annotation;
 
+import java.lang.annotation.*;
+
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.web.bind.annotation.ValueConstants;
 
-import java.lang.annotation.*;
-
+/**
+ * @author DC
+ */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented

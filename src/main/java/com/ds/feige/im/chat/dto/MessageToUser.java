@@ -2,16 +2,19 @@ package com.ds.feige.im.chat.dto;
 
 import lombok.Data;
 
+import java.util.Date;
+
 /**
- * 用户收件箱消息DTO封装
- *
  * @author DC
  */
 @Data
 public class MessageToUser {
-    private long userId;
-    private long msgId;
     private long conversationId;
     private long senderId;
+    private long msgId;
+    private String msgContent;
     private int msgType;
+    private int readCount;
+    private int receiverCount;
+    private Date createTime;
 }

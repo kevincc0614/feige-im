@@ -19,9 +19,10 @@ public interface UserMessageMapper extends BaseMapper<UserMessage> {
      * @param userId
      * @param minUnAckMsgId
      */
-    @Select("SELECT COUNT(msg_id)  unread_count,MAX(msg_id) last_msg_id,conversation_id conversation_id " +
-            "FROM t_user_message WHERE user_id=#{userId} and msg_type!=10 and msg_id>#{minUnAckMsgId} and state<2 GROUP BY conversation_id")
-    List<UnreadMessagePreview> getConversationUnreadPreview(long userId, long minUnAckMsgId);
+    @Select("SELECT COUNT(m.msg_id)  unread_count,MAX(m.msg_id) last_msg_id,m.conversation_id conversation_id,c.conversation_name conversation_name " +
+            "FROM t_user_message m RIGHT JOIN t_user_conversation c ON m.conversation_id=c.conversation_id AND m.user_id=c.user_id " +
+            "WHERE c.user_id=#{userId} and m.msg_type<20 and m.msg_id>=#{minUnAckMsgId} and m.state<2 GROUP BY conversation_id,conversation_name")
+    List<UnreadMessagePreview> getUnreadMessagePreview(long userId, long minUnAckMsgId);
 
     @Select("SELECT MIN(msg_id) FROM t_user_message WHERE user_id=#{userId} AND state=0")
     Long getMinUnAckMsgId(long userId);

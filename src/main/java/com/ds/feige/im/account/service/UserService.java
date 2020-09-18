@@ -1,13 +1,13 @@
 package com.ds.feige.im.account.service;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.ds.feige.im.account.dto.GetTokenRequest;
 import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.dto.UserRegisterRequest;
 
-import java.util.List;
-
 public interface UserService {
-
 
     UserInfo getUserByMobile(String mobile);
 
@@ -26,20 +26,16 @@ public interface UserService {
      */
     UserInfo verifyToken(String token);
 
-    /**
-     * 判断用户是否存在
-     */
-    boolean userExists(long userId);
-
     long register(UserRegisterRequest registerRequest);
 
     boolean deleteUser(long userId);
 
     /**
      * 获取用户信息
+     * 
      * @param userId
      * @return 用户信息
-     * */
+     */
     UserInfo getUserById(long userId);
 
     /**
@@ -48,7 +44,7 @@ public interface UserService {
      * @param userIdList
      * @return 返回的是存在的用户ID
      */
-    List<UserInfo> getUserByIds(List<Long> userIdList);
+    List<UserInfo> getUserByIds(Collection<Long> userIdList);
 
     /**
      * 注销用户

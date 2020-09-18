@@ -3,7 +3,7 @@ package com.ds.feige.im.favorite.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ds.base.nodepencies.exception.WarnMessageException;
-import com.ds.feige.im.chat.dto.ChatMessage;
+import com.ds.feige.im.chat.dto.MessageToUser;
 import com.ds.feige.im.chat.service.ChatService;
 import com.ds.feige.im.common.util.BeansConverter;
 import com.ds.feige.im.constants.FeigeWarn;
@@ -27,7 +27,7 @@ public class MarkMessageServiceImpl extends ServiceImpl<MarkMessageMapper, MarkM
     public long mark(MarkRequest request) {
         log.info("Mark message start:request={}", request);
         long msgId = request.getMsgId();
-        ChatMessage chatMessage = chatService.getMessage(msgId);
+        MessageToUser chatMessage = chatService.getMessage(msgId);
         if (chatMessage == null) {
             throw new WarnMessageException(FeigeWarn.CHAT_MSG_NOT_EXISTS);
         }

@@ -11,6 +11,7 @@ public class UserMessage extends BaseEntity {
     private Long senderId;
     private Long conversationId;
     private Long msgId;
+    private String msgContent;
     private Integer msgType;
     private Integer state;
 
@@ -60,5 +61,13 @@ public class UserMessage extends BaseEntity {
 
     public void setMsgType(Integer msgType) {
         this.msgType = msgType;
+    }
+
+    public String getMsgContent() {
+        return msgContent;
+    }
+
+    public void setMsgContent(String msgContent) {
+        this.msgContent = msgContent;
     }
 }

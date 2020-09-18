@@ -1,8 +1,8 @@
 package com.ds.feige.im.enterprise.service;
 
-import com.ds.feige.im.enterprise.dto.*;
-
 import java.util.List;
+
+import com.ds.feige.im.enterprise.dto.*;
 
 public interface EnterpriseService {
 
@@ -65,8 +65,10 @@ public interface EnterpriseService {
     /**
      * 获取部门信息
      *
-     * @param departmentId 部门ID
-     * @param queryChild   是否查询子部门
+     * @param departmentId
+     *            部门ID
+     * @param queryChild
+     *            是否查询子部门
      */
     DepartmentInfo getDepartment(long enterpriseId, long departmentId, boolean queryChild);
 

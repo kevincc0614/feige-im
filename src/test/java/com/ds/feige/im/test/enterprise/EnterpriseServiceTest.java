@@ -1,5 +1,6 @@
 package com.ds.feige.im.test.enterprise;
 
+import com.ds.feige.im.enterprise.dto.EditDepEmpRequest;
 import com.ds.feige.im.test.BaseTest;
 import org.junit.Test;
 
@@ -67,41 +68,16 @@ public class EnterpriseServiceTest extends BaseTest {
 ////        enterpriseService.deleteDepartment(request);
 //    }
 //
-//    @Test
-//    public void testAddEmpToDep() {
-//        WarnMessageException exception = null;
-//        EditDepEmpRequest request = new EditDepEmpRequest();
-//        //员工判断
-//        try {
-//            request.setEnterpriseId(ENT_ID);
-//            request.setDepartmentId(DEP_ID);
-//            request.setLeader(true);
-//            request.setUserId(USER_ID);
-//            request.setOperatorId(USER_ID);
-//            enterpriseService.addDepartmentEmployee(request);
-//        }catch (WarnMessageException e){
-//            exception=e;
-//        }
-//        Assert.assertEquals(FeigeWarn.EMPLOYEE_NOT_EXISTS.code(), exception.getCode());
-//        //部门判断
-//        try {
-//            request.setDepartmentId(DEP_ID + 1);
-//            enterpriseService.addDepartmentEmployee(request);
-//        } catch (WarnMessageException e) {
-//            exception = e;
-//        }
-//        Assert.assertEquals(FeigeWarn.DEPARTMENT_NOT_EXISTS.code(), exception.getCode());
-//        //正常添加
-//        request.setDepartmentId(DEP_ID);
-//        enterpriseService.addDepartmentEmployee(request);
-//        //重复添加判断
-//        try {
-//            enterpriseService.addDepartmentEmployee(request);
-//        } catch (WarnMessageException e) {
-//            exception = e;
-//        }
-//        Assert.assertEquals(FeigeWarn.EMPLOYEE_EXISTS_IN_DEPARTMENT.code(), exception.getCode());
-//    }
+@Test
+public void testAddEmpToDep() {
+    EditDepEmpRequest request = new EditDepEmpRequest();
+    request.setUserId(377665490283353088L);
+    request.setDepartmentId(377665490476291072L);
+    request.setEnterpriseId(377665490446930944L);
+    request.setLeader(true);
+    request.setOperatorId(377665490283353088L);
+    enterpriseService.addDepartmentEmployee(request);
+}
 //    @Test
 //    public void testGetDepartment(){
 //        DepartmentInfo departmentInfo = enterpriseService.getDepartment(ENT_ID, DEP_ID, true);

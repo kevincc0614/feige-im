@@ -1,10 +1,13 @@
 package com.ds.feige.im.gateway.socket.annotation;
 
+import java.lang.annotation.*;
+
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
 
-import java.lang.annotation.*;
-
+/**
+ * @author DC
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented

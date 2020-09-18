@@ -5,6 +5,7 @@ import com.ds.feige.im.chat.dto.group.GroupInfo;
 import com.ds.feige.im.constants.GroupUserRole;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author DC
@@ -32,10 +33,10 @@ public interface GroupUserService {
      * 添加用户进群
      *
      * @param groupId
-     * @param inviteeId  被邀请人ID
+     * @param inviteeIds 被邀请人ID
      * @param operatorId 邀请人ID
      */
-    void inviteJoinGroup(long groupId, long inviteeId,long operatorId);
+    void inviteJoinGroup(long groupId, Set<Long> inviteeIds, long operatorId);
 
     /**
      * 用户退出群聊
@@ -76,7 +77,7 @@ public interface GroupUserService {
      * @param groupId
      * @return 用户ID列表
      */
-    List<Long> getUserIds(long groupId);
+    Set<Long> getUserIds(long groupId);
 
     /**
      * @param groupId

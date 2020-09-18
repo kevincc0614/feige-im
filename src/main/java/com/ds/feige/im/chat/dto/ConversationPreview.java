@@ -9,7 +9,7 @@ import lombok.Data;
 public class ConversationPreview {
     private String conversationName;
     private String conversationAvatar;
-    private ChatMessage lastMsg;
+    private MessageToUser lastMsg;
     private long conversationId;
     private long lastMsgId;
     private int unreadCount;

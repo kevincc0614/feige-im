@@ -1,15 +1,16 @@
 package com.ds.feige.im.gateway.domain;
 
-import com.ds.feige.im.chat.dto.event.MessageForwardEvent;
-import com.ds.feige.im.constants.DynamicQueues;
-import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
-import com.ds.feige.im.gateway.socket.connection.UserConnection;
-import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
-import java.io.IOException;
+import com.ds.feige.im.chat.dto.event.MessageForwardEvent;
+import com.ds.feige.im.constants.AMQPConstants;
+import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
+import com.ds.feige.im.gateway.socket.connection.UserConnection;
+import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
 /**
  * 远程用户链接对象
  * */
@@ -25,7 +26,7 @@ public class RUserConnection implements UserConnection {
     @Override
     public boolean send(SocketRequest request) throws IOException {
         //非本机服务器通过MQ推送
-        String routeKey = DynamicQueues.SERVER_FORWARD_MESSAGE_QUEUE + meta.getInstanceId();
+        String routeKey = AMQPConstants.SERVER_FORWARD_MESSAGE_QUEUE + meta.getInstanceId();
         MessageForwardEvent message = new MessageForwardEvent();
         message.setMeta(this.meta);
 //        message.setSourceInstanceId(discoveryMQService.getInstanceId());
@@ -37,7 +38,7 @@ public class RUserConnection implements UserConnection {
 
     @Override
     public boolean disconnect(SocketRequest reason) throws IOException {
-        String routeKey = DynamicQueues.SERVER_FORWARD_DISCONNECT_MESSAGE_QUEUE + meta.getInstanceId();
+        String routeKey = AMQPConstants.SERVER_FORWARD_DISCONNECT_MESSAGE_QUEUE + meta.getInstanceId();
         MessageForwardEvent message = new MessageForwardEvent();
         message.setMeta(this.meta);
         message.setRequest(reason);

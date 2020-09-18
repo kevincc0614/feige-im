@@ -1,18 +1,19 @@
 package com.ds.feige.im.chat.controller;
 
-import com.ds.feige.im.chat.dto.event.InviteUserJoinGroupRequest;
+import java.util.List;
+
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import com.ds.feige.im.chat.dto.group.*;
 import com.ds.feige.im.chat.service.GroupUserService;
 import com.ds.feige.im.constants.GroupUserRole;
 import com.ds.feige.im.constants.SocketPaths;
 import com.ds.feige.im.gateway.socket.annotation.SocketController;
 import com.ds.feige.im.gateway.socket.annotation.SocketRequestMapping;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import javax.validation.Valid;
-import java.util.List;
 
 /**
  * 群聊controller
@@ -23,25 +24,30 @@ import java.util.List;
 public class GroupController {
     @Autowired
     GroupUserService groupUserService;
+
     @SocketRequestMapping(SocketPaths.CS_CREATE_GROUP)
-    public GroupInfo createGroup(@RequestBody @Valid CreateGroupRequest request){
-        List<Long> groupUserIds=request.getGroupUserIds();
-        long createUserId=request.getUserId();
-        String groupName=request.getGroupName();
-        return groupUserService.createGroup(groupUserIds,groupName,createUserId);
+    public GroupInfo createGroup(@RequestBody @Valid CreateGroupRequest request) {
+        List<Long> groupUserIds = request.getGroupUserIds();
+        long createUserId = request.getUserId();
+        String groupName = request.getGroupName();
+        return groupUserService.createGroup(groupUserIds, groupName, createUserId);
     }
+
     @SocketRequestMapping(SocketPaths.CS_DISBAND_GROUP)
-    public void disbandGroup(@RequestBody @Valid DisbandGroupRequest request){
-        groupUserService.disbandGroup(request.getGroupId(),request.getUserId());
+    public void disbandGroup(@RequestBody @Valid GroupUserRequest request) {
+        groupUserService.disbandGroup(request.getGroupId(), request.getUserId());
     }
+
     @SocketRequestMapping(SocketPaths.CS_USER_JOIN_GROUP)
-    public void joinGroup(@RequestBody @Valid InviteUserJoinGroupRequest request){
-        groupUserService.inviteJoinGroup(request.getGroupId(),request.getInviteeId(),request.getUserId());
+    public void joinGroup(@RequestBody @Valid InviteUserJoinGroupRequest request) {
+        groupUserService.inviteJoinGroup(request.getGroupId(), request.getInviteeIds(), request.getUserId());
     }
+
     @SocketRequestMapping(SocketPaths.CS_USER_EXIT_GROUP)
-    public void exitGroup(@RequestBody @Valid UserExitGroupRequest request){
-        groupUserService.exitGroup(request.getGroupId(),request.getUserId());
+    public void exitGroup(@RequestBody @Valid GroupUserRequest request) {
+        groupUserService.exitGroup(request.getGroupId(), request.getUserId());
     }
+
     @SocketRequestMapping(SocketPaths.CS_KICK_GROUP_USER)
     public void kickUser(@RequestBody @Valid KickGroupUserRequest request) {
         groupUserService.kickUser(request.getGroupId(), request.getKickUserId(), request.getUserId());
@@ -57,8 +63,9 @@ public class GroupController {
     public GroupInfo getInfo(@RequestParam("groupId") @Valid long groupId) {
         return groupUserService.getGroupInfo(groupId);
     }
+
     @SocketRequestMapping(SocketPaths.CS_GET_GROUP_USERS)
-    public void getUsers(@RequestParam("groupId") @Valid long groupId){
-        //TODO 待实现
+    public void getUsers(@RequestParam("groupId") @Valid long groupId) {
+        // TODO 待实现
     }
 }

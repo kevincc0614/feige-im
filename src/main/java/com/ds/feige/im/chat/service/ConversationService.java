@@ -1,8 +1,9 @@
 package com.ds.feige.im.chat.service;
 
-import com.ds.feige.im.chat.dto.CreateGroupConversation;
 import com.ds.feige.im.chat.dto.CreateGroupConversations;
 import com.ds.feige.im.chat.dto.UserConversationInfo;
+
+import java.util.Set;
 
 public interface ConversationService {
     /**
@@ -17,6 +18,10 @@ public interface ConversationService {
      */
     UserConversationInfo getUserConversation(long userId, long targetId, int conversationType);
 
+    UserConversationInfo getUserConversation(long userId, long conversationId);
+
+    Set<Long> getUserIdsByConversation(long conversationId);
+
     /**
      * 创建单聊会话
      *
@@ -26,13 +31,6 @@ public interface ConversationService {
      */
     UserConversationInfo createSingleConversation(long userId, long targetId);
 
-    /**
-     * 创建群聊会话
-     *
-     * @param createGroupConversation
-     * @return 会话信息
-     */
-    UserConversationInfo createGroupConversation(CreateGroupConversation createGroupConversation);
 
     /**
      * 删除指定会话

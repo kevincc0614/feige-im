@@ -7,7 +7,6 @@ import com.ds.feige.im.account.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 /**
@@ -29,7 +28,7 @@ public class AccountController {
 
     @RequestMapping("/profile")
     @NodAuthorizedRequest
-    public Response<UserInfo> getUserProfile(HttpServletRequest request, @RequestHeader(value = "im-auth-token", required = true) String token) {
+    public Response<UserInfo> getUserProfile(@RequestHeader(value = "im-auth-token", required = true) String token) {
         return new Response<>(userService.verifyToken(token));
     }
 }

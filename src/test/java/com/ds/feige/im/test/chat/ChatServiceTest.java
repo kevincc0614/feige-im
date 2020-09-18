@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class ChatServiceTest extends BaseTest {
@@ -20,7 +21,7 @@ public class ChatServiceTest extends BaseTest {
     @Test
     public void testSend(){
         for(int i=0;i<100;i++){
-            ConversationMessageRequest request = new ConversationMessageRequest();
+            MessageToConversation request = new MessageToConversation();
             if(i%2==0){
                 request.setUserId(USER_ID_1);
                 request.setTargetId(USER_ID_2);
@@ -32,7 +33,7 @@ public class ChatServiceTest extends BaseTest {
             }
             request.setConversationType(ConversationType.SINGLE_CONVERSATION_TYPE);
             request.setMsgType(MsgType.TEXT);
-            SendMessageResult result = chatService.sendMsg(request);
+            SendMessageResult result = chatService.sendToConversation(request);
             System.out.println("发送消息结果:"+result.toString());
         }
 
@@ -44,7 +45,7 @@ public class ChatServiceTest extends BaseTest {
         request.setMaxMsgId(Long.MAX_VALUE);
         request.setPageSize(2);
         request.setUserId(USER_ID_1);
-        List<ChatMessage> chatMessageList =chatService.pullMsg(request);
+        List<MessageToUser> chatMessageList = chatService.pullMessages(request);
         System.out.println(JsonUtils.toJson(chatMessageList));
 //        for(ChatMessage msg: chatMessageList){
 //            System.out.println("发送者:"+msg.getSenderId());
@@ -53,26 +54,27 @@ public class ChatServiceTest extends BaseTest {
 //        Assert.assertEquals(0, chatMessageList.size());
 
     }
+
     @Test
-    public void testAck(){
+    public void testAck() {
         ConversationMessageQueryRequest request = new ConversationMessageQueryRequest();
         request.setConversationId(2008141888938344448l);
         request.setMaxMsgId(Long.MAX_VALUE);
         request.setPageSize(100);
         request.setUserId(USER_ID_1);
-        List<ChatMessage> chatMessageList =chatService.pullMsg(request);
-        List<Long> msgIds=new ArrayList<>();
-        for(ChatMessage msg: chatMessageList){
-            System.out.println("发送者:"+msg.getSenderId());
-            System.out.println("消息内容:"+msg.getMsgContent());
+        List<MessageToUser> chatMessageList = chatService.pullMessages(request);
+        List<Long> msgIds = new ArrayList<>();
+        for (MessageToUser msg : chatMessageList) {
+            System.out.println("发送者:" + msg.getSenderId());
+            System.out.println("消息内容:" + msg.getMsgContent());
             msgIds.add(msg.getMsgId());
         }
-        ChatMessageAckResult result = chatService.ackMsg(USER_ID_1, msgIds);
+        ChatMessageAckResult result = chatService.ackMessages(USER_ID_1, msgIds);
         System.out.println(result);
     }
     @Test
     public void testChatPreview() throws Exception{
-        List<ConversationPreview> previews = chatService.getConversationPreviews(377665490283353088L);
+        Collection<ConversationPreview> previews = chatService.getConversationPreviews(377665490283353088L);
         System.out.println(JsonUtils.toJson(previews));
     }
 }

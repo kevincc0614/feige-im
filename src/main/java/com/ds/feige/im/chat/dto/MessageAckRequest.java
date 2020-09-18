@@ -9,6 +9,6 @@ import java.util.List;
  * @author DC
  */
 @Data
-public class ChatMessageAckRequest extends UserRequest {
+public class MessageAckRequest extends UserRequest {
     private List<Long> msgIds;
 }

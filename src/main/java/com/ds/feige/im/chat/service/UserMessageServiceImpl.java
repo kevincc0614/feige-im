@@ -2,7 +2,7 @@ package com.ds.feige.im.chat.service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ds.feige.im.chat.dto.ChatMessageAckResult;
-import com.ds.feige.im.chat.dto.MessageToUser;
+import com.ds.feige.im.chat.dto.MessageOfUser;
 import com.ds.feige.im.chat.entity.UserMessage;
 import com.ds.feige.im.chat.mapper.UserMessageMapper;
 import com.ds.feige.im.chat.po.SenderAndMsg;
@@ -23,13 +23,12 @@ import java.util.stream.Collectors;
 @Service
 public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserMessage> implements UserMessageService {
     static final Logger LOGGER = LoggerFactory.getLogger(UserMessageServiceImpl.class);
-
     public UserMessageServiceImpl() {
 
     }
 
     @Override
-    public long store(MessageToUser message) {
+    public long store(MessageOfUser message) {
         //TODO 缓存优化
         UserMessage entity = buildUserMessageEntity(message);
         save(entity);
@@ -37,13 +36,13 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
     }
 
     @Override
-    public void store(List<MessageToUser> messages) {
+    public void store(List<MessageOfUser> messages) {
         //TODO 缓存优化
         List<UserMessage> entities = messages.stream().map(msg -> buildUserMessageEntity(msg)).collect(Collectors.toList());
         saveBatch(entities);
     }
 
-    UserMessage buildUserMessageEntity(MessageToUser message) {
+    UserMessage buildUserMessageEntity(MessageOfUser message) {
         UserMessage entity = new UserMessage();
         entity.setUserId(message.getUserId());
         entity.setMsgId(message.getMsgId());
@@ -84,7 +83,7 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
         if (minUnAckMsgId == null) {
             minUnAckMsgId = 0L;
         }
-        List<UnreadMessagePreview> previews = baseMapper.getConversationUnreadPreview(userId, minUnAckMsgId);
+        List<UnreadMessagePreview> previews = baseMapper.getUnreadMessagePreview(userId, minUnAckMsgId);
         return previews;
     }
 }

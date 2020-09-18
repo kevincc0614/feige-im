@@ -1,9 +1,8 @@
 package com.ds.feige.im.common.configurer;
 
-import com.ds.feige.im.constants.DynamicQueues;
-import com.ds.feige.im.gateway.DiscoveryService;
-import com.ds.feige.im.gateway.consumer.DynamicQueueListener;
-import com.google.common.collect.Lists;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Binding;
@@ -21,8 +20,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
-import java.util.Map;
+import com.ds.feige.im.constants.AMQPConstants;
+import com.ds.feige.im.gateway.DiscoveryService;
+import com.ds.feige.im.gateway.consumer.DynamicQueueListener;
+import com.google.common.collect.Lists;
 
 @Configuration
 @EnableRabbit
@@ -34,22 +35,22 @@ public class RabbitMQConfiguration {
     @Bean
     RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory, @Autowired DiscoveryService discoveryService) {
         RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
-        //动态队列绑定
+        // 动态队列绑定
         for (String queueName : buildDynamicQueueNames(discoveryService)) {
-            //非持久化,排他,链接断开自动删除
+            // 非持久化,排他,链接断开自动删除
             Queue dynamicQueue = new Queue(queueName, false, true, true);
             rabbitAdmin.declareQueue(dynamicQueue);
-            Binding binding = new Binding(queueName,
-                    Binding.DestinationType.QUEUE, exchange, queueName, null);
+            Binding binding = new Binding(queueName, Binding.DestinationType.QUEUE, exchange, queueName, null);
             rabbitAdmin.declareBinding(binding);
             LOGGER.info("RabbitMQ binding dynamic queue:routingKey={},queue={}", queueName, queueName);
         }
-        Map<String, String[]> routeKeyQueues = DynamicQueues.BINDINGS;
+        Map<String, String[]> routeKeyQueues = AMQPConstants.BINDINGS;
         for (Map.Entry<String, String[]> entry : routeKeyQueues.entrySet()) {
             for (String queueName : entry.getValue()) {
                 Queue queue = new Queue(queueName);
                 rabbitAdmin.declareQueue(queue);
-                Binding binding = new Binding(queueName, Binding.DestinationType.QUEUE, this.exchange, entry.getKey(), null);
+                Binding binding =
+                    new Binding(queueName, Binding.DestinationType.QUEUE, this.exchange, entry.getKey(), null);
                 rabbitAdmin.declareBinding(binding);
                 LOGGER.info("RabbitMQ binding static queue:routingKey={},queue={}", entry.getKey(), queueName);
             }
@@ -59,10 +60,10 @@ public class RabbitMQConfiguration {
     }
 
     List<String> buildDynamicQueueNames(DiscoveryService discoveryService) {
-        String[] privateQueues = DynamicQueues.ALL_DYNAMIC_QUEUES;
+        String[] privateQueues = AMQPConstants.ALL_DYNAMIC_QUEUES;
         List<String> result = Lists.newArrayListWithCapacity(privateQueues.length);
         for (int i = 0; i < privateQueues.length; i++) {
-            //声明专属队列
+            // 声明专属队列
             result.add(privateQueues[i] + discoveryService.getInstanceId());
         }
         return result;
@@ -76,8 +77,7 @@ public class RabbitMQConfiguration {
     @Bean
     @ConditionalOnBean(DiscoveryService.class)
     SimpleMessageListenerContainer dynamicMessageListenerContainer(ConnectionFactory connectionFactory,
-                                                                   @Autowired DiscoveryService discoveryService,
-                                                                   @Autowired DynamicQueueListener listener) {
+        @Autowired DiscoveryService discoveryService, @Autowired DynamicQueueListener listener) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         List<String> dynamicQueues = buildDynamicQueueNames(discoveryService);

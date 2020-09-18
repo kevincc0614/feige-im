@@ -1,17 +1,18 @@
 package com.ds.feige.im.gateway.service;
 
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.account.dto.LoginRequest;
 import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.gateway.entity.UserDevice;
 import com.ds.feige.im.gateway.mapper.UserDeviceMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 用户设备管理
@@ -19,12 +20,11 @@ import java.util.List;
  * @author DC
  */
 @Service
+@Slf4j
 public class UserDeviceServiceImpl extends ServiceImpl<UserDeviceMapper, UserDevice> implements UserDeviceService {
-    static Logger LOGGER = LoggerFactory.getLogger(UserDeviceServiceImpl.class);
-
     @Override
     public void deviceLogin(LoginRequest loginRequest) {
-        //判断是更新还是新增
+        // 判断是更新还是新增
         UserDevice device = baseMapper.getByUserIdAndDeviceId(loginRequest.getUserId(), loginRequest.getDeviceId());
         if (device == null) {
             device = new UserDevice();
@@ -37,7 +37,8 @@ public class UserDeviceServiceImpl extends ServiceImpl<UserDeviceMapper, UserDev
         }
         device.setLastLoginTime(new Date());
         save(device);
-        LOGGER.info("User device login:userId={},deviceId={},deviceType={}", loginRequest.getUserId(), loginRequest.getDeviceId(), loginRequest.getDeviceType());
+        log.info("User device login:userId={},deviceId={},deviceType={}", loginRequest.getUserId(),
+            loginRequest.getDeviceId(), loginRequest.getDeviceType());
     }
 
     @Override
@@ -48,7 +49,7 @@ public class UserDeviceServiceImpl extends ServiceImpl<UserDeviceMapper, UserDev
         }
         device.setStatus(-1);
         save(device);
-        LOGGER.info("User device logout:userId={},deviceId={},deviceType={}", userId, deviceId, device.getDeviceType());
+        log.info("User device logout:userId={},deviceId={},deviceType={}", userId, deviceId, device.getDeviceType());
     }
 
     @Override

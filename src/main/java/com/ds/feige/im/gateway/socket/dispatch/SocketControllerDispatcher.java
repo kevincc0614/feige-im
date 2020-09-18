@@ -10,8 +10,7 @@ import com.ds.feige.im.gateway.socket.protocol.SocketResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -26,9 +25,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 @Component
+@Slf4j
 public class SocketControllerDispatcher implements BeanPostProcessor {
-    static Logger LOGGER= LoggerFactory.getLogger(SocketControllerDispatcher.class);
     private Map<String, SocketMethodHandler> invokeMethods= Maps.newHashMap();
     static final ObjectMapper jsonMapper=new ObjectMapper();
     private List<SocketMethodHandlerInterceptor> interceptors =new ArrayList<>();
@@ -43,12 +43,12 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
     public void doService(WebSocketSession session, SocketRequest socketRequest){
         String path= socketRequest.getPath();
         if(Strings.isNullOrEmpty(path)){
-            LOGGER.warn("The path of websocket message is empty:session={}",session);
+            log.warn("The path of websocket message is empty:session={}", session);
             return;
         }
         SocketMethodHandler invoker=invokeMethods.get(path);
         if(invoker==null){
-            LOGGER.warn("No suitable method mapping was found:path={}",path);
+            log.warn("No suitable method mapping was found:path={}", path);
             return;
         }
         this.interceptors.forEach(interceptor -> {
@@ -63,8 +63,8 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
                     interceptor.postHandle(session, socketRequest,result,invoker);
                 }
             }catch (Throwable e){
-                dispatchEx=e;
-                LOGGER.error("Dispatch exception:request={}",socketRequest,dispatchEx);
+                dispatchEx = e;
+                log.error("Dispatch exception:request={}", socketRequest, dispatchEx);
             }
             processServiceResult(session,socketRequest,result,invoker,dispatchEx);
         }catch (Throwable e){
@@ -101,17 +101,17 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
             }
             if(session.isOpen()){
                 String responseText=jsonMapper.writeValueAsString(response);
-                LOGGER.info("Response to client:responseText={}",responseText);
+                log.info("Response to client:responseText={}", responseText);
                 TextMessage responseMessage=new TextMessage(responseText);
                 session.sendMessage(responseMessage);
             }else{
-                LOGGER.debug("Need send response to session,but it is closed:session={}",session);
+                log.debug("Need send response to session,but it is closed:session={}", session);
             }
         }
     }
     public void addHandler(String path, SocketMethodHandler handler){
-        invokeMethods.put(path,handler);
-        LOGGER.info("Add method handler:path={},method={}",path,handler.getMethod());
+        invokeMethods.put(path, handler);
+        log.info("Add method handler:path={},method={}", path, handler.getMethod());
     }
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {

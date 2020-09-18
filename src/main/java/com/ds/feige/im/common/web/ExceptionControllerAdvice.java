@@ -1,8 +1,7 @@
 package com.ds.feige.im.common.web;
 
-import com.ds.base.nodepencies.api.Response;
-import com.ds.base.nodepencies.exception.WarnMessageException;
-import com.ds.feige.im.constants.FeigeWarn;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.ObjectError;
@@ -11,8 +10,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.List;
-
+import com.ds.base.nodepencies.api.Response;
+import com.ds.base.nodepencies.exception.WarnMessageException;
+import com.ds.feige.im.constants.FeigeWarn;
 
 @ControllerAdvice
 public class ExceptionControllerAdvice {
@@ -24,7 +24,7 @@ public class ExceptionControllerAdvice {
         LOGGER.warn("Http controller advice exception ", exception);
         Response response = new Response();
         if (exception instanceof WarnMessageException) {
-            WarnMessageException warnMessageException = (WarnMessageException) exception;
+            WarnMessageException warnMessageException = (WarnMessageException)exception;
             response.setCode(warnMessageException.getCode());
             response.setMessage(warnMessageException.getDisplayMessage());
         } else {
@@ -38,7 +38,7 @@ public class ExceptionControllerAdvice {
     @ResponseBody
     public Response handleArgumentValidateException(MethodArgumentNotValidException e) {
         Response response = new Response();
-        //打印校验住的所有的错误信息
+        // 打印校验住的所有的错误信息
         StringBuilder sb = new StringBuilder("参数错误：[");
         List<ObjectError> list = e.getBindingResult().getAllErrors();
         for (ObjectError item : list) {

@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author DC
  */
 @ConfigurationProperties("account.security")
-public class UserSecurityProperties {
+public class AccountSecurityProperties {
     private String tokenSignSecret;
 
     public String getTokenSignSecret() {

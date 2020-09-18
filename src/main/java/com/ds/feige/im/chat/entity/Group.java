@@ -2,6 +2,7 @@ package com.ds.feige.im.chat.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ds.feige.im.common.entity.BaseEntity;
+
 import lombok.Data;
 
 @TableName("t_group")
@@ -10,9 +11,6 @@ public class Group extends BaseEntity {
     private String name;
     private String avatar;
     private Integer type;
-    /**
-     * 会话是否已创建
-     */
     private Long conversationId;
     private Integer maxUserLimit;
     private String announcement;

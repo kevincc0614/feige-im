@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * 群和用户关系表
@@ -16,7 +16,7 @@ import java.util.List;
 public interface GroupUserMapper extends BaseMapper<GroupUser> {
 
     @Select("SELECT gu.user_id FROM t_group_user gu  WHERE gu.group_id=#{groupId}")
-    List<Long> findUserIdsByGroup(long groupId);
+    Set<Long> findUserIdsByGroup(long groupId);
 
     @Delete("DELETE FROM t_group_user where group_id=#{groupId}")
     int disbandGroup(long groupId);

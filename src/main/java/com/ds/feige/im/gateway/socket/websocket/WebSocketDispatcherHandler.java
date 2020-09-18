@@ -1,11 +1,11 @@
 package com.ds.feige.im.gateway.socket.websocket;
 
 import com.ds.feige.im.common.util.JsonUtils;
+import com.ds.feige.im.constants.SessionAttributeKeys;
 import com.ds.feige.im.gateway.service.SessionUserService;
 import com.ds.feige.im.gateway.socket.dispatch.SocketControllerDispatcher;
 import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -14,10 +14,10 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 @Component
+@Slf4j
 public class WebSocketDispatcherHandler extends TextWebSocketHandler {
     private final SocketControllerDispatcher controllerDispatcher;
     private final SessionUserService sessionUserService;
-    static final Logger LOGGER=LoggerFactory.getLogger(WebSocketDispatcherHandler.class);
     @Autowired
     public WebSocketDispatcherHandler(SocketControllerDispatcher controllerDispatcher, SessionUserService sessionUserService){
         this.controllerDispatcher=controllerDispatcher;
@@ -25,8 +25,9 @@ public class WebSocketDispatcherHandler extends TextWebSocketHandler {
     }
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String payload=message.getPayload();
-        LOGGER.debug("Received client text message:session={},payload={}",session,payload);
+        String payload = message.getPayload();
+        Long userId = (Long) session.getAttributes().get(SessionAttributeKeys.USER_ID);
+        log.info("Received client text message:userId={},payload={}", userId, payload);
         SocketRequest socketRequest = JsonUtils.jsonToBean(payload, SocketRequest.class);
         controllerDispatcher.doService(session, socketRequest);
     }
