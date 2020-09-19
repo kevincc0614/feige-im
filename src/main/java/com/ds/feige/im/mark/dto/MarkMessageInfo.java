@@ -1,4 +1,4 @@
-package com.ds.feige.im.favorite.dto;
+package com.ds.feige.im.mark.dto;
 
 /**
  * @author DC

@@ -1,9 +1,10 @@
-package com.ds.feige.im.favorite.dto;
-
-import com.ds.feige.im.account.dto.UserRequest;
-import lombok.Data;
+package com.ds.feige.im.mark.dto;
 
 import java.util.Date;
+
+import com.ds.feige.im.account.dto.UserRequest;
+
+import lombok.Data;
 
 /**
  * @author DC

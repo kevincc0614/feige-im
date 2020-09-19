@@ -20,8 +20,8 @@ import com.ds.feige.im.enterprise.dto.SimpleDepartmentInfo;
 import com.ds.feige.im.enterprise.entity.Department;
 import com.ds.feige.im.enterprise.entity.Employee;
 import com.ds.feige.im.enterprise.entity.Enterprise;
-import com.ds.feige.im.favorite.dto.MarkMessageInfo;
-import com.ds.feige.im.favorite.entity.MarkMessage;
+import com.ds.feige.im.mark.dto.MarkMessageInfo;
+import com.ds.feige.im.mark.entity.MarkMessage;
 import com.ds.feige.im.oss.dto.UploadCompleteRequest;
 import com.ds.feige.im.oss.entity.OSSFile;
 

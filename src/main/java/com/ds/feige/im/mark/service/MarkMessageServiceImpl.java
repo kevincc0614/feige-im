@@ -1,4 +1,8 @@
-package com.ds.feige.im.favorite.service;
+package com.ds.feige.im.mark.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -7,13 +11,11 @@ import com.ds.feige.im.chat.dto.MessageToUser;
 import com.ds.feige.im.chat.service.ChatService;
 import com.ds.feige.im.common.util.BeansConverter;
 import com.ds.feige.im.constants.FeigeWarn;
-import com.ds.feige.im.favorite.dto.*;
-import com.ds.feige.im.favorite.entity.MarkMessage;
-import com.ds.feige.im.favorite.mapper.MarkMessageMapper;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ds.feige.im.mark.dto.*;
+import com.ds.feige.im.mark.entity.MarkMessage;
+import com.ds.feige.im.mark.mapper.MarkMessageMapper;
 
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author DC
@@ -53,16 +55,18 @@ public class MarkMessageServiceImpl extends ServiceImpl<MarkMessageMapper, MarkM
 
     @Override
     public boolean cancelMark(CancelMarkRequest request) {
-        MarkMessage message = super.getById(request.getMarkId());
+        final long userId = request.getUserId();
+        final long markId = request.getMarkId();
+        MarkMessage message = super.getById(markId);
         if (message == null) {
-            log.error("Mark message not exists:markId={}", request.getMarkId());
+            log.error("Mark message not exists:markId={}", markId);
             return false;
         }
-        if (message.getUserId() != request.getUserId()) {
+        if (message.getUserId() != userId) {
             throw new WarnMessageException(FeigeWarn.PERMISSION_DIED);
         }
-        boolean result = super.removeById(request.getMarkId());
-        log.info("Cancel mark:markId={}", request.getMarkId());
+        boolean result = super.removeById(markId);
+        log.info("Cancel mark:markId={}", markId);
         return result;
     }
 

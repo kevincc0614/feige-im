@@ -26,7 +26,7 @@ public interface UserMapper extends BaseMapper<User> {
     @Select("SELECT * FROM t_user where mobile=#{mobile}")
     User getOneByMobile(@Param("mobile") String mobile);
 
-    @Select({"<script> ", "SELECT * FROM t_user WHERE id IN",
+    @Select({"<script> ", "SELECT * FROM t_user WHERE id IN ",
         "<foreach item='item' index='index' collection='userIds' open='(' separator=',' close=')'>", "#{item}",
         "</foreach>", "</script>"})
     List<User> findUserByIds(@Param("userIds") Collection<Long> userIds);

@@ -13,14 +13,9 @@ public class SocketPaths {
     public static final String CS_CONVERSATION_PREVIEWS = "/chat/conversation/previews";
 
 
+
     public static final String SC_PUSH_CHAT_MESSAGE = "/chat/message/receive";
     public static final String SC_CHAT_MESSAGE_READ_RECEIPT = "/chat/message/read-receipt";
-    public static final String SC_GROUP_CREATED = "/group/created";
-    public static final String SC_GROUP_DISBANDED = "/group/disbanded";
-    public static final String SC_GROUP_USER_JOIN = "/group/user/joined";
-    public static final String SC_GROUP_USER_KICKED = "/group/user/kicked";
-    public static final String SC_GROUP_USER_EXIT = "/group/user/exit";
-    public static final String SC_GROUP_USER_ROLE_SET = "/group/user/role-set";
 
     public static final String CS_CREATE_GROUP = "/group/create";
     public static final String CS_DISBAND_GROUP = "/group/disband";
@@ -30,5 +25,11 @@ public class SocketPaths {
     public static final String CS_SET_GROUP_USER_ROLE = "/group/user/set-role";
     public static final String CS_GET_GROUP_INFO = "/group/info";
     public static final String CS_GET_GROUP_USERS = "/group/users";
+
+    public static final String CS_MARK_ADD = "/mark/add";
+    public static final String CS_MARK_GET = "/mark/get";
+    public static final String CS_MARK_DELETE = "/mark/delete";
+    public static final String CS_MARK_UPDATE = "/mark/update";
+    public static final String CS_MARK_QUERY = "/mark/query";
 
 }

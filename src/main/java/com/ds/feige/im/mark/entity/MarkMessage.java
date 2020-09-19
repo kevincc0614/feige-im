@@ -1,7 +1,8 @@
-package com.ds.feige.im.favorite.entity;
+package com.ds.feige.im.mark.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ds.feige.im.common.entity.BaseEntity;
+
 import lombok.Data;
 
 /**

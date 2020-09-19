@@ -1,6 +1,7 @@
-package com.ds.feige.im.favorite.dto;
+package com.ds.feige.im.mark.dto;
 
 import com.ds.feige.im.account.dto.UserRequest;
+
 import lombok.Data;
 
 /**

@@ -1,4 +1,4 @@
-package com.ds.feige.im.favorite.constants;
+package com.ds.feige.im.mark.constants;
 
 /**
  * @author DC

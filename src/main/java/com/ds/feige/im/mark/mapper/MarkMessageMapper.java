@@ -1,7 +1,7 @@
-package com.ds.feige.im.favorite.mapper;
+package com.ds.feige.im.mark.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ds.feige.im.favorite.entity.MarkMessage;
+import com.ds.feige.im.mark.entity.MarkMessage;
 
 /**
  * @author DC
