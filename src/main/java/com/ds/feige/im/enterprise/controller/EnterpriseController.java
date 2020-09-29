@@ -34,15 +34,15 @@ public class EnterpriseController {
     }
 
     @RequestMapping(value = "/department")
-    Response<DepartmentInfo> getDepartment(@RequestBody GetDepRequest request) {
+    Response<DepartmentDetails> getDepartment(@RequestBody GetDepRequest request) {
         long enterpriseId = request.getEnterpriseId();
         long departmentId = request.getDepartmentId();
         boolean isQueryChild = request.isQueryChild();
-        DepartmentInfo departmentInfo = enterpriseService.getDepartment(enterpriseId, departmentId, isQueryChild);
-        departmentInfo.getEmployees().forEach(e -> {
+        DepartmentDetails departmentDetails = enterpriseService.getDepartment(enterpriseId, departmentId, isQueryChild);
+        departmentDetails.getEmployees().forEach(e -> {
             e.setState(sessionUserService.getSessionUser(e.getUserId()).getState());
         });
-        return new Response<>(departmentInfo);
+        return new Response<>(departmentDetails);
     }
 
     @RequestMapping("/employee/info")
@@ -53,8 +53,8 @@ public class EnterpriseController {
     }
 
     @RequestMapping("/departments")
-    Response<List<SimpleDepartmentInfo>> getDepartments(long enterpriseId) {
-        List<SimpleDepartmentInfo> infos = enterpriseService.getDepartments(enterpriseId);
+    Response<List<DepartmentBaseInfo>> getDepartments(long enterpriseId) {
+        List<DepartmentBaseInfo> infos = enterpriseService.getDepartments(enterpriseId);
         return new Response<>(infos);
     }
 }

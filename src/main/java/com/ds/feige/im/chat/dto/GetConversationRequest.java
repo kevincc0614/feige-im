@@ -1,23 +1,16 @@
 package com.ds.feige.im.chat.dto;
 
-import java.util.List;
-
 import javax.validation.constraints.Positive;
-import javax.validation.constraints.Size;
 
 import com.ds.feige.im.account.dto.UserRequest;
 
 import lombok.Data;
 
 /**
- * 已读回执
- *
  * @author DC
  */
 @Data
-public class ReadMessageRequest extends UserRequest {
-    @Size(min = 1, max = 100)
-    private List<Long> msgIds;
+public class GetConversationRequest extends UserRequest {
     @Positive
     private long conversationId;
 }

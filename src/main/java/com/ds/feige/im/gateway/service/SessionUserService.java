@@ -1,12 +1,15 @@
 package com.ds.feige.im.gateway.service;
 
 import java.util.Collection;
+import java.util.Map;
 
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.ds.feige.im.account.dto.LoginRequest;
+import com.ds.feige.im.common.domain.UserIdHolder;
 import com.ds.feige.im.gateway.domain.SessionUser;
+import com.ds.feige.im.gateway.domain.UserState;
 
 public interface SessionUserService {
     /**
@@ -21,6 +24,8 @@ public interface SessionUserService {
     SessionUser login(LoginRequest request, WebSocketSession session);
 
     SessionUser getSessionUser(long userId);
+
+    Map<Long, UserState> getUserStates(Collection<? extends UserIdHolder> users);
 
     /**
      * 登出

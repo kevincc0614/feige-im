@@ -13,7 +13,7 @@ import lombok.Data;
 @Data
 public class SetUserRoleRequest extends GroupUserRequest {
     @Positive
-    private long roleUserId;
+    private long memberId;
     @NotBlank
     private String role;
 }

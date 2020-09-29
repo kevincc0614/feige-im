@@ -1,10 +1,10 @@
 package com.ds.feige.im.test.group;
 
-import com.ds.feige.im.account.dto.UserRegisterRequest;
-import com.ds.feige.im.test.BaseTest;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
+
+import com.ds.feige.im.account.dto.UserRegisterRequest;
+import com.ds.feige.im.test.BaseTest;
 
 /**
  * 群聊测试类
@@ -20,7 +20,7 @@ public class GroupUserServiceTest extends BaseTest {
         String mobile = RandomStringUtils.randomNumeric(10);
         registerRequest.setMobile(mobile);
         long userId = userService.register(registerRequest);
-        groupUserService.inviteJoinGroup(group_id, Sets.newHashSet(userId), user_ids.get(0));
+        // groupUserService.inviteJoinGroup(group_id, Sets.newHashSet(userId), user_ids.get(0));
     }
 
 }

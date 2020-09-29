@@ -1,13 +1,8 @@
 package com.ds.feige.im.chat.service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.redisson.api.RedissonClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,14 +13,17 @@ import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.chat.dto.event.*;
 import com.ds.feige.im.chat.dto.group.GroupInfo;
+import com.ds.feige.im.chat.dto.group.Member;
 import com.ds.feige.im.chat.entity.Group;
 import com.ds.feige.im.chat.entity.GroupUser;
 import com.ds.feige.im.chat.mapper.GroupMapper;
 import com.ds.feige.im.chat.mapper.GroupUserMapper;
 import com.ds.feige.im.common.util.BeansConverter;
+import com.ds.feige.im.common.util.JsonUtils;
 import com.ds.feige.im.constants.AMQPConstants;
 import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.constants.GroupUserRole;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -42,7 +40,6 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
     GroupMapper groupMapper;
     UserService userService;
     RabbitTemplate rabbitTemplate;
-    static final Logger LOGGER = LoggerFactory.getLogger(GroupUserServiceImpl.class);
     RedissonClient redissonClient;
 
     @Autowired
@@ -55,8 +52,8 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
     }
 
     @Override
-    public GroupInfo createGroup(List<Long> userIds, String groupName, long createUserId) {
-        LOGGER.info("Ready to create group:userIds={},groupName={},createUserId={}", userIds, groupName, createUserId);
+    public GroupInfo createGroup(Set<Long> userIds, String groupName, long createUserId) {
+        log.info("Ready to create group:userIds={},groupName={},createUserId={}", userIds, groupName, createUserId);
         UserInfo createUser = userService.getUserById(createUserId);
         if (createUser == null) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
@@ -118,6 +115,22 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
         return BeansConverter.groupToGroupInfo(group);
     }
 
+    @Override
+    public void pubAnnouncement(long groupId, long operatorId, String announcement) {
+        Group group = checkGroupExists(groupId);
+        GroupUser operator = checkGroupAdmin(groupId, operatorId);
+        try {
+            HashMap map = JsonUtils.jsonToBean(announcement, HashMap.class);
+            map.put("pubUserId", operator.getUserId());
+            map.put("pubTime", System.currentTimeMillis());
+            group.setAnnouncement(JsonUtils.toJson(map));
+            groupMapper.updateById(group);
+        } catch (JsonProcessingException e) {
+            throw new WarnMessageException(FeigeWarn.REQUEST_VALIDATE_ERROR);
+        }
+
+    }
+
     private GroupUser buildGroupUser(UserInfo userInfo, long groupId, long createUserId) {
         GroupUser groupUser = new GroupUser();
         groupUser.setGroupId(groupId);
@@ -137,19 +150,24 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
         return group;
     }
 
-    @Override
-    public void disbandGroup(long groupId, long operatorId) {
-        Group group = checkGroupExists(groupId);
+    private GroupUser checkGroupAdmin(long groupId, long operatorId) {
         // 判断用户权限
         GroupUser operator = baseMapper.getGroupUser(groupId, operatorId);
         if (!GroupUserRole.ADMIN.name().equals(operator.getRole())) {
             throw new WarnMessageException(FeigeWarn.GROUP_PERMISSION_NOT_ALLOWED);
         }
+        return operator;
+    }
+    @Override
+    public void disbandGroup(long groupId, long operatorId) {
+        Group group = checkGroupExists(groupId);
+        // 判断用户权限
+        GroupUser operator = checkGroupAdmin(groupId, operatorId);
         // 清理缓存
         // RBucket<Group> groupRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
         // boolean deleteCache=groupRBucket.delete();
         // if(deleteCache){
-        // LOGGER.info("Delete group cache:groupId={}",groupId);
+        // log.info("Delete group cache:groupId={}",groupId);
         // }
         // 删除群组
         groupMapper.deleteById(groupId);
@@ -204,7 +222,7 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
             newGroupUsers.add(groupUser);
         }
         saveBatch(newGroupUsers);
-        LOGGER.info("Add user to group success:userIds={},groupId={}", inviteeIds, groupId);
+        log.info("Add user to group success:userIds={},groupId={}", inviteeIds, groupId);
         rabbitTemplate.convertAndSend(AMQPConstants.RoutingKeys.GROUP_USER_JOINED, event);
     }
 
@@ -212,7 +230,7 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
     public void exitGroup(long groupId, long userId) {
         GroupUser groupUser = baseMapper.getGroupUser(groupId, userId);
         if (groupUser == null) {
-            LOGGER.error("User not in the group,can not exit:groupId={},userId={}", groupId, userId);
+            log.error("User not in the group,can not exit:groupId={},userId={}", groupId, userId);
             return;
         }
         int i = baseMapper.deleteByGroupAndUserId(groupId, userId);
@@ -228,7 +246,7 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
 
     @Override
     public void kickUser(long groupId, Set<Long> kickUsers, long operatorId) {
-        List<GroupUser> groupUsers = baseMapper.getGroupUsers(groupId, kickUsers);
+        List<GroupUser> groupUsers = baseMapper.findByGroupAndUserIds(groupId, kickUsers);
         if (groupUsers == null || groupUsers.isEmpty()) {
             log.warn("Kick operation has users:groupId={},kickUsers={},operatorId={}", groupId, kickUsers, operatorId);
             return;
@@ -238,7 +256,7 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
         groupUsers.forEach(u -> kickedUsers.add(u.getUserId()));
         int deleted = baseMapper.deleteBatchIds(kickUsers);
         if (deleted >= 1) {
-            LOGGER.info("Kick group user:groupId={},kickUsers={}", groupId, kickedUsers);
+            log.info("Kick group user:groupId={},kickUsers={}", groupId, kickedUsers);
             GroupUserKickEvent event = new GroupUserKickEvent();
             event.setGroupId(groupId);
             event.setKickedUsers(kickUsers);
@@ -255,7 +273,7 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
             throw new WarnMessageException(FeigeWarn.GROUP_PERMISSION_NOT_ALLOWED);
         }
         int i = baseMapper.updateUserRole(groupId, userId, role.name());
-        LOGGER.info("Update group user role:groupId={},userId={},role={}", groupId, userId, role);
+        log.info("Update group user role:groupId={},userId={},role={}", groupId, userId, role);
         // rabbitTemplate.convertAndSend("");
     }
 
@@ -287,6 +305,20 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
     @Override
     public void groupConversationsCreated(long groupId, long conversationId) {
         groupMapper.conversationCreated(groupId, conversationId);
-        LOGGER.info("Group conversations created:groupId={},conversationId={}", groupId, conversationId);
+        log.info("Group conversations created:groupId={},conversationId={}", groupId, conversationId);
+    }
+
+    @Override
+    public Collection<Member> getGroupMembers(long groupId) {
+        List<GroupUser> groupUsers = baseMapper.findByGroup(groupId);
+        List<Member> members = Lists.newArrayListWithCapacity(groupUsers.size());
+        groupUsers.forEach(groupUser -> {
+            Member member = new Member();
+            member.setName(groupUser.getUserName());
+            member.setUserId(groupUser.getUserId());
+            member.setRole(groupUser.getRole());
+            members.add(member);
+        });
+        return members;
     }
 }

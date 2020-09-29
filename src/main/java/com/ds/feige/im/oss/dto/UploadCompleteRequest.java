@@ -4,11 +4,14 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 
+import lombok.Data;
+
 /**
  * 上传成功通知
  *
  * @author DC
  */
+@Data
 public class UploadCompleteRequest {
     @Size(min = 8, max = 100)
     private String domain;

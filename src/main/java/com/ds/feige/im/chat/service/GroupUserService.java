@@ -1,10 +1,11 @@
 package com.ds.feige.im.chat.service;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.chat.dto.group.GroupInfo;
+import com.ds.feige.im.chat.dto.group.Member;
 import com.ds.feige.im.constants.GroupUserRole;
 
 /**
@@ -19,8 +20,16 @@ public interface GroupUserService {
      * @param createUserId
      * @return GroupInfo
      */
-    GroupInfo createGroup(List<Long> userIds, String groupName, long createUserId);
+    GroupInfo createGroup(Set<Long> userIds, String groupName, long createUserId);
 
+    /**
+     * 发布公告
+     * 
+     * @param groupId
+     * @param operatorId
+     * @param announcement
+     */
+    void pubAnnouncement(long groupId, long operatorId, String announcement);
     /**
      * 解散群聊
      *
@@ -33,8 +42,10 @@ public interface GroupUserService {
      * 添加用户进群
      *
      * @param groupId
-     * @param inviteeIds 被邀请人ID
-     * @param operatorId 邀请人ID
+     * @param inviteeIds
+     *            被邀请人ID
+     * @param operatorId
+     *            邀请人ID
      */
     void inviteJoinGroup(long groupId, Set<Long> inviteeIds, long operatorId);
 
@@ -82,7 +93,8 @@ public interface GroupUserService {
     /**
      * @param groupId
      * @return GroupInfo
-     * @throws WarnMessageException 群不存在时会抛出异常
+     * @throws WarnMessageException
+     *             群不存在时会抛出异常
      */
     GroupInfo getGroupInfo(long groupId);
 
@@ -90,4 +102,9 @@ public interface GroupUserService {
      * 更新群组会话创建状态
      */
     void groupConversationsCreated(long groupId, long conversationId);
+
+    /**
+     * @param groupId
+     */
+    Collection<Member> getGroupMembers(long groupId);
 }

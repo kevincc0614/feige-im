@@ -7,8 +7,10 @@ import lombok.Data;
  */
 @Data
 public class UnreadMessagePreview {
-    private long conversationId;
-    private long lastMsgId;
-    private int unreadCount;
-    private String conversationName;
+    protected long conversationId;
+    protected String conversationName;
+    protected String conversationAvatar;
+    protected long lastMsgId;
+    protected int unreadCount;
+    protected long targetId;
 }

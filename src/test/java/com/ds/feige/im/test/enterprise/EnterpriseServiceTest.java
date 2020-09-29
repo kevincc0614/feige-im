@@ -1,14 +1,15 @@
 package com.ds.feige.im.test.enterprise;
 
+import org.junit.Test;
+
 import com.ds.feige.im.enterprise.dto.EditDepEmpRequest;
 import com.ds.feige.im.test.BaseTest;
-import org.junit.Test;
 
 public class EnterpriseServiceTest extends BaseTest {
     @Test
     public void testCreateEnt() {
-        long entId = enterpriseService.createEnterprise("梦幻热游", "梦幻热游", user_ids.get(0));
-        System.out.println(entId);
+        // long entId = enterpriseService.createEnterprise("梦幻热游", "梦幻热游", user_ids.get(0));
+        // System.out.println(entId);
     }
 
     @Test

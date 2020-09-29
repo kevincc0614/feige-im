@@ -1,7 +1,5 @@
 package com.ds.feige.im.chat.dto.group;
 
-import java.util.Date;
-
 import lombok.Data;
 
 /**
@@ -18,6 +16,5 @@ public class GroupInfo {
     private Long conversationId;
     private int maxUserLimit;
     private String announcement;
-    private long announcePubUser;
-    private Date announcementPubTime;
+    private String option;
 }

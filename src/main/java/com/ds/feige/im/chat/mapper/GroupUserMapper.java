@@ -27,7 +27,7 @@ public interface GroupUserMapper extends BaseMapper<GroupUser> {
     @Select({"<script> ", "SELECT * FROM t_group_user WHERE group_id=#{groupId} AND user_id IN",
         "<foreach item='item' index='index' collection='userIds' open='(' separator=',' close=')'>", "#{item}",
         "</foreach>", "</script>"})
-    List<GroupUser> getGroupUsers(long groupId, Collection<Long> userIds);
+    List<GroupUser> findByGroupAndUserIds(long groupId, Collection<Long> userIds);
 
     @Select("SELECT * FROM t_group_user where group_id=#{groupId} AND user_id=#{userId}")
     GroupUser getGroupUser(long groupId, long userId);
@@ -37,4 +37,7 @@ public interface GroupUserMapper extends BaseMapper<GroupUser> {
 
     @Delete("DELETE FROM t_group_user where group_id=#{groupId} and user_id=#{userId}")
     int deleteByGroupAndUserId(long groupId, long userId);
+
+    @Select("SELECT * FROM t_group_user where group_id=#{groupId}")
+    List<GroupUser> findByGroup(long groupId);
 }

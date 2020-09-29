@@ -1,15 +1,22 @@
 package com.ds.feige.im.chat.dto;
 
-import lombok.Data;
-
 import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.Data;
 
 /**
  * @author DC
  */
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MessageToUser {
     private long conversationId;
+    private String conversationName;
+    private String conversationAvatar;
+    private int conversationType;
+    private long targetId;
     private long senderId;
     private long msgId;
     private String msgContent;

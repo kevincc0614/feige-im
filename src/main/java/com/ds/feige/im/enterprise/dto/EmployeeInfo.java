@@ -1,9 +1,10 @@
 package com.ds.feige.im.enterprise.dto;
 
-import com.ds.feige.im.gateway.domain.UserState;
-import lombok.Data;
-
 import java.util.List;
+
+import com.ds.feige.im.gateway.domain.UserState;
+
+import lombok.Data;
 
 @Data
 public class EmployeeInfo {
@@ -15,5 +16,4 @@ public class EmployeeInfo {
     private Boolean leader;
     private List<Long> departments;
     private UserState state;
-
 }

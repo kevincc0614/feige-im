@@ -13,4 +13,6 @@ public class Department extends BaseEntity {
     private Integer priority;
     private String enName;
     private Long enterpriseId;
+    private Boolean createGroup;
+    private Long groupId;
 }

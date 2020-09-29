@@ -1,11 +1,13 @@
 package com.ds.feige.im.chat.dto;
 
-import com.ds.feige.im.account.dto.UserRequest;
-import lombok.Data;
-
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
-import javax.validation.constraints.Size;
+
+import com.ds.feige.im.account.dto.UserRequest;
+
+import lombok.Data;
 
 /**
  * @author DC
@@ -16,7 +18,8 @@ public class ConversationMessageQueryRequest extends UserRequest {
     private long conversationId;
     @PositiveOrZero
     private long maxMsgId;
-    @Size(min = 1, max = 100, message = "一次最多查询1到100条消息")
+    @Min(1)
+    @Max(100)
     private int pageSize;
 
 }

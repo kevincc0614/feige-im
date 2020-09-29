@@ -1,13 +1,16 @@
 package com.ds.feige.im.gateway.socket.dispatch;
 
-import com.ds.base.nodepencies.exception.WarnMessageException;
-import com.ds.feige.im.account.dto.UserRequest;
-import com.ds.feige.im.common.util.JsonUtils;
-import com.ds.feige.im.constants.FeigeWarn;
-import com.ds.feige.im.constants.SessionAttributeKeys;
-import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.Lists;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Valid;
+import javax.validation.Validator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.MethodParameter;
@@ -19,15 +22,15 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.socket.WebSocketSession;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Valid;
-import javax.validation.Validator;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import com.ds.base.nodepencies.exception.WarnMessageException;
+import com.ds.feige.im.account.dto.UserRequest;
+import com.ds.feige.im.common.util.JsonUtils;
+import com.ds.feige.im.constants.FeigeWarn;
+import com.ds.feige.im.constants.SessionAttributeKeys;
+import com.ds.feige.im.gateway.socket.annotation.UserId;
+import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.Lists;
 
 public class SocketMethodHandler {
     private String path;
@@ -78,6 +81,15 @@ public class SocketMethodHandler {
             if(parameter.getType().isAssignableFrom(SocketRequest.class)){
                 parameterValues[i]= socketRequest;
                 continue;
+            }
+            UserId userIdAnno = AnnotationUtils.getAnnotation(parameter, UserId.class);
+            if (userIdAnno != null) {
+                if (parameter.getType() == Long.class || parameter.getType() == long.class) {
+                    parameterValues[i] = getUserIdFromSession(session);
+                    continue;
+                } else {
+                    throw new IllegalStateException("@UserId annotation only used for Long/long type parameter");
+                }
             }
             RequestBody requestBody=AnnotationUtils.getAnnotation(parameter, RequestBody.class);
             if(requestBody!=null){

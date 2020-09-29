@@ -1,11 +1,13 @@
 package com.ds.feige.im.chat.dto;
 
-import com.ds.feige.im.account.dto.UserRequest;
-import lombok.Data;
-
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
+
+import com.ds.feige.im.account.dto.UserRequest;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import lombok.Data;
 
 /**
  * 会话消息
@@ -13,6 +15,7 @@ import javax.validation.constraints.Size;
  * @author DC
  */
 @Data
+@JsonIgnoreProperties
 public class MessageToConversation extends UserRequest {
     @Positive(message = "targetId不合法")
     private long targetId;

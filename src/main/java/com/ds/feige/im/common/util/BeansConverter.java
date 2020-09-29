@@ -13,10 +13,10 @@ import com.ds.feige.im.chat.dto.event.ConversationMessageEvent;
 import com.ds.feige.im.chat.dto.group.GroupInfo;
 import com.ds.feige.im.chat.entity.Group;
 import com.ds.feige.im.chat.entity.UserConversation;
-import com.ds.feige.im.enterprise.dto.DepartmentInfo;
+import com.ds.feige.im.enterprise.dto.DepartmentBaseInfo;
+import com.ds.feige.im.enterprise.dto.DepartmentDetails;
 import com.ds.feige.im.enterprise.dto.EmployeeInfo;
 import com.ds.feige.im.enterprise.dto.EnterpriseInfo;
-import com.ds.feige.im.enterprise.dto.SimpleDepartmentInfo;
 import com.ds.feige.im.enterprise.entity.Department;
 import com.ds.feige.im.enterprise.entity.Employee;
 import com.ds.feige.im.enterprise.entity.Enterprise;
@@ -87,14 +87,14 @@ public class BeansConverter {
         return result;
     }
 
-    public static SimpleDepartmentInfo departmentToSimpleDepartmentInfo(Department department) {
-        DepartmentInfo departmentInfo = new DepartmentInfo();
-        BeanUtils.copyProperties(department, departmentInfo);
-        return departmentInfo;
+    public static DepartmentBaseInfo departmentToSimpleDepartmentInfo(Department department) {
+        DepartmentDetails departmentDetails = new DepartmentDetails();
+        BeanUtils.copyProperties(department, departmentDetails);
+        return departmentDetails;
     }
 
-    public static List<SimpleDepartmentInfo> departmentsToSimpleDepartmentInfos(List<Department> departments) {
-        List<SimpleDepartmentInfo> result = new ArrayList<>(departments.size());
+    public static List<DepartmentBaseInfo> departmentsToSimpleDepartmentInfos(List<Department> departments) {
+        List<DepartmentBaseInfo> result = new ArrayList<>(departments.size());
         departments.forEach(department -> result.add(departmentToSimpleDepartmentInfo(department)));
         return result;
     }

@@ -1,6 +1,6 @@
 package com.ds.feige.im.chat.dto.group;
 
-import java.util.List;
+import java.util.Set;
 
 import javax.validation.constraints.Size;
 
@@ -17,5 +17,5 @@ public class CreateGroupRequest extends UserRequest {
     private String groupName;
     private int groupType;
     @Size(min = 2,max = 500,message = "群聊人数最少2个,最多500个")
-    private List<Long> groupUserIds;
+    private Set<Long> groupUserIds;
 }

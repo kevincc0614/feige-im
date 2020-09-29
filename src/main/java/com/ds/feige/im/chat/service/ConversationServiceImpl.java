@@ -59,6 +59,9 @@ public class ConversationServiceImpl extends ServiceImpl<UserConversationMapper,
     @Override
     public UserConversationInfo getUserConversation(long userId, long conversationId) {
         UserConversation conversation = baseMapper.getByUserAndConversationId(userId, conversationId);
+        if (conversation == null) {
+            return null;
+        }
         UserConversationInfo userConversationInfo = new UserConversationInfo();
         BeanUtils.copyProperties(conversation, userConversationInfo);
         return userConversationInfo;

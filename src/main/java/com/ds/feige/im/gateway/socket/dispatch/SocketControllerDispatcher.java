@@ -1,5 +1,21 @@
 package com.ds.feige.im.gateway.socket.dispatch;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+
 import com.ds.base.nodepencies.api.Response;
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.constants.FeigeWarn;
@@ -10,21 +26,8 @@ import com.ds.feige.im.gateway.socket.protocol.SocketResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
 
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
@@ -125,10 +128,13 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
             Method[] declaredMethods=bean.getClass().getDeclaredMethods();
             for(Method method:declaredMethods){
                 SocketRequestMapping methodRequestMapping=AnnotationUtils.getAnnotation(method, SocketRequestMapping.class);
-                String methodPath=path+methodRequestMapping.value();
-                Validator validator=validatorFactory.getValidator();
-                SocketMethodHandler invoker=new SocketMethodHandler(methodPath,method,bean,methodRequestMapping.response(),validator);
-                addHandler(methodPath,invoker);
+                if (methodRequestMapping != null) {
+                    String methodPath = path + methodRequestMapping.value();
+                    Validator validator = validatorFactory.getValidator();
+                    SocketMethodHandler invoker =
+                        new SocketMethodHandler(methodPath, method, bean, methodRequestMapping.response(), validator);
+                    addHandler(methodPath, invoker);
+                }
             }
 
         }

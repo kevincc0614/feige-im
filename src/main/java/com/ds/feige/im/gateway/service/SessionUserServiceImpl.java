@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.redisson.api.RBuckets;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,16 +20,20 @@ import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
 import com.ds.feige.im.account.dto.LoginRequest;
 import com.ds.feige.im.account.dto.RemoteLoginMsg;
+import com.ds.feige.im.common.domain.UserIdHolder;
 import com.ds.feige.im.common.util.JsonUtils;
+import com.ds.feige.im.constants.CacheKeys;
 import com.ds.feige.im.constants.DeviceType;
 import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.constants.SessionAttributeKeys;
 import com.ds.feige.im.gateway.DiscoveryService;
 import com.ds.feige.im.gateway.domain.SessionUser;
 import com.ds.feige.im.gateway.domain.SessionUserFactory;
+import com.ds.feige.im.gateway.domain.UserState;
 import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.ds.feige.im.gateway.socket.connection.UserConnection;
 import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
+import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,6 +72,23 @@ public class SessionUserServiceImpl implements SessionUserService {
     public SessionUser getSessionUser(long userId) {
         SessionUser sessionUser = this.sessionUserFactory.getSessionUser(userId);
         return sessionUser;
+    }
+
+    @Override
+    public Map<Long, UserState> getUserStates(Collection<? extends UserIdHolder> users) {
+        RBuckets buckets = this.redissonClient.getBuckets();
+        String[] keys = new String[users.size()];
+        int i = 0;
+        for (UserIdHolder user : users) {
+            keys[i] = CacheKeys.SESSION_USER_STATE + user.getUserId();
+            i++;
+        }
+        Map<String, UserState> bucketResults = buckets.get(keys);
+        Map<Long, UserState> stateMap = Maps.newHashMap();
+        bucketResults.forEach((k, v) -> {
+            stateMap.put(Long.valueOf(k.replace(CacheKeys.SESSION_USER_STATE, "")), v);
+        });
+        return stateMap;
     }
 
     @Override
@@ -218,6 +240,7 @@ public class SessionUserServiceImpl implements SessionUserService {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
+        log.debug("WebSocketSession connection closed:sessionId={},closeStatus={}", session.getId(), closeStatus);
         disconnect(session);
         this.sessionUserFactory.removeWebSocketSession(session);
     }

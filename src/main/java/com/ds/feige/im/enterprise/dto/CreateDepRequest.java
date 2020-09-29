@@ -16,5 +16,5 @@ public class CreateDepRequest extends EnterpriseOpRequest {
     private String departmentName;
     private String departmentEnName;
     private int priority;
-
+    private boolean createGroup;
 }

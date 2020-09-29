@@ -98,7 +98,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void deleteDepartment(DeleteDepRequest request) {
+    public DepartmentBaseInfo deleteDepartment(DeleteDepRequest request) {
         long departmentId = request.getDepartmentId();
         long enterpriseId = request.getEnterpriseId();
         // 验证权限
@@ -115,7 +115,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
             throw new WarnMessageException(FeigeWarn.PERMISSION_DIED);
         }
         // 判断是有还有下级部门,如果有下级部门,则不能直接删除
-        List<DepartmentInfo> childs = departmentMapper.findByParentId(enterpriseId, request.getDepartmentId());
+        List<DepartmentDetails> childs = departmentMapper.findByParentId(enterpriseId, request.getDepartmentId());
         if (childs != null && !childs.isEmpty()) {
             throw new WarnMessageException(FeigeWarn.HAS_CHILD_DEPS_CAN_NOT_DELETE);
         }
@@ -124,6 +124,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         // 解除员工和部门的关系
         departmentEmployeeMapper.deleteByDepartmentId(departmentId);
         log.info("Delete department success:departmentId={}", departmentId);
+        return BeansConverter.departmentToSimpleDepartmentInfo(department);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -168,6 +169,12 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     }
 
     @Override
+    public void updateDepartmentGroup(long enterpriseId, long departmentId, long groupId) {
+        int i = departmentMapper.updateGroupId(enterpriseId, departmentId, groupId);
+        log.info("Update department group:departmentId={},groupId={}", departmentId, groupId);
+    }
+
+    @Override
     public void addDepartmentEmployee(EditDepEmpRequest request) {
         long enterpriseId = request.getEnterpriseId();
         long userId = request.getUserId();
@@ -201,15 +208,16 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     }
 
     @Override
-    public void removeDepartmentEmployee(EditDepEmpRequest request) {
-        departmentEmployeeMapper.deleteDepartmentEmployee(request.getEnterpriseId(), request.getDepartmentId(),
+    public boolean removeDepartmentEmployee(EditDepEmpRequest request) {
+        int i = departmentEmployeeMapper.deleteDepartmentEmployee(request.getEnterpriseId(), request.getDepartmentId(),
             request.getUserId());
         log.info("Delete department employee success:request={}", request);
+        return i == 1;
     }
 
     @Override
-    public DepartmentInfo getDepartment(long enterpriseId, long departmentId, boolean queryChild) {
-        DepartmentInfo info = new DepartmentInfo();
+    public DepartmentDetails getDepartment(long enterpriseId, long departmentId, boolean queryChild) {
+        DepartmentDetails info = new DepartmentDetails();
         Department department = departmentMapper.selectById(departmentId);
         if (department == null) {
             return null;
@@ -217,7 +225,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         BeanUtils.copyProperties(department, info);
         if (queryChild) {
             // 查询子部门
-            List<DepartmentInfo> child = departmentMapper.findByParentId(enterpriseId, departmentId);
+            List<DepartmentDetails> child = departmentMapper.findByParentId(enterpriseId, departmentId);
             info.setDepartments(child);
         }
         List<EmployeeInfo> employeeInfos = employeeMapper.findByDepartmentId(enterpriseId, departmentId);
@@ -226,7 +234,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     }
 
     @Override
-    public List<SimpleDepartmentInfo> getDepartments(long enterpriseId) {
+    public List<DepartmentBaseInfo> getDepartments(long enterpriseId) {
         List<Department> departments = departmentMapper.findByEnterpriseId(enterpriseId);
         return BeansConverter.departmentsToSimpleDepartmentInfos(departments);
     }

@@ -1,22 +1,23 @@
 package com.ds.feige.im.gateway.domain;
 
-import com.ds.feige.im.constants.CacheKeys;
-import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
-import org.redisson.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import org.redisson.api.*;
+
+import com.ds.feige.im.constants.CacheKeys;
+import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 在线用户对象封装,充血模型
  * @author DC
  */
+@Slf4j
 public class SessionUser {
     private Long userId;
-    private static final Logger LOGGER = LoggerFactory.getLogger(SessionUser.class);
     private RedissonClient redissonClient;
     public SessionUser(long userId, RedissonClient redissonClient) {
         this.userId = userId;
@@ -42,7 +43,8 @@ public class SessionUser {
         }
         state.setOnline(true);
         stateRBucket.set(state);
-        LOGGER.info("Add connection meta:userId={},connectionKey={},sessionId={}", userId, deviceConnectionKey, connectionMeta.getSessionId());
+        log.info("Add connection meta:userId={},connectionKey={},sessionId={}", userId, deviceConnectionKey,
+            connectionMeta.getSessionId());
     }
 
     public Map<String, ConnectionMeta> getConnectionMetas() {
@@ -108,7 +110,7 @@ public class SessionUser {
         userState.setOfflineTime(System.currentTimeMillis());
         RBucket<UserState> stateRBucket = redissonClient.getBucket(CacheKeys.SESSION_USER_STATE + userId);
         stateRBucket.set(userState);
-        LOGGER.info("Remove connection meta:userId={},connectionKey={}", userId, key);
+        log.info("Remove connection meta:userId={},connectionKey={}", userId, key);
         return metaDeleted && setDeleted;
     }
 
@@ -131,6 +133,5 @@ public class SessionUser {
         RBucket<UserState> bucket = redissonClient.getBucket(CacheKeys.SESSION_USER_STATE + userId);
         return bucket.get();
     }
-
 }
 

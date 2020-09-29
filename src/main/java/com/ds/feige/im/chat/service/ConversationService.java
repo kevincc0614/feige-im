@@ -20,8 +20,15 @@ public interface ConversationService {
      */
     UserConversationInfo getUserConversation(long userId, long targetId, int conversationType);
 
+    /**
+     * @param userId
+     * @param conversationId
+     */
     UserConversationInfo getUserConversation(long userId, long conversationId);
 
+    /**
+     * @param conversationId
+     */
     Set<Long> getUserIdsByConversation(long conversationId);
 
     /**

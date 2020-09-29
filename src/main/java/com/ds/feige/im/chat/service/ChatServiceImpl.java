@@ -83,41 +83,53 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         Set<Long> receiverIds;
         // 消息接收人数位置为会话人数-1
         int receiverCount;
+        long sourceId;
         switch (conversationType) {
             case ConversationType.SINGLE_CONVERSATION_TYPE:
                 receiverCount = 1;
                 receiverIds = Sets.newHashSet();
                 receiverIds.add(message.getTargetId());
+                sourceId = senderId;
                 break;
             case ConversationType.GROUP_CONVERSATION_TYPE:
                 receiverIds = conversationService.getUserIdsByConversation(userConversation.getConversationId());
                 receiverCount = receiverIds.size() - 1;
+                sourceId = targetId;
                 break;
             default:
                 throw new IllegalStateException("Conversation type invalid " + message.getConversationType());
         }
         message.setReceiverCount(receiverCount);
         save(message);
-        ConversationMessageEvent event = buildEvent(message, receiverIds);
+        ConversationMessageEvent event = buildEvent(message, receiverIds, userConversation, sourceId);
         template.convertAndSend(AMQPConstants.RoutingKeys.CONVERSATION_SEND_MESSAGE, event);
 
         return BeansConverter.conversationMsgToMessageToUser(event);
 
     }
 
-    public static ConversationMessageEvent buildEvent(ConversationMessage message, Set<Long> receiverIds) {
+    public static ConversationMessageEvent buildEvent(ConversationMessage message, Set<Long> receiverIds,
+        UserConversationInfo userConversation, long sourceId) {
         // 消息推送
         ConversationMessageEvent event = new ConversationMessageEvent();
+        // 会话信息
         event.setConversationId(message.getConversationId());
+        event.setConversationName(userConversation.getConversationName());
+        event.setConversationAvatar(userConversation.getConversationAvatar());
         event.setConversationType(message.getConversationType());
+        event.setTargetId(sourceId);
+        // 消息内容
         event.setMsgContent(message.getMsgContent());
         event.setMsgId(message.getMsgId());
         event.setMsgType(message.getMsgType());
         event.setOption(message.getOption());
         event.setSenderId(message.getSenderId());
+        // 已读未读
         event.setReadCount(message.getReadCount());
         event.setReceiverCount(message.getReceiverCount());
         event.setReceiverIds(receiverIds);
+        event.setCreateTime(message.getCreateTime());
+
         return event;
     }
 
@@ -136,6 +148,9 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
 
     @Override
     public ChatMessageAckResult ackMessages(long userId, List<Long> msgIds) {
+        if (msgIds == null || msgIds.isEmpty()) {
+            return new ChatMessageAckResult();
+        }
         return userMessageService.ackMsg(userId, msgIds);
     }
 
@@ -160,6 +175,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         List<MessageToUser> conversationLastMessages = baseMapper.findMessagesByIds(msgIds);
         conversationLastMessages.forEach(lastMsg -> {
             ConversationPreview preview = previewMap.get(lastMsg.getConversationId());
+            preview.setConversationType(lastMsg.getConversationType());
             preview.setLastMsg(lastMsg);
         });
         // 数据合并

@@ -22,7 +22,7 @@ public interface EnterpriseService {
      *
      * @param request
      */
-    void deleteDepartment(DeleteDepRequest request);
+    DepartmentBaseInfo deleteDepartment(DeleteDepRequest request);
 
     /**
      * 编辑部门信息
@@ -50,7 +50,7 @@ public interface EnterpriseService {
      *
      * @param request
      */
-    void removeDepartmentEmployee(EditDepEmpRequest request);
+    boolean removeDepartmentEmployee(EditDepEmpRequest request);
 
     /**
      * 添加员工,前提是员工必须具备账号,在t_user表有数据
@@ -70,9 +70,16 @@ public interface EnterpriseService {
      * @param queryChild
      *            是否查询子部门
      */
-    DepartmentInfo getDepartment(long enterpriseId, long departmentId, boolean queryChild);
+    DepartmentDetails getDepartment(long enterpriseId, long departmentId, boolean queryChild);
 
-    List<SimpleDepartmentInfo> getDepartments(long enterpriseId);
+    /**
+     * @param enterpriseId
+     * @param departmentId
+     * @param groupId
+     */
+    void updateDepartmentGroup(long enterpriseId, long departmentId, long groupId);
+
+    List<DepartmentBaseInfo> getDepartments(long enterpriseId);
 
     /**
      * 根据用户ID查询员工信息

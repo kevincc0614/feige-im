@@ -9,6 +9,8 @@ public class UserConversationInfo {
      * 会话ID,双方保持一致
      */
     private Long conversationId;
+    private String conversationName;
+    private String conversationAvatar;
     /**
      * 用户ID
      */

@@ -1,16 +1,14 @@
 package com.ds.feige.im.chat.dto;
 
+import com.ds.feige.im.chat.po.UnreadMessagePreview;
+
 import lombok.Data;
 
 /**
  * @author DC
  */
 @Data
-public class ConversationPreview {
-    private String conversationName;
-    private String conversationAvatar;
+public class ConversationPreview extends UnreadMessagePreview {
     private MessageToUser lastMsg;
-    private long conversationId;
-    private long lastMsgId;
-    private int unreadCount;
+    private int conversationType;
 }

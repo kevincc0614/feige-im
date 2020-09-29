@@ -1,7 +1,6 @@
 package com.ds.feige.im.chat.mapper;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
@@ -17,18 +16,18 @@ import com.ds.feige.im.chat.entity.ConversationMessage;
  */
 public interface ConversationMessageMapper extends BaseMapper<ConversationMessage> {
     String SELECT_COLUMNS =
-        "SELECT conversation_id,sender_id,msg_id,msg_content,msg_type,read_count,receiver_count,create_time FROM t_conversation_message ";
+        "SELECT conversation_id,sender_id,msg_id,msg_content,msg_type,conversation_type,read_count,receiver_count,create_time FROM t_conversation_message ";
 
-    @Select({SELECT_COLUMNS, "  where msg_id=#{msgId}"})
+    @Select({SELECT_COLUMNS, "  WHERE msg_id=#{msgId}"})
     MessageToUser getMessageById(long msgId);
 
     @Select({SELECT_COLUMNS,
-        " WHERE conversation_id=#{conversationId}" + " AND msg_id<#{maxMsgId} ORDER BY msg_id ASC LIMIT #{pageSize} "})
+        " WHERE conversation_id=#{conversationId}" + " AND msg_id<=#{maxMsgId} ORDER BY msg_id ASC LIMIT #{pageSize} "})
     List<MessageToUser> findMessages(long userId, long conversationId, long maxMsgId, long pageSize);
 
-    @Select({SELECT_COLUMNS, " WHERE conversation_id=#{conversationId}"
-        + " AND update_time<=#{updateTime} ORDER BY msg_id ASC LIMIT #{pageSize} "})
-    List<MessageToUser> findMessages(long userId, long conversationId, Date updateTime, long pageSize);
+    // @Select({SELECT_COLUMNS, " WHERE conversation_id=#{conversationId}"
+    // + " AND update_time<=#{updateTime} ORDER BY msg_id ASC LIMIT #{pageSize} "})
+    // List<MessageToUser> findMessages(long userId, long conversationId, Date updateTime, long pageSize);
 
     @Select({"<script> ", SELECT_COLUMNS,
         " WHERE msg_id IN <foreach item='item' index='index' collection='msgIds' open='(' separator=',' close=')'>",

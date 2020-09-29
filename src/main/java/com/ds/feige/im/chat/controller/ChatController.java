@@ -8,14 +8,17 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.chat.dto.*;
 import com.ds.feige.im.chat.service.ChatService;
+import com.ds.feige.im.chat.service.ConversationService;
 import com.ds.feige.im.constants.SocketPaths;
 import com.ds.feige.im.gateway.service.SessionUserService;
 import com.ds.feige.im.gateway.socket.annotation.SocketController;
 import com.ds.feige.im.gateway.socket.annotation.SocketRequestMapping;
+import com.ds.feige.im.gateway.socket.annotation.UserId;
 import com.google.common.collect.Maps;
 
 /**
@@ -27,12 +30,14 @@ public class ChatController {
     ChatService chatService;
     UserService userService;
     SessionUserService sessionUserService;
-
+    ConversationService conversationService;
     @Autowired
-    public ChatController(ChatService chatService, UserService userService, SessionUserService sessionUserService) {
+    public ChatController(ChatService chatService, ConversationService conversationService, UserService userService,
+        SessionUserService sessionUserService) {
         this.chatService = chatService;
         this.userService = userService;
         this.sessionUserService = sessionUserService;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -76,5 +81,11 @@ public class ChatController {
     @SocketRequestMapping(value = SocketPaths.CS_READ_CHAT_MESSAGE, response = false)
     public void readMessage(@RequestBody ReadMessageRequest req) {
         chatService.readMessage(req);
+    }
+
+    @SocketRequestMapping(SocketPaths.CS_CONVERSATION_INFO)
+    public UserConversationInfo getConversation(@UserId long userId,
+        @RequestParam("conversationId") long conversationId) {
+        return conversationService.getUserConversation(userId, conversationId);
     }
 }
