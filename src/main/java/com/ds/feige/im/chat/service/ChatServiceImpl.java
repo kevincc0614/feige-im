@@ -102,8 +102,10 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         message.setReceiverCount(receiverCount);
         save(message);
         ConversationMessageEvent event = buildEvent(message, receiverIds, userConversation, sourceId);
+        Set<String> connectionIds = Sets.newHashSet();
+        connectionIds.add(request.getSenderConnectionId());
+        event.setExcludeConnectionIds(connectionIds);
         template.convertAndSend(AMQPConstants.RoutingKeys.CONVERSATION_SEND_MESSAGE, event);
-
         return BeansConverter.conversationMsgToMessageToUser(event);
 
     }
@@ -122,7 +124,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         event.setMsgContent(message.getMsgContent());
         event.setMsgId(message.getMsgId());
         event.setMsgType(message.getMsgType());
-        event.setOption(message.getOption());
+        event.setExtra(message.getExtra());
         event.setSenderId(message.getSenderId());
         // 已读未读
         event.setReadCount(message.getReadCount());

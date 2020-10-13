@@ -70,11 +70,11 @@
             });
         }
         function send(path,payload) {
-            const socketRequest=new Object();
-            socketRequest.requestId=123456
-            socketRequest.path=path
-            socketRequest.payload=JSON.stringify(payload)
-            const requestText=JSON.stringify(socketRequest);
+            const socketPacket=new Object();
+            socketPacket.requestId=123456
+            socketPacket.path=path
+            socketPacket.payload=JSON.stringify(payload)
+            const requestText=JSON.stringify(socketPacket);
             console.log('Send request text to server:'+requestText)
             ws.send(requestText)
         }

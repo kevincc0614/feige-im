@@ -14,5 +14,5 @@ public class Group extends BaseEntity {
     private Long conversationId;
     private Integer maxUserLimit;
     private String announcement;
-    private String option;
+    private String extra;
 }

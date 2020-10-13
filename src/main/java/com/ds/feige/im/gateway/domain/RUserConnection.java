@@ -10,7 +10,7 @@ import com.ds.feige.im.chat.dto.event.MessageForwardEvent;
 import com.ds.feige.im.constants.AMQPConstants;
 import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.ds.feige.im.gateway.socket.connection.UserConnection;
-import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
+import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 /**
  * 远程用户链接对象
  * */
@@ -24,7 +24,7 @@ public class RUserConnection implements UserConnection {
         this.rabbitTemplate=rabbitTemplate;
     }
     @Override
-    public boolean send(SocketRequest request) throws IOException {
+    public boolean send(SocketPacket request) throws IOException {
         //非本机服务器通过MQ推送
         String routeKey = AMQPConstants.SERVER_FORWARD_MESSAGE_QUEUE + meta.getInstanceId();
         MessageForwardEvent message = new MessageForwardEvent();
@@ -37,7 +37,7 @@ public class RUserConnection implements UserConnection {
     }
 
     @Override
-    public boolean disconnect(SocketRequest reason) throws IOException {
+    public boolean disconnect(SocketPacket reason) throws IOException {
         String routeKey = AMQPConstants.SERVER_FORWARD_DISCONNECT_MESSAGE_QUEUE + meta.getInstanceId();
         MessageForwardEvent message = new MessageForwardEvent();
         message.setMeta(this.meta);
@@ -54,5 +54,10 @@ public class RUserConnection implements UserConnection {
     @Override
     public ConnectionMeta getMeta() {
         return this.meta;
+    }
+
+    @Override
+    public String getId() {
+        return this.meta.getSessionId();
     }
 }

@@ -1,4 +1,4 @@
-package com.ds.feige.im.admin.dto;
+package com.ds.feige.im.account.dto;
 
 import lombok.Data;
 

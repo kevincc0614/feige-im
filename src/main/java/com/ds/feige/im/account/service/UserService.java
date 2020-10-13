@@ -8,7 +8,9 @@ import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.dto.UserRegisterRequest;
 
 public interface UserService {
-
+    /**
+     * @param mobile
+     */
     UserInfo getUserByMobile(String mobile);
 
     /**
@@ -26,8 +28,19 @@ public interface UserService {
      */
     UserInfo verifyToken(String token);
 
+    /**
+     * 注册用户
+     * 
+     * @param registerRequest
+     * @return 用户ID
+     */
     long register(UserRegisterRequest registerRequest);
 
+    /**
+     * 删除用户
+     * 
+     * @param userId
+     */
     boolean deleteUser(long userId);
 
     /**

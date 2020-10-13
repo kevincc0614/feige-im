@@ -60,7 +60,7 @@ public interface EnterpriseService {
     /**
      * 删除员工
      */
-    void deleteEmployee(long enterpriseId, long userId);
+    void deleteEmployee(DeleteEmpRequest request);
 
     /**
      * 获取部门信息
@@ -104,4 +104,14 @@ public interface EnterpriseService {
      * @param userId
      */
     boolean isAdmin(long enterpriseId, long userId);
+
+    /**
+     * 检查是否具备管理员权限
+     * 
+     * @param enterpriseId
+     * @param userId
+     * @throws com.ds.base.nodepencies.exception.WarnMessageException
+     *             如果没有管理员权限会抛出异常
+     */
+    void checkAdmin(long enterpriseId, long userId);
 }

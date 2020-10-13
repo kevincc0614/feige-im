@@ -9,8 +9,6 @@ import java.util.List;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.redisson.api.RedissonClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -33,12 +31,14 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.hash.Hashing;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 用户服务,主要为无状态服务接口
  */
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
-    static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private final UserMapper userMapper;
     @Autowired
     @Qualifier("longIdKeyGenerator")
@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserInfo getUserByMobile(String mobile) {
-        User user = userMapper.getOneByMobile(mobile);
+        User user = userMapper.getByMobile(mobile);
         if (user == null) {
             return null;
         }
@@ -63,7 +63,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public String getToken(GetTokenRequest request) {
         String loginName = request.getLoginName();
-        User user = userMapper.getOneByMobile(loginName);
+        User user = userMapper.getByMobile(loginName);
         if (user == null) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
         String password =
             Hashing.hmacMd5(key).newHasher().putString(request.getPassword(), Charsets.UTF_8).hash().toString();
         // 查询数据库
-        user = this.userMapper.getOne(loginName, password);
+        user = this.userMapper.getByMobileAndPassword(loginName, password);
         // 用户不存在
         if (user == null) {
             throw new WarnMessageException(FeigeWarn.PWD_ERROR);
@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
             JWT.create().withClaim("userId", userId).withExpiresAt(expireDate).sign(Algorithm.HMAC256(password));
         // 放入缓存
 
-        LOGGER.info("User get token success:userId={},token={}", user.getId(), token);
+        log.info("User get token success:userId={},token={}", user.getId(), token);
         return token;
     }
 
@@ -102,7 +102,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserInfo verifyToken(String token) {
         // 获取 token 中的 user id
-        LOGGER.info("User verify token:token={}", token);
+        log.info("User verify token:token={}", token);
         Long userId = JWT.decode(token).getClaim("userId").asLong();
         User user = userMapper.selectById(userId);
         if (user == null) {
@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public long register(UserRegisterRequest request) {
         // 判断手机号是否已存在
-        int i = userMapper.getByMobile(request.getMobile());
+        int i = userMapper.getCountByMobile(request.getMobile());
         if (i >= 1) {
             throw new WarnMessageException(FeigeWarn.ACCOUNT_REGISTERD);
         }
@@ -177,6 +177,6 @@ public class UserServiceImpl implements UserService {
         if (i < 1) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
-        LOGGER.info("Cancel user success:userId={},operatorId={}", userId, operatorId);
+        log.info("Cancel user success:userId={},operatorId={}", userId, operatorId);
     }
 }

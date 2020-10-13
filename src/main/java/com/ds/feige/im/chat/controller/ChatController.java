@@ -9,16 +9,20 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.socket.WebSocketSession;
 
 import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.chat.dto.*;
 import com.ds.feige.im.chat.service.ChatService;
 import com.ds.feige.im.chat.service.ConversationService;
+import com.ds.feige.im.constants.SessionAttributeKeys;
 import com.ds.feige.im.constants.SocketPaths;
+import com.ds.feige.im.gateway.domain.SessionUser;
 import com.ds.feige.im.gateway.service.SessionUserService;
 import com.ds.feige.im.gateway.socket.annotation.SocketController;
 import com.ds.feige.im.gateway.socket.annotation.SocketRequestMapping;
 import com.ds.feige.im.gateway.socket.annotation.UserId;
+import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.google.common.collect.Maps;
 
 /**
@@ -27,25 +31,25 @@ import com.google.common.collect.Maps;
 @SocketController
 @SocketRequestMapping
 public class ChatController {
-    ChatService chatService;
-    UserService userService;
-    SessionUserService sessionUserService;
-    ConversationService conversationService;
     @Autowired
-    public ChatController(ChatService chatService, ConversationService conversationService, UserService userService,
-        SessionUserService sessionUserService) {
-        this.chatService = chatService;
-        this.userService = userService;
-        this.sessionUserService = sessionUserService;
-        this.conversationService = conversationService;
-    }
+    ChatService chatService;
+    @Autowired
+    UserService userService;
+    @Autowired
+    SessionUserService sessionUserService;
+    @Autowired
+    ConversationService conversationService;
 
     /**
      * 发送聊天消息
      */
     @SocketRequestMapping(SocketPaths.CS_SEND_CHAT_MESSAGE)
-    public MessageToUser send(@RequestBody @Valid MessageToConversation request) {
-
+    public MessageToUser send(WebSocketSession session, @RequestBody @Valid MessageToConversation request) {
+        SessionUser sessionUser = sessionUserService.getSessionUser(request.getUserId());
+        // TODO 这部分代码有待优化,代码结构和层次需要更加清晰
+        String deviceId = (String)session.getAttributes().get(SessionAttributeKeys.DEVICE_ID);
+        ConnectionMeta connectionMeta = sessionUser.getConnectionMetaByDeviceId(deviceId);
+        request.setSenderConnectionId(connectionMeta.getSessionId());
         return this.chatService.sendToConversation(request);
     }
 

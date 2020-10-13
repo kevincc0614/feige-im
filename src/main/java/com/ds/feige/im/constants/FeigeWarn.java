@@ -38,6 +38,13 @@ public enum FeigeWarn implements WarnMessageEntry {
     CONVERSATION_HAS_BEEN_CREATED("CHAT_100003", "会话已经被创建", "会话已经被创建"),
     CHAT_MSG_NOT_EXISTS("CHAT_100004", "消息不存在", "消息不存在"),
 
+    APP_NOT_EXISTS("APP_100001", "应用不存在", "应用不存在"), APP_NAME_EXISTS("APP_100002", "应用名已存在", "应用名已存在"),
+    APP_ROLE_NOT_EXISTS("APP_100003", "应用角色不存在", "应用角色不存在"),
+    APP_SECRET_INVALID("APP_100004", "不合法的secret参数", "不合法的secret参数"),
+    APP_ROLE_AUTHORITY_EXISTS("APP_100005", "角色权限已存在", "角色权限已存在"),
+    APP_ROLE_AUTHORITY_NAME_EXISTS("APP_100006", "权限名已存在", "权限名已存在"),
+    USER_OPENID_INVALID("APP_100007", "OpenId不合法", "OpenId不合法"),
+    APP_TOKEN_EXPIRED("APP_100008", "AccessToken已过期", "AccessToken已过期"),
     FAVORITE_MARK_MESSAGE_NOT_EXISTS("FAVORITE_100001", "备注不存在", "备注不存在");
     private String code;
     private String originalMessage;

@@ -7,6 +7,10 @@ import org.springframework.beans.BeanUtils;
 
 import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.entity.User;
+import com.ds.feige.im.app.dto.AppInfo;
+import com.ds.feige.im.app.dto.EmpRoleInfo;
+import com.ds.feige.im.app.entity.App;
+import com.ds.feige.im.app.entity.EmpRole;
 import com.ds.feige.im.chat.dto.MessageToUser;
 import com.ds.feige.im.chat.dto.UserConversationInfo;
 import com.ds.feige.im.chat.dto.event.ConversationMessageEvent;
@@ -120,6 +124,27 @@ public class BeansConverter {
     public static List<MarkMessageInfo> markMessagesToMarkMessageInfos(List<MarkMessage> markMessages) {
         List<MarkMessageInfo> result = new ArrayList<>(markMessages.size());
         markMessages.forEach(m -> result.add(markMessageToMarkMessageInfo(m)));
+        return result;
+    }
+
+    public static AppInfo appToAppInfo(App app) {
+        AppInfo appInfo = new AppInfo();
+        BeanUtils.copyProperties(app, appInfo);
+        return appInfo;
+    }
+
+    public static EmpRoleInfo empRoleToEmpRoleInfo(EmpRole empRole) {
+        EmpRoleInfo info = new EmpRoleInfo();
+        BeanUtils.copyProperties(empRole, info);
+        return info;
+    }
+
+    public static List<EmpRoleInfo> empRoleTosEmpRoleInfos(List<EmpRole> sources) {
+        if (sources == null) {
+            return null;
+        }
+        List<EmpRoleInfo> result = new ArrayList<>(sources.size());
+        sources.forEach(source -> result.add(empRoleToEmpRoleInfo(source)));
         return result;
     }
 }

@@ -2,6 +2,7 @@ package com.ds.feige.im.chat.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ds.feige.im.common.entity.BaseEntity;
+
 import lombok.Data;
 
 @TableName("t_user_conversation")
@@ -32,7 +33,7 @@ public class UserConversation extends BaseEntity {
     /**
      * 其他针对会话的配置信息
      **/
-    private String option;
+    private String extra;
     /**
      * 最后已读消息ID
      */

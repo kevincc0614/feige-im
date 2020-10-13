@@ -8,7 +8,7 @@ import lombok.Data;
 
 @JsonIgnoreProperties
 @Data
-public class SocketRequest {
+public class SocketPacket {
     /** 消息ID */
     protected long requestId;
     /** 消息path,类似HTTP协议中的URL地址 */

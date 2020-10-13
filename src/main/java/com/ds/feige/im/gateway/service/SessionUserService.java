@@ -2,6 +2,7 @@ package com.ds.feige.im.gateway.service;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
@@ -47,7 +48,7 @@ public interface SessionUserService {
      * @param path
      * @param payload
      */
-    void sendToUser(Long userId, String path, Object payload);
+    void sendToUser(Long userId, String path, Object payload, Set<String> excludeConnectionIds);
 
     /**
      * 服务器主动发消息给客户端 如果客户端连接的是非本机服务器,则会通过其他服务器进行转发推送
@@ -57,7 +58,7 @@ public interface SessionUserService {
      * @param path
      * @param payload
      */
-    void sendToUsers(Collection<Long> userIds, String path, Object payload);
+    void sendToUsers(Collection<Long> userIds, String path, Object payload, Set<String> excludeConnectionIds);
 
     void afterConnectionEstablished(WebSocketSession session) throws Exception;
 

@@ -192,7 +192,7 @@ public class ConversationServiceImpl extends ServiceImpl<UserConversationMapper,
     }
 
     @Override
-    public void updateConversationOption(long userId, long conversationId, String option) {
+    public void updateConversationExtra(long userId, long conversationId, String option) {
 
     }
 

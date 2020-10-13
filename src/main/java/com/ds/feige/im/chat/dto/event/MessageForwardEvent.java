@@ -1,7 +1,7 @@
 package com.ds.feige.im.chat.dto.event;
 
 import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
-import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
+import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 
 import lombok.Data;
 
@@ -9,6 +9,6 @@ import lombok.Data;
 public class MessageForwardEvent {
     /** 源服务器ID */
     private String sourceInstanceId;
-    private SocketRequest request;
+    private SocketPacket request;
     private ConnectionMeta meta;
 }

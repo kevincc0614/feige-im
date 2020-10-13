@@ -14,7 +14,7 @@ import com.ds.feige.im.enterprise.entity.DepartmentEmployee;
 public interface DepartmentEmployeeMapper extends BaseMapper<DepartmentEmployee> {
 
     @Select("SELECT COUNT(*) FROM t_department_employee where user_id=#{userId} and department_id=#{departmentId}")
-    DepartmentEmployee getOne(long userId, long departmentId);
+    DepartmentEmployee getByUserAndDepartmentId(long userId, long departmentId);
 
     @Delete("DELETE FROM t_department_employee where department_id=#{departmentId}")
     int deleteByDepartmentId(long departmentId);

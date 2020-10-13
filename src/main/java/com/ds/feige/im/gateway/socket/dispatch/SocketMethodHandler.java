@@ -28,7 +28,7 @@ import com.ds.feige.im.common.util.JsonUtils;
 import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.constants.SessionAttributeKeys;
 import com.ds.feige.im.gateway.socket.annotation.UserId;
-import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
+import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Lists;
 
@@ -52,8 +52,9 @@ public class SocketMethodHandler {
     public Method getMethod(){
         return this.method;
     }
-    public Object invokeForRequest(WebSocketSession session, SocketRequest socketRequest) throws Exception {
-        Object[] args = getMethodArgumentValues(session, socketRequest);
+
+    public Object invokeForRequest(WebSocketSession session, SocketPacket socketPacket) throws Exception {
+        Object[] args = getMethodArgumentValues(session, socketPacket);
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Invoke method arguments: " + Arrays.toString(args));
         }
@@ -68,18 +69,20 @@ public class SocketMethodHandler {
         Long userId=(Long) sessionAttrs.get(SessionAttributeKeys.USER_ID);
         return userId;
     }
-    public Object[] getMethodArgumentValues(WebSocketSession session, SocketRequest socketRequest) throws JsonProcessingException {
+
+    public Object[] getMethodArgumentValues(WebSocketSession session, SocketPacket socketPacket)
+        throws JsonProcessingException {
         Parameter[] parameters=method.getParameters();
         Object[] parameterValues=new Object[parameters.length];
         int bodyParamCount=0;
-        String payload=socketRequest.getPayload();
-        Map<String,String> headers=socketRequest.getHeaders();
+        String payload = socketPacket.getPayload();
+        Map<String, String> headers = socketPacket.getHeaders();
         //payload转为map对象的引用,只json反序列化一次
         Map<String,Object> payloadMap=null;
         for(int i=0;i<parameters.length;i++){
             Parameter parameter=parameters[i];
-            if(parameter.getType().isAssignableFrom(SocketRequest.class)){
-                parameterValues[i]= socketRequest;
+            if (parameter.getType().isAssignableFrom(SocketPacket.class)) {
+                parameterValues[i] = socketPacket;
                 continue;
             }
             UserId userIdAnno = AnnotationUtils.getAnnotation(parameter, UserId.class);
@@ -114,7 +117,7 @@ public class SocketMethodHandler {
                     String key=headerAnnotation.value();
                     String header=null;
                     if(headers!=null){
-                        header= socketRequest.getHeaders().get(key);
+                        header = socketPacket.getHeaders().get(key);
                     }
                     parameterValues[i]=header;
                     continue;

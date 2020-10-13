@@ -21,7 +21,7 @@ import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.gateway.socket.annotation.SocketController;
 import com.ds.feige.im.gateway.socket.annotation.SocketRequestMapping;
-import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
+import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 import com.ds.feige.im.gateway.socket.protocol.SocketResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
@@ -43,8 +43,9 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
     public void addMethodInterceptor(SocketMethodHandlerInterceptor interceptor){
         this.interceptors.add(interceptor);
     }
-    public void doService(WebSocketSession session, SocketRequest socketRequest){
-        String path= socketRequest.getPath();
+
+    public void doService(WebSocketSession session, SocketPacket socketPacket) {
+        String path = socketPacket.getPath();
         if(Strings.isNullOrEmpty(path)){
             log.warn("The path of websocket message is empty:session={}", session);
             return;
@@ -55,31 +56,33 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
             return;
         }
         this.interceptors.forEach(interceptor -> {
-            interceptor.preHandle(session, socketRequest,invoker);
+            interceptor.preHandle(session, socketPacket, invoker);
         });
         Throwable dispatchEx=null;
         Object result=null;
         try{
             try{
-                result=invoker.invokeForRequest(session, socketRequest);
+                result = invoker.invokeForRequest(session, socketPacket);
                 for(SocketMethodHandlerInterceptor interceptor:interceptors){
-                    interceptor.postHandle(session, socketRequest,result,invoker);
+                    interceptor.postHandle(session, socketPacket, result, invoker);
                 }
             }catch (Throwable e){
                 dispatchEx = e;
-                log.error("Dispatch exception:request={}", socketRequest, dispatchEx);
+                log.error("Dispatch exception:request={}", socketPacket, dispatchEx);
             }
-            processServiceResult(session,socketRequest,result,invoker,dispatchEx);
+            processServiceResult(session, socketPacket, result, invoker, dispatchEx);
         }catch (Throwable e){
             for(SocketMethodHandlerInterceptor interceptor:interceptors){
-                interceptor.postHandle(session, socketRequest,result,invoker);
+                interceptor.postHandle(session, socketPacket, result, invoker);
             }
         }
 
 
 
     }
-    public void processServiceResult(WebSocketSession session,SocketRequest request,Object result,SocketMethodHandler handler,Throwable e) throws Exception{
+
+    public void processServiceResult(WebSocketSession session, SocketPacket request, Object result,
+        SocketMethodHandler handler, Throwable e) throws Exception {
         if(handler.isNeedResponse()){
             SocketResponse response=new SocketResponse();
             response.setResponseId(request.getRequestId());

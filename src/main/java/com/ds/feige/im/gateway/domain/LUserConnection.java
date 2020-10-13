@@ -1,14 +1,15 @@
 package com.ds.feige.im.gateway.domain;
 
-import com.ds.feige.im.common.util.JsonUtils;
-import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
-import com.ds.feige.im.gateway.socket.connection.UserConnection;
-import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
+import java.io.IOException;
+
 import org.springframework.util.Assert;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
+import com.ds.feige.im.common.util.JsonUtils;
+import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
+import com.ds.feige.im.gateway.socket.connection.UserConnection;
+import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 
 /**
  * 本地用户链接对象
@@ -26,7 +27,7 @@ public class LUserConnection implements UserConnection {
     }
 
     @Override
-    public boolean send(SocketRequest request) throws IOException {
+    public boolean send(SocketPacket request) throws IOException {
         if (request == null) {
             throw new NullPointerException("SocketRequest is null");
         }
@@ -37,7 +38,7 @@ public class LUserConnection implements UserConnection {
     }
 
     @Override
-    public boolean disconnect(SocketRequest reason) throws IOException {
+    public boolean disconnect(SocketPacket reason) throws IOException {
         this.send(reason);
         this.webSocketSession.close();
         return true;
@@ -52,5 +53,10 @@ public class LUserConnection implements UserConnection {
     @Override
     public ConnectionMeta getMeta() {
         return this.meta;
+    }
+
+    @Override
+    public String getId() {
+        return this.meta.getSessionId();
     }
 }

@@ -46,6 +46,7 @@ public class ChatMessageListener {
         long msgId = event.getMsgId();
         long senderId = event.getSenderId();
         int msgType = event.getMsgType();
+        Set<String> excludeConnectionIds = event.getExcludeConnectionIds();
         MessageToUser chatMessage = BeansConverter.conversationMsgToMessageToUser(event);
         // 给群用户收件箱写消息
         Set<Long> receiverIds = event.getReceiverIds();
@@ -53,7 +54,8 @@ public class ChatMessageListener {
             receiverIds.stream().map(userId -> buildMessageOfUser(userId, senderId, conversationId, msgId, msgType))
                 .collect(Collectors.toList());
         userMessageService.store(list);
-        sessionUserService.sendToUsers(receiverIds, SocketPaths.SC_PUSH_CHAT_MESSAGE, chatMessage);
+        sessionUserService.sendToUsers(receiverIds, SocketPaths.SC_PUSH_CHAT_MESSAGE, chatMessage,
+            excludeConnectionIds);
     }
 
     @RabbitListener(queues = AMQPConstants.QueueNames.CONVERSATION_READ_MESSAGE_RECEIPT)
@@ -67,7 +69,7 @@ public class ChatMessageListener {
                 ReadReceiptNotice notice = new ReadReceiptNotice();
                 notice.setMsgIds(msgIds);
                 notice.setReaderId(readerId);
-                sessionUserService.sendToUser(senderId, SocketPaths.SC_CHAT_MESSAGE_READ_RECEIPT, notice);
+                sessionUserService.sendToUser(senderId, SocketPaths.SC_CHAT_MESSAGE_READ_RECEIPT, notice, null);
             } catch (Exception e) {
                 log.error("Send read receipt notice to user error:value={}", entry, e);
             }

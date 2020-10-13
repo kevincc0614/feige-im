@@ -16,5 +16,5 @@ public class GroupInfo {
     private Long conversationId;
     private int maxUserLimit;
     private String announcement;
-    private String option;
+    private String extra;
 }

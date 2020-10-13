@@ -2,6 +2,7 @@ package com.ds.feige.im.chat.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ds.feige.im.common.entity.BaseEntity;
+
 import lombok.Data;
 
 @TableName("t_conversation_message")
@@ -38,7 +39,7 @@ public class ConversationMessage extends BaseEntity {
     /**
      * 消息相关参数配置,比如是否漫游,是否离线推送,是否计入未读等等
      */
-    private String option;
+    private String extra;
     /**
      * 已读人数
      */

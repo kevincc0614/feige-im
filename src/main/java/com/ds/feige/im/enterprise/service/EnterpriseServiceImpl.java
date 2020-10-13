@@ -12,7 +12,7 @@ import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.common.util.BeansConverter;
 import com.ds.feige.im.constants.FeigeWarn;
-import com.ds.feige.im.enterprise.constants.EmployeeRole;
+import com.ds.feige.im.enterprise.constants.EnterpriseRole;
 import com.ds.feige.im.enterprise.dto.*;
 import com.ds.feige.im.enterprise.entity.Department;
 import com.ds.feige.im.enterprise.entity.DepartmentEmployee;
@@ -54,7 +54,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         Employee employee = new Employee();
         employee.setUserId(creator.getUserId());
         employee.setName(creator.getNickName());
-        employee.setRole(EmployeeRole.SUPER_ADMIN);
+        employee.setRole(EnterpriseRole.SUPER_ADMIN);
         employee.setEnterpriseId(enterprise.getId());
         employeeMapper.insert(employee);
         return enterprise.getId();
@@ -69,9 +69,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     @Override
     public long createDepartment(CreateDepRequest request) {
         // 验证权限
-        if (!isAdmin(request.getEnterpriseId(), request.getOperatorId())) {
-            throw new WarnMessageException(FeigeWarn.EMPLOYEE_ROLE_NOT_ADMIN);
-        }
+        checkAdmin(request.getEnterpriseId(), request.getOperatorId());
         long parentId = request.getParentId();
         if (parentId != 0) {
             // 判断上级部门是否存在
@@ -102,9 +100,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         long departmentId = request.getDepartmentId();
         long enterpriseId = request.getEnterpriseId();
         // 验证权限
-        if (!isAdmin(request.getEnterpriseId(), request.getOperatorId())) {
-            throw new WarnMessageException(FeigeWarn.EMPLOYEE_ROLE_NOT_ADMIN);
-        }
+        checkAdmin(request.getEnterpriseId(), request.getOperatorId());
         log.info("Delete department start:departmentId={}", departmentId);
         // 判断部门是否属于该企业下
         Department department = departmentMapper.selectById(departmentId);
@@ -133,9 +129,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         log.info("Edit employee start:request={}", request.toString());
         final long userId = request.getUserId();
         // 判断是否具备权限
-        if (!isAdmin(request.getEnterpriseId(), request.getOperatorId())) {
-            throw new WarnMessageException(FeigeWarn.EMPLOYEE_ROLE_NOT_ADMIN);
-        }
+        checkAdmin(request.getEnterpriseId(), request.getOperatorId());
         Employee employee = employeeMapper.getByUserId(request.getEnterpriseId(), request.getUserId());
         if (employee == null) {
             throw new WarnMessageException(FeigeWarn.EMPLOYEE_NOT_EXISTS);
@@ -155,9 +149,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     public void editDepartment(EditDepRequest request) {
         log.info("Edit department start:request={}", request);
         // 判断是否具备权限
-        if (!isAdmin(request.getEnterpriseId(), request.getOperatorId())) {
-            throw new WarnMessageException(FeigeWarn.EMPLOYEE_ROLE_NOT_ADMIN);
-        }
+        checkAdmin(request.getEnterpriseId(), request.getOperatorId());
         Department department = new Department();
         department.setEnName(request.getEnName());
         department.setId(request.getDepartmentId());
@@ -180,9 +172,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         long userId = request.getUserId();
         long departmentId = request.getDepartmentId();
         boolean leader = request.isLeader();
-        if (!isAdmin(request.getEnterpriseId(), request.getOperatorId())) {
-            throw new WarnMessageException(FeigeWarn.EMPLOYEE_ROLE_NOT_ADMIN);
-        }
+        checkAdmin(request.getEnterpriseId(), request.getOperatorId());
         // 判断员工是否存在
         Employee employee = employeeMapper.getByUserId(enterpriseId, userId);
         if (employee == null) {
@@ -194,7 +184,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
             throw new WarnMessageException(FeigeWarn.DEPARTMENT_NOT_EXISTS);
         }
         // 判断员工是否在对应部门已存在
-        DepartmentEmployee count = departmentEmployeeMapper.getOne(userId, departmentId);
+        DepartmentEmployee count = departmentEmployeeMapper.getByUserAndDepartmentId(userId, departmentId);
         if (count != null) {
             throw new WarnMessageException(FeigeWarn.EMPLOYEE_EXISTS_IN_DEPARTMENT);
         }
@@ -209,6 +199,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
 
     @Override
     public boolean removeDepartmentEmployee(EditDepEmpRequest request) {
+        checkAdmin(request.getEnterpriseId(), request.getOperatorId());
         int i = departmentEmployeeMapper.deleteDepartmentEmployee(request.getEnterpriseId(), request.getDepartmentId(),
             request.getUserId());
         log.info("Delete department employee success:request={}", request);
@@ -241,6 +232,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
 
     @Override
     public long createEmployee(CreateEmpRequest request) {
+        checkAdmin(request.getEnterpriseId(), request.getOperatorId());
         // 判断用户是否存在
         UserInfo userInfo = userService.getUserById(request.getUserId());
         if (userInfo == null) {
@@ -265,7 +257,10 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     }
 
     @Override
-    public void deleteEmployee(long enterpriseId, long userId) {
+    public void deleteEmployee(DeleteEmpRequest request) {
+        long enterpriseId = request.getEnterpriseId();
+        long userId = request.getUserId();
+        checkAdmin(request.getEnterpriseId(), request.getOperatorId());
         // 删除员工表数据
         employeeMapper.deleteEmployee(enterpriseId, userId);
         // 删除部门关联数据
@@ -297,6 +292,14 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         }
         String role = employee.getRole();
         // 角色权限校验
-        return EmployeeRole.ADMIN.equals(role) || EmployeeRole.SUPER_ADMIN.equals(role);
+        return EnterpriseRole.ADMIN.equals(role) || EnterpriseRole.SUPER_ADMIN.equals(role);
+    }
+
+    @Override
+    public void checkAdmin(long enterpriseId, long userId) {
+        // 验证权限
+        if (!isAdmin(enterpriseId, userId)) {
+            throw new WarnMessageException(FeigeWarn.EMPLOYEE_ROLE_NOT_ADMIN);
+        }
     }
 }

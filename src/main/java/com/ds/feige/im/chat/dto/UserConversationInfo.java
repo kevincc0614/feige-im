@@ -30,7 +30,7 @@ public class UserConversationInfo {
     /**
      * 其他针对会话的配置信息
      **/
-    private String option;
+    private String extra;
     /**
      * 最后已读消息ID
      */

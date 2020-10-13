@@ -1,19 +1,20 @@
-package com.ds.feige.im.admin.controller;
+package com.ds.feige.im.account.controller;
 
-import com.ds.base.nodepencies.api.Response;
-import com.ds.feige.im.account.service.UserService;
-import com.ds.feige.im.admin.dto.UnregisterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ds.base.nodepencies.api.Response;
+import com.ds.feige.im.account.dto.UnregisterRequest;
+import com.ds.feige.im.account.service.UserService;
 
 /**
- * 用户后台管理
- *
  * @author DC
  */
 @RequestMapping("/admin/user")
-public class UserAdminController {
+@RestController
+public class AccountAdminController {
     @Autowired
     UserService userService;
 

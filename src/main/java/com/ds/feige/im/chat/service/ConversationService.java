@@ -84,5 +84,5 @@ public interface ConversationService {
 
     void updateConversationAvatar(long userId, long conversationId, String avatar);
 
-    void updateConversationOption(long userId, long conversationId, String option);
+    void updateConversationExtra(long userId, long conversationId, String option);
 }

@@ -16,11 +16,12 @@ public class ConversationMessageEvent {
     private int conversationType;
     private long targetId;
     private long senderId;
+    private Set<String> excludeConnectionIds;
     private Set<Long> receiverIds;
     private long msgId;
     private String msgContent;
     private Integer msgType;
-    private String option;
+    private String extra;
     private int readCount;
     private int receiverCount;
     private Date createTime;

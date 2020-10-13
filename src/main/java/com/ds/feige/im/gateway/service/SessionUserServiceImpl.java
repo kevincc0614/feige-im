@@ -3,6 +3,7 @@ package com.ds.feige.im.gateway.service;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -19,7 +20,6 @@ import org.springframework.web.socket.WebSocketSession;
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
 import com.ds.feige.im.account.dto.LoginRequest;
-import com.ds.feige.im.account.dto.RemoteLoginMsg;
 import com.ds.feige.im.common.domain.UserIdHolder;
 import com.ds.feige.im.common.util.JsonUtils;
 import com.ds.feige.im.constants.CacheKeys;
@@ -30,9 +30,10 @@ import com.ds.feige.im.gateway.DiscoveryService;
 import com.ds.feige.im.gateway.domain.SessionUser;
 import com.ds.feige.im.gateway.domain.SessionUserFactory;
 import com.ds.feige.im.gateway.domain.UserState;
+import com.ds.feige.im.gateway.dto.RemoteLoginPayload;
 import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.ds.feige.im.gateway.socket.connection.UserConnection;
-import com.ds.feige.im.gateway.socket.protocol.SocketRequest;
+import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -57,10 +58,10 @@ public class SessionUserServiceImpl implements SessionUserService {
         // 通知用户其他链接,在其他设备登录
         long userId = oldConnMeta.getUserId();
         log.info("The user was remote login:userId={},oldConnMeta={},newConnMeta={}", userId, oldConnMeta, newConnMeta);
-        SocketRequest sendToClientRequest = new SocketRequest();
+        SocketPacket sendToClientRequest = new SocketPacket();
         sendToClientRequest.setPath("/user/remote-login");
         sendToClientRequest.setRequestId(longIdKeyGenerator.generateId());
-        RemoteLoginMsg msg = new RemoteLoginMsg();
+        RemoteLoginPayload msg = new RemoteLoginPayload();
         msg.setDeviceId(newConnMeta.getDeviceId());
         msg.setIpAddress(newConnMeta.getIpAddress());
         sendToClientRequest.setPayload(JsonUtils.toJson(msg));
@@ -177,7 +178,7 @@ public class SessionUserServiceImpl implements SessionUserService {
     }
 
     @Override
-    public void sendToUser(Long userId, String path, Object payload) {
+    public void sendToUser(Long userId, String path, Object payload, Set<String> excludeConnectionIds) {
         SessionUser user = sessionUserFactory.getSessionUser(userId);
         if (!user.isOnline()) {
             // 用户不在线
@@ -186,7 +187,12 @@ public class SessionUserServiceImpl implements SessionUserService {
             for (Map.Entry<String, ConnectionMeta> entry : user.getConnectionMetas().entrySet()) {
                 try {
                     UserConnection connection = sessionUserFactory.getConnection(entry.getValue());
-                    SocketRequest request = new SocketRequest();
+                    if (excludeConnectionIds != null && !excludeConnectionIds.isEmpty()) {
+                        if (excludeConnectionIds.contains(connection.getId())) {
+                            continue;
+                        }
+                    }
+                    SocketPacket request = new SocketPacket();
                     request.setRequestId(longIdKeyGenerator.generateId());
                     request.setPayload(JsonUtils.toJson(payload));
                     request.setPath(path);
@@ -200,10 +206,10 @@ public class SessionUserServiceImpl implements SessionUserService {
     }
 
     @Override
-    public void sendToUsers(Collection<Long> userIds, String path, Object payload) {
+    public void sendToUsers(Collection<Long> userIds, String path, Object payload, Set<String> excludeConnectionIds) {
         for (Long userId : userIds) {
             try {
-                sendToUser(userId, path, payload);
+                sendToUser(userId, path, payload, excludeConnectionIds);
             } catch (Exception e) {
                 log.error("Send to user error:userId={}", userId, e);
             }
@@ -214,7 +220,7 @@ public class SessionUserServiceImpl implements SessionUserService {
     private void sendEstablishedOK(WebSocketSession session) throws IOException {
         Map<String, Object> attributes = session.getAttributes();
         attributes.put(SessionAttributeKeys.CLOSED, new AtomicBoolean(false));
-        SocketRequest request = new SocketRequest();
+        SocketPacket request = new SocketPacket();
         request.setPath("/connection/state-change");
         request.setPayload("{\"state\":\"established\"}");
         request.setRequestId(1L);

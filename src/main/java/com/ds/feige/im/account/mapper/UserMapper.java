@@ -13,18 +13,14 @@ import com.ds.feige.im.account.entity.User;
  * @author caedmon
  */
 public interface UserMapper extends BaseMapper<User> {
-
-    @Select("select count(1) from t_user where id=#{id}")
-    int getCountById(@Param("id") long userId);
-
     @Select("select count(1) from t_user where mobile=#{mobile} ")
-    int getByMobile(@Param("mobile") String mobile);
+    int getCountByMobile(@Param("mobile") String mobile);
 
     @Select("SELECT * FROM t_user where mobile=#{mobile} and password=#{password} ")
-    User getOne(@Param("mobile") String mobile, @Param("password") String password);
+    User getByMobileAndPassword(@Param("mobile") String mobile, @Param("password") String password);
 
     @Select("SELECT * FROM t_user where mobile=#{mobile}")
-    User getOneByMobile(@Param("mobile") String mobile);
+    User getByMobile(@Param("mobile") String mobile);
 
     @Select({"<script> ", "SELECT * FROM t_user WHERE id IN ",
         "<foreach item='item' index='index' collection='userIds' open='(' separator=',' close=')'>", "#{item}",

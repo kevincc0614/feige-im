@@ -9,4 +9,5 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties(AccountSecurityProperties.class)
 public class UserConfiguration {
+
 }

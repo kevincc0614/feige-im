@@ -1,4 +1,4 @@
-package com.ds.feige.im.admin.controller;
+package com.ds.feige.im.enterprise.controller;
 
 import java.util.List;
 import java.util.Set;

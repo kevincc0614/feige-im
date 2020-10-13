@@ -58,7 +58,7 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 logging:
   level:
-    com.ds.feige.im.mapper: debug
+    com.ds.feige.im: debug
 oss:
   domain: "http://35.220.161.103:8080"
   group: group1

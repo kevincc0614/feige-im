@@ -26,4 +26,5 @@ public class MessageToConversation extends UserRequest {
     @Size(min = 1, max = 10000, message = "消息内容长度超出限制")
     private String msgContent;
     private String option;
+    private String senderConnectionId;
 }

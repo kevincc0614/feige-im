@@ -1,17 +1,18 @@
 package com.ds.feige.im.account.controller;
 
-import com.ds.feige.im.account.dto.UserInfo;
-import com.ds.feige.im.account.service.UserService;
-import com.ds.feige.im.constants.SessionAttributeKeys;
-import com.google.common.base.Strings;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.ds.feige.im.account.dto.UserInfo;
+import com.ds.feige.im.account.service.UserService;
+import com.ds.feige.im.constants.SessionAttributeKeys;
+import com.google.common.base.Strings;
 
 /**
  * 用户权限验证拦截器
@@ -30,6 +31,10 @@ public class UserAuthInterceptor extends HandlerInterceptorAdapter {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (handler instanceof HandlerMethod) {
+            // TODO 引入Spring Security解决
+            if (request.getServletPath().startsWith("/api/")) {
+                return super.preHandle(request, response, handler);
+            }
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             NodAuthorizedRequest annotation = handlerMethod.getMethodAnnotation(NodAuthorizedRequest.class);
             if (annotation == null) {
