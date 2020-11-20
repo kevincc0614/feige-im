@@ -7,22 +7,8 @@ import java.util.Date;
 import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
 import com.ds.base.nodepencies.strategy.id.IdKeyGeneratorFactory;
 
-public class JsonTest {
+public class IdTimeTest {
     public static void main(String[] args) throws Exception {
-
-        // SocketRequest request = new SocketRequest();
-        // request.setRequestId(1);
-        // request.setPath("/chat/message/send");
-        // MessageToConversation payload = new MessageToConversation();
-        // payload.setTargetId(377665490308518912L);
-        // payload.setConversationType(1);
-        // payload.setMsgType(0);
-        // MessageContent content = new MessageContent.TextMessage("自测消息", null);
-        // payload.setMsgContent(content.toJson());
-        //
-        // request.setPayload(JsonUtils.toJson(payload));
-        // System.out.println(request);
-        // System.out.println(JsonUtils.toJson(request));
         IdKeyGenerator<Long> keyGeneratorForLong =
             IdKeyGeneratorFactory.instance(IdKeyGeneratorFactory.IdType.WITH_OUT_DATE_LONG);
         long id = keyGeneratorForLong.generateId();

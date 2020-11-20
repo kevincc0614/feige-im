@@ -1,9 +1,8 @@
 package com.ds.feige.im.gateway.socket.websocket;
 
-import com.ds.feige.im.account.dto.UserInfo;
-import com.ds.feige.im.account.service.UserService;
-import com.ds.feige.im.constants.DeviceType;
-import com.ds.feige.im.constants.SessionAttributeKeys;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +14,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
-import java.util.List;
-import java.util.Map;
+import com.ds.feige.im.account.dto.UserInfo;
+import com.ds.feige.im.account.service.UserService;
+import com.ds.feige.im.constants.DeviceType;
+import com.ds.feige.im.constants.SessionAttributeKeys;
 @Component
 public class SimpleHandshakeInterceptor extends HttpSessionHandshakeInterceptor {
     private UserService userService;
@@ -36,6 +37,7 @@ public class SimpleHandshakeInterceptor extends HttpSessionHandshakeInterceptor 
         //获取设备号,设备类型信息
         String deviceId = getParamFromRequest(request, SessionAttributeKeys.DEVICE_ID);
         String deviceTypeStr = getParamFromRequest(request, SessionAttributeKeys.DEVICE_TYPE);
+        String deviceName = getParamFromRequest(request, SessionAttributeKeys.DEVICE_NAME);
         try {
             DeviceType deviceType = DeviceType.valueOf(deviceTypeStr);
             attributes.put(SessionAttributeKeys.DEVICE_TYPE, deviceType);
@@ -45,7 +47,7 @@ public class SimpleHandshakeInterceptor extends HttpSessionHandshakeInterceptor 
             return false;
         }
         attributes.put(SessionAttributeKeys.DEVICE_ID, deviceId);
-
+        attributes.put(SessionAttributeKeys.DEVICE_NAME, deviceName);
         //验证token是否合法
         try {
             UserInfo userInfo = userService.verifyToken(token);

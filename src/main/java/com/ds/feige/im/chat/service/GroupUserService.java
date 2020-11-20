@@ -39,6 +39,11 @@ public interface GroupUserService {
     void disbandGroup(long groupId, long operatorId);
 
     /**
+     * 解散群聊
+     */
+    void disbandGroup(long groupId);
+
+    /**
      * 添加用户进群
      *
      * @param groupId

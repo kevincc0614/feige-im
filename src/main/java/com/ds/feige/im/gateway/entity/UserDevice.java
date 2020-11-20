@@ -25,7 +25,7 @@ public class UserDevice extends BaseEntity {
     /**
      * 推送token
      */
-    private String pushToken;
+    private String deviceToken;
     /**
      * 设备状态
      */

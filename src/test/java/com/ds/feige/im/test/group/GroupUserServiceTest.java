@@ -18,7 +18,7 @@ public class GroupUserServiceTest extends BaseTest {
         registerRequest.setSource("enterprise");
         registerRequest.setPassword("123456");
         String mobile = RandomStringUtils.randomNumeric(10);
-        registerRequest.setMobile(mobile);
+        registerRequest.setLoginName(mobile);
         long userId = userService.register(registerRequest);
         // groupUserService.inviteJoinGroup(group_id, Sets.newHashSet(userId), user_ids.get(0));
     }

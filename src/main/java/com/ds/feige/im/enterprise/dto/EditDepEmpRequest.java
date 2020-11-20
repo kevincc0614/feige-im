@@ -1,5 +1,7 @@
 package com.ds.feige.im.enterprise.dto;
 
+import java.util.Map;
+
 import lombok.Data;
 
 /**
@@ -8,6 +10,5 @@ import lombok.Data;
 @Data
 public class EditDepEmpRequest extends EnterpriseOpRequest {
     private long userId;
-    private long departmentId;
-    private boolean leader;
+    private Map<Long, Boolean> departments;
 }

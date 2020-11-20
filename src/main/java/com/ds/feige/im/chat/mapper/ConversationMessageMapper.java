@@ -25,20 +25,10 @@ public interface ConversationMessageMapper extends BaseMapper<ConversationMessag
         " WHERE conversation_id=#{conversationId}" + " AND msg_id<=#{maxMsgId} ORDER BY msg_id ASC LIMIT #{pageSize} "})
     List<MessageToUser> findMessages(long userId, long conversationId, long maxMsgId, long pageSize);
 
-    // @Select({SELECT_COLUMNS, " WHERE conversation_id=#{conversationId}"
-    // + " AND update_time<=#{updateTime} ORDER BY msg_id ASC LIMIT #{pageSize} "})
-    // List<MessageToUser> findMessages(long userId, long conversationId, Date updateTime, long pageSize);
-
     @Select({"<script> ", SELECT_COLUMNS,
         " WHERE msg_id IN <foreach item='item' index='index' collection='msgIds' open='(' separator=',' close=')'>",
         "#{item}", "</foreach>", "</script>"})
     List<MessageToUser> findMessagesByIds(@Param("msgIds") Collection<Long> msgIds);
-
-    @Select({"<script> ",
-        "SELECT MAX(msg_id) last_msg_id,conversation_id FROM t_conversation_message WHERE conversation_id IN ",
-        "<foreach item='item' index='index' collection='conversationIds' open='(' separator=',' close=')'>", "#{item}",
-        "</foreach>", " GROUP BY conversation_id", "</script>"})
-    List<Long> findLastMessagesByConversations(@Param("conversationIds") Collection<Long> conversationIds);
 
     @Update({"<script> ", "UPDATE t_conversation_message SET read_count=read_count+1 WHERE msg_id IN ",
         "<foreach item='item' index='index' collection='msgIds' open='(' separator=',' close=')'>", "#{item}",

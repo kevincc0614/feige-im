@@ -1,14 +1,15 @@
 package com.ds.feige.im.test.user;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.account.dto.GetTokenRequest;
 import com.ds.feige.im.account.dto.UserRegisterRequest;
 import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.test.BaseTest;
-import org.junit.Assert;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UserServiceTest extends BaseTest {
     static final Logger LOGGER= LoggerFactory.getLogger(UserServiceTest.class);
@@ -16,7 +17,7 @@ public class UserServiceTest extends BaseTest {
     @Test
     public void testRegister() {
         UserRegisterRequest userRegisterRequest = new UserRegisterRequest();
-        userRegisterRequest.setMobile("110110110");
+        userRegisterRequest.setLoginName("110110110");
         userRegisterRequest.setPassword("123456");
         userRegisterRequest.setSource("enterprise");
         long userId = userService.register(userRegisterRequest);

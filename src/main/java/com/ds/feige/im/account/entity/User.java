@@ -8,7 +8,7 @@ import lombok.Data;
 @TableName("t_user")
 @Data
 public class User extends BaseEntity {
-    private String accountId;
+    private String loginName;
     private String password;
     private String nickName;
     private String avatar;

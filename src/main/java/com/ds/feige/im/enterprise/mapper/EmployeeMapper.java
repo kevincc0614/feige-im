@@ -1,12 +1,13 @@
 package com.ds.feige.im.enterprise.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ds.feige.im.enterprise.dto.EmployeeInfo;
-import com.ds.feige.im.enterprise.entity.Employee;
+import java.util.List;
+
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Select;
 
-import java.util.List;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.ds.feige.im.enterprise.dto.EmployeeInfo;
+import com.ds.feige.im.enterprise.entity.Employee;
 
 public interface EmployeeMapper extends BaseMapper<Employee> {
     @Select("SELECT e.user_id user_id,e.name name,e.avatar avatar,e.title title,e.work_email work_email,de.leader leader " +
@@ -19,6 +20,7 @@ public interface EmployeeMapper extends BaseMapper<Employee> {
     @Select("SELECT * FROM t_employee WHERE enterprise_id=#{enterpriseId}")
     List<Employee> findByEnterpriseId(long enterpriseId);
 
-    @Delete("DELETE FROM t_employee WHERE enterprise_id=#{enterprise_id} and user_id=#{userId}")
+    @Delete("DELETE FROM t_employee WHERE enterprise_id=#{enterpriseId} and user_id=#{userId}")
     int deleteEmployee(long enterpriseId, long userId);
+
 }

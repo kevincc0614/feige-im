@@ -1,6 +1,6 @@
 package com.ds.feige.im.enterprise.dto;
 
-import java.util.List;
+import java.util.Map;
 
 import com.ds.feige.im.gateway.domain.UserState;
 
@@ -13,7 +13,6 @@ public class EmployeeInfo {
     private String avatar;
     private String title;
     private String workEmail;
-    private Boolean leader;
-    private List<Long> departments;
+    private Map<Long, Boolean> departments;
     private UserState state;
 }

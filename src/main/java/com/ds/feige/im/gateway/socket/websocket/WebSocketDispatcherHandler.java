@@ -8,6 +8,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.ds.feige.im.common.util.JsonUtils;
+import com.ds.feige.im.common.util.Tracer;
 import com.ds.feige.im.constants.SessionAttributeKeys;
 import com.ds.feige.im.gateway.service.SessionUserService;
 import com.ds.feige.im.gateway.socket.dispatch.SocketControllerDispatcher;
@@ -29,20 +30,29 @@ public class WebSocketDispatcherHandler extends TextWebSocketHandler {
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
         Long userId = (Long) session.getAttributes().get(SessionAttributeKeys.USER_ID);
-        log.info("Received client text message:userId={},payload={}", userId, payload);
         SocketPacket socketPacket = JsonUtils.jsonToBean(payload, SocketPacket.class);
-        controllerDispatcher.doService(session, socketPacket);
+        Tracer.setTraceId(socketPacket);
+        log.info("Received client text message:userId={},payload={}", userId, payload);
+        try {
+            controllerDispatcher.doService(session, socketPacket);
+        } finally {
+            Tracer.removeTraceId();
+        }
     }
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        Tracer.setTraceId();
         super.afterConnectionClosed(session,status);
         this.sessionUserService.afterConnectionClosed(session,status);
+        Tracer.removeTraceId();
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        Tracer.setTraceId();
         super.afterConnectionEstablished(session);
         this.sessionUserService.afterConnectionEstablished(session);
+        Tracer.removeTraceId();
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.ds.feige.im.app.dto;
+package com.ds.feige.im.enterprise.dto;
 
 import lombok.Data;
 
@@ -9,8 +9,6 @@ import lombok.Data;
 public class RoleAuthorityInfo {
     private Long appId;
     private String appName;
-    private Long roleId;
-    private String roleName;
     private Long authorityId;
     private String authorityName;
     private String resource;

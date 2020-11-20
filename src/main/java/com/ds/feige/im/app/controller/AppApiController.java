@@ -9,10 +9,10 @@ import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.app.dto.AppInfo;
 import com.ds.feige.im.app.dto.AppOperationRequest;
-import com.ds.feige.im.app.dto.PermissionCheckRequest;
-import com.ds.feige.im.app.service.AppSecurityService;
 import com.ds.feige.im.app.service.AppService;
 import com.ds.feige.im.constants.FeigeWarn;
+import com.ds.feige.im.enterprise.dto.PermissionCheckRequest;
+import com.ds.feige.im.enterprise.service.EnterpriseSecurityService;
 
 import cn.hutool.core.codec.Base64;
 
@@ -23,7 +23,7 @@ import cn.hutool.core.codec.Base64;
 @RequestMapping("/api/app")
 public class AppApiController {
     @Autowired
-    AppSecurityService appSecurityService;
+    EnterpriseSecurityService enterpriseSecurityService;
     @Autowired
     AppService appService;
     @Autowired
@@ -51,11 +51,12 @@ public class AppApiController {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
         PermissionCheckRequest checkRequest = new PermissionCheckRequest();
+        checkRequest.setEnterpriseId(appInfo.getEnterpriseId());
         checkRequest.setAppId(appInfo.getId());
         checkRequest.setUserId(userInfo.getUserId());
         checkRequest.setResource(request.getResource());
         checkRequest.setMethod(request.getMethod());
-        boolean result = appSecurityService.checkPermission(checkRequest);
+        boolean result = enterpriseSecurityService.checkPermission(checkRequest);
         return new Response(result);
     }
 

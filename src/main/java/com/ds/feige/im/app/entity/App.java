@@ -15,5 +15,5 @@ public class App extends BaseEntity {
     private String name;
     private String avatar;
     private String secret;
-
+    private String config;
 }

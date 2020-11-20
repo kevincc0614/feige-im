@@ -15,7 +15,7 @@ public class LoginRequest extends UserRequest {
     private DeviceType deviceType;
     @NotBlank(message = "设备名不能为空")
     private String deviceName;
-    private String pushToken;
+    private String deviceToken;
     @NotBlank(message = "token不能为空")
     private String authToken;
 

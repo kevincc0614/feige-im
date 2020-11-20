@@ -23,6 +23,9 @@ import com.ds.feige.im.gateway.socket.annotation.SocketController;
 import com.ds.feige.im.gateway.socket.annotation.SocketRequestMapping;
 import com.ds.feige.im.gateway.socket.annotation.UserId;
 import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
+import com.ds.feige.im.mark.dto.MarkMessageInfo;
+import com.ds.feige.im.mark.dto.MarkMessageQueryRequest;
+import com.ds.feige.im.mark.service.MarkMessageService;
 import com.google.common.collect.Maps;
 
 /**
@@ -39,7 +42,8 @@ public class ChatController {
     SessionUserService sessionUserService;
     @Autowired
     ConversationService conversationService;
-
+    @Autowired
+    MarkMessageService markMessageService;
     /**
      * 发送聊天消息
      */
@@ -65,6 +69,21 @@ public class ChatController {
     @SocketRequestMapping(SocketPaths.CS_PULL_CHAT_MESSAGE)
     public List<MessageToUser> pull(@RequestBody @Valid ConversationMessageQueryRequest request) {
         List<MessageToUser> messages = chatService.pullMessages(request);
+        Map<Long, MessageToUser> map = Maps.newHashMap();
+        if (messages != null && !messages.isEmpty()) {
+            messages.forEach(m -> {
+                map.put(m.getMsgId(), m);
+            });
+            MarkMessageQueryRequest queryRequest = new MarkMessageQueryRequest();
+            queryRequest.setMsgIds(map.keySet());
+            List<MarkMessageInfo> markMessageInfos = markMessageService.query(queryRequest);
+            markMessageInfos.forEach(markMessageInfo -> {
+                MessageToUser entity = map.get(markMessageInfo.getMsgId());
+                if (entity != null) {
+                    entity.setMarkType(markMessageInfo.getMarkType());
+                }
+            });
+        }
         return messages;
     }
 

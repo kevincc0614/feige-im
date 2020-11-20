@@ -2,6 +2,7 @@ package com.ds.feige.im.gateway.domain;
 
 import java.io.IOException;
 
+import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -10,7 +11,7 @@ import com.ds.feige.im.chat.dto.event.MessageForwardEvent;
 import com.ds.feige.im.constants.AMQPConstants;
 import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.ds.feige.im.gateway.socket.connection.UserConnection;
-import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
+
 /**
  * 远程用户链接对象
  * */

@@ -3,7 +3,7 @@ package com.ds.feige.im.constants;
 public class CacheKeys {
     public static final String SESSION_USERS_MAP = "feige-im.user.session-users";
     public static final String SESSION_USER_STATE = "feige-im.user.state.";
-    public static final String USER_INFO = "feige-im.user.info.";
+    public static final String USER_ENTITY = "feige-im.user.entity.";
     public static final String USER_TOKEN = "feige-im.user.token.";
     public static final String SESSION_USER_CONNECTIONS = "feige-im.user.connections.";
     public static final String SESSION_USER_CONNECTION = "feige-im.user.connection.";

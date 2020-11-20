@@ -1,18 +1,20 @@
 package com.ds.feige.im.test.oss;
 
-import cn.hutool.http.HttpUtil;
-import com.ds.feige.im.common.util.JsonUtils;
-import com.ds.feige.im.oss.dto.UploadCompleteRequest;
-import com.ds.feige.im.oss.service.OSSService;
-import com.ds.feige.im.test.BaseTest;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.io.File;
 import java.net.URLDecoder;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.ds.feige.im.common.util.JsonUtils;
+import com.ds.feige.im.oss.dto.UploadCompleteRequest;
+import com.ds.feige.im.oss.service.OSSService;
+import com.ds.feige.im.test.BaseTest;
+
+import cn.hutool.http.HttpUtil;
 
 /**
  * 上传测试
@@ -23,10 +25,15 @@ public class UploadTest extends BaseTest {
     @Autowired
     OSSService ossService;
 
+    public static void main(String[] args) throws Exception {
+        UploadTest uploadTest = new UploadTest();
+        uploadTest.testUpload();
+    }
+
     @Test
     public void testUpload() throws Exception {
         //文件地址
-        File file = new File("/Users/caedmon/Desktop/pics/test-1.jpg");
+        File file = new File("/Users/caedmon/Desktop/pics/480_270(2).jpeg");
         //声明参数集合
         HashMap<String, Object> paramMap = new HashMap<>();
         //文件

@@ -1,11 +1,9 @@
-package com.ds.feige.im.app.dto;
+package com.ds.feige.im.enterprise.dto;
 
 import java.util.Set;
 
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
-
-import com.ds.feige.im.enterprise.dto.EnterpriseOpRequest;
 
 import lombok.Data;
 

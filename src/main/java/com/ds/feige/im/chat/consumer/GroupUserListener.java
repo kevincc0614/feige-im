@@ -89,6 +89,10 @@ public class GroupUserListener {
             LOGGER.error("Group not exists:groupId={}", event.getGroupId());
             return;
         }
+        if (event.getInviteUsers() == null || event.getInviteUsers().isEmpty()) {
+            LOGGER.error("InviteUsers is empty:groupId={}", event.getGroupId());
+            return;
+        }
         CreateGroupConversations createGroupConversations = new CreateGroupConversations();
         createGroupConversations.setMembers(event.getInviteUsers().keySet());
         createGroupConversations.setAvatar(groupInfo.getAvatar());

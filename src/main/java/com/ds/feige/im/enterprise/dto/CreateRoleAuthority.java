@@ -1,6 +1,4 @@
-package com.ds.feige.im.app.dto;
-
-import com.ds.feige.im.enterprise.dto.EnterpriseOpRequest;
+package com.ds.feige.im.enterprise.dto;
 
 import lombok.Data;
 

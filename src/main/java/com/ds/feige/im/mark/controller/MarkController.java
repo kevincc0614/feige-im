@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.ds.base.nodepencies.api.Response;
 import com.ds.feige.im.constants.SocketPaths;
 import com.ds.feige.im.gateway.socket.annotation.SocketController;
 import com.ds.feige.im.gateway.socket.annotation.SocketRequestMapping;
@@ -41,15 +40,14 @@ public class MarkController {
     }
 
     @SocketRequestMapping(SocketPaths.CS_MARK_UPDATE)
-    Response updateRemark(@RequestBody @Valid UpdateRemarkRequest request) {
+    void updateRemark(@RequestBody @Valid UpdateRemarkRequest request) {
         markMessageService.updateRemark(request);
-        return Response.EMPTY_SUCCESS;
     }
 
     @SocketRequestMapping(SocketPaths.CS_MARK_QUERY)
-    Response<List<MarkMessageInfo>> query(@RequestBody @Valid MarkMessageQueryRequest request) {
+    List<MarkMessageInfo> query(@RequestBody @Valid MarkMessageQueryRequest request) {
         List<MarkMessageInfo> messageInfos = markMessageService.query(request);
-        return new Response<>(messageInfos);
+        return messageInfos;
     }
 
 }

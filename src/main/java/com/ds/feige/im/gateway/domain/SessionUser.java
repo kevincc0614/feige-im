@@ -131,7 +131,8 @@ public class SessionUser {
 
     public UserState getState() {
         RBucket<UserState> bucket = redissonClient.getBucket(CacheKeys.SESSION_USER_STATE + userId);
-        return bucket.get();
+        UserState state = bucket.get();
+        return state == null ? new UserState() : state;
     }
 }
 

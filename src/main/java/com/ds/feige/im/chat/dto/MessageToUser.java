@@ -24,4 +24,5 @@ public class MessageToUser {
     private int readCount;
     private int receiverCount;
     private Date createTime;
+    private int markType;
 }

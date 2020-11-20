@@ -5,15 +5,27 @@ import java.util.List;
 import com.ds.feige.im.enterprise.dto.*;
 
 public interface EnterpriseService {
+    /**
+     * 创建企业
+     * 
+     * @param name
+     * @param description
+     * @param createUserId
+     */
+    long createEnterprise(String name, String description, long createUserId);
 
-    long createEnterprise(String name, String description, long operatorId);
-
+    /**
+     * 获取用户所属企业列表
+     * 
+     * @param userId
+     */
     List<EnterpriseInfo> getEnterprises(long userId);
 
     /**
      * 创建部门
      *
      * @param request
+     * @return 部门ID
      */
     long createDepartment(CreateDepRequest request);
 
@@ -21,6 +33,7 @@ public interface EnterpriseService {
      * 删除部门
      *
      * @param request
+     * @return 部门基本信息
      */
     DepartmentBaseInfo deleteDepartment(DeleteDepRequest request);
 
@@ -36,31 +49,26 @@ public interface EnterpriseService {
      *
      * @param request
      */
-    void editEmployee(EditEmpRequest request);
+    void editEmp(EditEmpRequest request);
 
     /**
-     * 把员工添加到部门
+     * 编辑员工部门信息
      *
      * @param request
      */
-    void addDepartmentEmployee(EditDepEmpRequest request);
-
-    /**
-     * 删除部门员工
-     *
-     * @param request
-     */
-    boolean removeDepartmentEmployee(EditDepEmpRequest request);
+    void editEmpDepartments(EditDepEmpRequest request);
 
     /**
      * 添加员工,前提是员工必须具备账号,在t_user表有数据
+     * 
+     * @param request
      */
-    long createEmployee(CreateEmpRequest request);
+    long createEmp(AddEmpRequest request);
 
     /**
      * 删除员工
      */
-    void deleteEmployee(DeleteEmpRequest request);
+    void deleteEmp(DeleteEmpRequest request);
 
     /**
      * 获取部门信息
@@ -88,14 +96,15 @@ public interface EnterpriseService {
      * @param enterpriseId
      * @return 员工信息
      */
-    EmployeeInfo getEmployeeByUserId(long enterpriseId, long userId);
+    EmployeeInfo getEmp(long enterpriseId, long userId);
 
     /**
      * 获取企业全体员工列表
      *
      * @param enterpriseId
+     * @return 企业所有员工列表
      */
-    List<EmployeeInfo> getEmployees(long enterpriseId);
+    List<EmployeeInfo> getEmpsByEnt(long enterpriseId);
 
     /**
      * 判断用户是否为管理员

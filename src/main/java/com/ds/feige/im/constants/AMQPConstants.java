@@ -21,6 +21,7 @@ public class AMQPConstants {
         BINDINGS.put(RoutingKeys.CONVERSATION_SEND_MESSAGE, new String[] {QueueNames.CONVERSATION_SEND_MESSAGE_SYNC});
         BINDINGS.put(RoutingKeys.CONVERSATION_READ_MESSAGE,
             new String[] {QueueNames.CONVERSATION_READ_MESSAGE_RECEIPT});
+        BINDINGS.put(RoutingKeys.PUBLIC_DLX, new String[] {QueueNames.PUBLIC_DLX_DEFAULT});
     }
 
     public static final class RoutingKeys {
@@ -32,6 +33,8 @@ public class AMQPConstants {
         public static final String GROUP_USER_ROLE_UPDATED = "group.user.role-updated";
         public static final String CONVERSATION_SEND_MESSAGE = "conversation.send.message";
         public static final String CONVERSATION_READ_MESSAGE = "conversation.read.message";
+        // 死信队列
+        public static final String PUBLIC_DLX = "public.dlx";
     }
 
     public static final class QueueNames {
@@ -45,5 +48,7 @@ public class AMQPConstants {
         public static final String GROUP_USER_ROLE_UPDATED_BROADCAST = "group.user.role-updated.broadcast";
         public static final String CONVERSATION_SEND_MESSAGE_SYNC = "conversation.send.message.sync";
         public static final String CONVERSATION_READ_MESSAGE_RECEIPT = "conversation.read.message.receipt";
+        // 死信队列
+        public static final String PUBLIC_DLX_DEFAULT = "public.dlx.default";
     }
 }

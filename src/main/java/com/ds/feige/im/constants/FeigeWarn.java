@@ -17,6 +17,8 @@ public enum FeigeWarn implements WarnMessageEntry {
     USER_LOCK_INTERRUPT("User_100006", "请求超时", "锁定用户资源时线程中断"),
     TOKEN_EXPIRED("User_100007", "Token已过期", "Token已过期"),
     DEVICE_NOT_EXISTS("User_100008", "设备不存在", "设备不存在{1}"),
+    LOGIN_NAME_IS_EMPTY("user_100009", "登录名不能为空", "登录名不能为空"), PASSWORD_INSECURE("User_100010", "密码不安全", "密码不安全"),
+    LOGIN_NAME_EXISTS("User_100011", "用户名已存在", "用户名已存在"),
 
     GROUP_NOT_EXISTS("Group_100001", "群聊不存在{1}", "群聊不存在{1}"),
     GROUP_USER_OVER_LIMIT("Group_100002", "已超过最大人数限制", "已超过最大人数限制"),
@@ -39,13 +41,17 @@ public enum FeigeWarn implements WarnMessageEntry {
     CHAT_MSG_NOT_EXISTS("CHAT_100004", "消息不存在", "消息不存在"),
 
     APP_NOT_EXISTS("APP_100001", "应用不存在", "应用不存在"), APP_NAME_EXISTS("APP_100002", "应用名已存在", "应用名已存在"),
-    APP_ROLE_NOT_EXISTS("APP_100003", "应用角色不存在", "应用角色不存在"),
     APP_SECRET_INVALID("APP_100004", "不合法的secret参数", "不合法的secret参数"),
-    APP_ROLE_AUTHORITY_EXISTS("APP_100005", "角色权限已存在", "角色权限已存在"),
-    APP_ROLE_AUTHORITY_NAME_EXISTS("APP_100006", "权限名已存在", "权限名已存在"),
     USER_OPENID_INVALID("APP_100007", "OpenId不合法", "OpenId不合法"),
     APP_TOKEN_EXPIRED("APP_100008", "AccessToken已过期", "AccessToken已过期"),
-    FAVORITE_MARK_MESSAGE_NOT_EXISTS("FAVORITE_100001", "备注不存在", "备注不存在");
+
+    ROLE_NOT_EXISTS("SECURITY_100003", "应用角色不存在", "应用角色不存在"),
+    ROLE_AUTHORITY_EXISTS("SECURITY_100005", "角色权限已存在", "角色权限已存在"),
+    ROLE_AUTHORITY_NAME_EXISTS("SECURITY_100006", "权限名已存在", "权限名已存在"),
+    AUTHORITY_IS_EMPTY("SECURITY_100006", "权限为空", "权限为空"),
+
+    FAVORITE_MARK_MESSAGE_NOT_EXISTS("MARK_100001", "备注不存在", "备注不存在"),
+    MESSAGE_HAS_MARKED("MARK_100002", "消息已被标记过", "消息已被标记过");
     private String code;
     private String originalMessage;
     private String displayMessage;

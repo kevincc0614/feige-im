@@ -53,7 +53,8 @@ public class SessionUserServiceImpl implements SessionUserService {
     IdKeyGenerator<Long> longIdKeyGenerator;
     @Autowired
     SessionUserFactory sessionUserFactory;
-
+    @Autowired
+    UserDeviceService userDeviceService;
     public void remoteLoginDisconnect(ConnectionMeta oldConnMeta, ConnectionMeta newConnMeta) throws IOException {
         // 通知用户其他链接,在其他设备登录
         long userId = oldConnMeta.getUserId();
@@ -131,6 +132,8 @@ public class SessionUserServiceImpl implements SessionUserService {
                 sessionUser.connectionEstablished(newConnMeta);
                 // 标记为已登录
                 sessionAttributes.put(SessionAttributeKeys.LOGIN, true);
+                // 记录登录设备
+                userDeviceService.deviceLogin(request);
             } else {
                 // 超时未获取到锁,返回异常
                 log.error("Get session user lock timeout:userId={}", userId);
@@ -148,6 +151,7 @@ public class SessionUserServiceImpl implements SessionUserService {
     @Override
     public void logout(WebSocketSession session) {
         // TODO token作废
+        // TODO 设备状态更新
     }
 
     @Override
@@ -241,6 +245,7 @@ public class SessionUserServiceImpl implements SessionUserService {
         loginRequest.setUserId(userId);
         loginRequest.setDeviceId((String)attributes.get(SessionAttributeKeys.DEVICE_ID));
         loginRequest.setDeviceType((DeviceType)attributes.get(SessionAttributeKeys.DEVICE_TYPE));
+        loginRequest.setDeviceName((String)attributes.get(SessionAttributeKeys.DEVICE_NAME));
         login(loginRequest, session);
     }
 

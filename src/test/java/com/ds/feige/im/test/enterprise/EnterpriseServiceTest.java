@@ -2,7 +2,6 @@ package com.ds.feige.im.test.enterprise;
 
 import org.junit.Test;
 
-import com.ds.feige.im.enterprise.dto.EditDepEmpRequest;
 import com.ds.feige.im.test.BaseTest;
 
 public class EnterpriseServiceTest extends BaseTest {
@@ -71,13 +70,8 @@ public class EnterpriseServiceTest extends BaseTest {
 //
 @Test
 public void testAddEmpToDep() {
-    EditDepEmpRequest request = new EditDepEmpRequest();
-    request.setUserId(377665490283353088L);
-    request.setDepartmentId(377665490476291072L);
-    request.setEnterpriseId(377665490446930944L);
-    request.setLeader(true);
-    request.setOperatorId(377665490283353088L);
-    enterpriseService.addDepartmentEmployee(request);
+
+    // enterpriseService.addDepartmentEmployee(request);
 }
 //    @Test
 //    public void testGetDepartment(){

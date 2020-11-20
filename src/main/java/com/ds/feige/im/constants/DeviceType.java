@@ -6,8 +6,8 @@ package com.ds.feige.im.constants;
 
 public enum DeviceType {
 
-    IOS_MOBILE(DeviceType.MOBILE_TYPE, "IOS"), ANDROID_MOBILE(DeviceType.MOBILE_TYPE, "ANDROID"),
-    MAC_PC(DeviceType.PC_TYPE, "MAC"), WINDOWS_PC(DeviceType.PC_TYPE, "Windows"), WEB(DeviceType.WEB_TYPE, "WEB");
+    IOS(DeviceType.MOBILE_TYPE, "ios"), ANDROID(DeviceType.MOBILE_TYPE, "android"), MACOS(DeviceType.PC_TYPE, "mac"),
+    WINDOWS(DeviceType.PC_TYPE, "windows"), WEB(DeviceType.WEB_TYPE, "web");
 
     public static final int MOBILE_TYPE = 1, PC_TYPE = 2, WEB_TYPE = 3;
     /**

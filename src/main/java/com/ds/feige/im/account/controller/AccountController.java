@@ -1,13 +1,15 @@
 package com.ds.feige.im.account.controller;
 
-import com.ds.base.nodepencies.api.Response;
-import com.ds.feige.im.account.dto.GetTokenRequest;
-import com.ds.feige.im.account.dto.UserInfo;
-import com.ds.feige.im.account.service.UserService;
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import com.ds.base.nodepencies.api.Response;
+import com.ds.feige.im.account.dto.GetTokenRequest;
+import com.ds.feige.im.account.dto.UserInfo;
+import com.ds.feige.im.account.dto.UserRegisterRequest;
+import com.ds.feige.im.account.service.UserService;
 
 /**
  * @author DX
@@ -29,6 +31,15 @@ public class AccountController {
     @RequestMapping("/profile")
     @NodAuthorizedRequest
     public Response<UserInfo> getUserProfile(@RequestHeader(value = "im-auth-token", required = true) String token) {
-        return new Response<>(userService.verifyToken(token));
+        UserInfo userInfo = userService.verifyToken(token);
+        userInfo.setPassword(null);
+        return new Response<>(userInfo);
+    }
+
+    @PostMapping("/register")
+    @NodAuthorizedRequest
+    public Response register(@RequestBody @Valid UserRegisterRequest request) {
+        long userId = userService.register(request);
+        return new Response(userId);
     }
 }

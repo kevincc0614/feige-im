@@ -1,6 +1,7 @@
 package com.ds.feige.im.mark.dto;
 
 import java.util.Date;
+import java.util.Set;
 
 import com.ds.feige.im.account.dto.UserRequest;
 
@@ -15,4 +16,5 @@ public class MarkMessageQueryRequest extends UserRequest {
     private Date start;
     private Date end;
     private Integer markType;
+    private Set<Long> msgIds;
 }

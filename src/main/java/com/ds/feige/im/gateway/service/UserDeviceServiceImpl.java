@@ -33,10 +33,10 @@ public class UserDeviceServiceImpl extends ServiceImpl<UserDeviceMapper, UserDev
             device.setDeviceType(loginRequest.getDeviceType().name());
             device.setStatus(1);
             device.setUserId(loginRequest.getUserId());
-            device.setPushToken(loginRequest.getPushToken());
+            device.setDeviceToken(loginRequest.getDeviceToken());
         }
         device.setLastLoginTime(new Date());
-        save(device);
+        saveOrUpdate(device);
         log.info("User device login:userId={},deviceId={},deviceType={}", loginRequest.getUserId(),
             loginRequest.getDeviceId(), loginRequest.getDeviceType());
     }
@@ -48,7 +48,7 @@ public class UserDeviceServiceImpl extends ServiceImpl<UserDeviceMapper, UserDev
             throw new WarnMessageException(FeigeWarn.DEVICE_NOT_EXISTS, deviceId);
         }
         device.setStatus(-1);
-        save(device);
+        saveOrUpdate(device);
         log.info("User device logout:userId={},deviceId={},deviceType={}", userId, deviceId, device.getDeviceType());
     }
 

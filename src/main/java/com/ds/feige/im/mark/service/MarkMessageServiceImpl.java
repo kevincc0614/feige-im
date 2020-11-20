@@ -35,6 +35,11 @@ public class MarkMessageServiceImpl extends ServiceImpl<MarkMessageMapper, MarkM
         if (chatMessage == null) {
             throw new WarnMessageException(FeigeWarn.CHAT_MSG_NOT_EXISTS);
         }
+        // 判断是否存在相同的标记
+        MarkMessage markMessage = baseMapper.getByMsgId(request.getMsgId());
+        if (markMessage != null && markMessage.getMarkType() == request.getMarkType()) {
+            throw new WarnMessageException(FeigeWarn.MESSAGE_HAS_MARKED);
+        }
         String msgContent = chatMessage.getMsgContent();
         int msgType = chatMessage.getMsgType();
         long conversationId = chatMessage.getConversationId();
@@ -98,6 +103,9 @@ public class MarkMessageServiceImpl extends ServiceImpl<MarkMessageMapper, MarkM
         }
         if (request.getMarkType() != null) {
             wrapper.eq("mark_type", request.getMarkType());
+        }
+        if (request.getMsgIds() != null && !request.getMsgIds().isEmpty()) {
+            wrapper.in("msg_id", request.getMsgIds());
         }
         List<MarkMessage> messages = super.list(wrapper);
         return BeansConverter.markMessagesToMarkMessageInfos(messages);

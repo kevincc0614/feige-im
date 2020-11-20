@@ -7,7 +7,7 @@ import lombok.Data;
  */
 @Data
 public class UserState {
-    private Boolean online;
+    private boolean online;
     private Long offlineTime;
 
     public long getOfflineDuration() {

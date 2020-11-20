@@ -2,6 +2,7 @@ package com.ds.feige.im.gateway.domain;
 
 import java.io.IOException;
 
+import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 import org.springframework.util.Assert;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -9,7 +10,6 @@ import org.springframework.web.socket.WebSocketSession;
 import com.ds.feige.im.common.util.JsonUtils;
 import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.ds.feige.im.gateway.socket.connection.UserConnection;
-import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 
 /**
  * 本地用户链接对象

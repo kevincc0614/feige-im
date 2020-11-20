@@ -60,7 +60,7 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
         }
         userIds.add(createUserId);
         // 要把userIds里面的createUserId排除掉
-        List<UserInfo> memberUsers = userService.getUserByIds(userIds);
+        Collection<UserInfo> memberUsers = userService.getUserByIds(userIds);
         Group group = new Group();
         Map<Long, String> members = Maps.newHashMap();
         if (Strings.isNullOrEmpty(groupName)) {
@@ -163,12 +163,11 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
         Group group = checkGroupExists(groupId);
         // 判断用户权限
         GroupUser operator = checkGroupAdmin(groupId, operatorId);
-        // 清理缓存
-        // RBucket<Group> groupRBucket=redissonClient.getBucket(CacheKeys.CHAT_GROUP_INFO+groupId);
-        // boolean deleteCache=groupRBucket.delete();
-        // if(deleteCache){
-        // log.info("Delete group cache:groupId={}",groupId);
-        // }
+        disbandGroup(groupId);
+    }
+
+    @Override
+    public void disbandGroup(long groupId) {
         // 删除群组
         groupMapper.deleteById(groupId);
         // 删除关系
@@ -176,8 +175,8 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
         // 发布事件
         GroupDisbandEvent event = new GroupDisbandEvent();
         event.setGroupId(groupId);
-        event.setOperatorId(operatorId);
-        event.setOperatorName(operator.getUserName());
+        // TODO operatorId=0表示系统解散
+        event.setOperatorId(0L);
         rabbitTemplate.convertAndSend(AMQPConstants.RoutingKeys.GROUP_DISBANDED, event);
     }
 
@@ -197,7 +196,7 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
         // 删除已经在群的ID
         inviteeIds.removeAll(groupMembers);
         // 查询user是否存在
-        List<UserInfo> inviteeUserInfos = userService.getUserByIds(inviteeIds);
+        Collection<UserInfo> inviteeUserInfos = userService.getUserByIds(inviteeIds);
         if (inviteeUserInfos.isEmpty()) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
@@ -216,11 +215,12 @@ public class GroupUserServiceImpl extends ServiceImpl<GroupUserMapper, GroupUser
             groupUser.setUserId(inviteeUser.getUserId());
             groupUser.setJoinTime(new Date());
             groupUser.setInviteUserId(operatorId);
-            groupUser.setJoinType("USER_INVITE");
+            groupUser.setJoinType("user_invite");
             groupUser.setRole(GroupUserRole.ORDINARY.name());
             inviteUsers.put(groupUser.getUserId(), groupUser.getUserName());
             newGroupUsers.add(groupUser);
         }
+        event.setInviteUsers(inviteUsers);
         saveBatch(newGroupUsers);
         log.info("Add user to group success:userIds={},groupId={}", inviteeIds, groupId);
         rabbitTemplate.convertAndSend(AMQPConstants.RoutingKeys.GROUP_USER_JOINED, event);

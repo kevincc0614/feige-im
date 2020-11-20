@@ -1,17 +1,19 @@
 package com.ds.feige.im.account.service;
 
 import java.util.Collection;
-import java.util.List;
 
 import com.ds.feige.im.account.dto.GetTokenRequest;
 import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.dto.UserRegisterRequest;
 
 public interface UserService {
+
     /**
-     * @param mobile
+     * @param userId
+     * @param loginName
+     * @param password
      */
-    UserInfo getUserByMobile(String mobile);
+    void updateUser(long userId, String loginName, String password);
 
     /**
      * 用户名密码获取token
@@ -57,7 +59,7 @@ public interface UserService {
      * @param userIdList
      * @return 返回的是存在的用户ID
      */
-    List<UserInfo> getUserByIds(Collection<Long> userIdList);
+    Collection<UserInfo> getUserByIds(Collection<Long> userIdList);
 
     /**
      * 注销用户

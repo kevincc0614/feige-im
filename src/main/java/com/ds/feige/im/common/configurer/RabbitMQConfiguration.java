@@ -17,11 +17,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.ErrorHandler;
 
 import com.ds.feige.im.constants.AMQPConstants;
 import com.ds.feige.im.gateway.DiscoveryService;
 import com.ds.feige.im.gateway.consumer.DynamicQueueListener;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,26 +33,44 @@ import lombok.extern.slf4j.Slf4j;
 public class RabbitMQConfiguration {
     @Value("${spring.rabbitmq.template.exchange}")
     private String exchange;
+    @Autowired
+    private RabbitDLXConfigProperties dlx;
 
+    private Map<String, Object> getQueueArgments() {
+        Map<String, Object> headers = Maps.newHashMap();
+        headers.put("x-message-ttl", 10000);
+        headers.put("x-dead-letter-exchange", exchange);
+        headers.put("x-dead-letter-routing-key", AMQPConstants.RoutingKeys.PUBLIC_DLX);
+        return headers;
+    }
     @Bean
     RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory, @Autowired DiscoveryService discoveryService) {
         RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
+        Map<String, Object> arguments = getQueueArgments();
         // 动态队列绑定
         for (String queueName : buildDynamicQueueNames(discoveryService)) {
             // 非持久化,排他,链接断开自动删除
             Queue dynamicQueue = new Queue(queueName, false, true, true);
             rabbitAdmin.declareQueue(dynamicQueue);
-            Binding binding = new Binding(queueName, Binding.DestinationType.QUEUE, exchange, queueName, null);
+            Binding binding = new Binding(queueName, Binding.DestinationType.QUEUE, exchange, queueName, arguments);
             rabbitAdmin.declareBinding(binding);
             log.info("RabbitMQ binding dynamic queue:routingKey={},queue={}", queueName, queueName);
         }
+        // 静态队列绑定
         Map<String, String[]> routeKeyQueues = AMQPConstants.BINDINGS;
         for (Map.Entry<String, String[]> entry : routeKeyQueues.entrySet()) {
             for (String queueName : entry.getValue()) {
                 Queue queue = new Queue(queueName);
                 rabbitAdmin.declareQueue(queue);
-                Binding binding =
-                    new Binding(queueName, Binding.DestinationType.QUEUE, this.exchange, entry.getKey(), null);
+                Binding binding = null;
+                if (!queueName.equals(AMQPConstants.QueueNames.PUBLIC_DLX_DEFAULT)) {
+                    binding =
+                        new Binding(queueName, Binding.DestinationType.QUEUE, this.exchange, entry.getKey(), arguments);
+
+                } else {
+                    binding =
+                        new Binding(queueName, Binding.DestinationType.QUEUE, this.exchange, entry.getKey(), null);
+                }
                 rabbitAdmin.declareBinding(binding);
                 log.info("RabbitMQ binding static queue:routingKey={},queue={}", entry.getKey(), queueName);
             }
@@ -87,6 +107,12 @@ public class RabbitMQConfiguration {
         MessageListenerAdapter adapter = new MessageListenerAdapter(listener);
         adapter.setMessageConverter(jackson2JsonMessageConverter());
         container.setMessageListener(adapter);
+        container.setErrorHandler(new ErrorHandler() {
+            @Override
+            public void handleError(Throwable t) {
+                log.error("Message container error:", t);
+            }
+        });
         return container;
     }
 

@@ -1,4 +1,4 @@
-package com.ds.feige.im.app.dto;
+package com.ds.feige.im.enterprise.dto;
 
 import javax.validation.constraints.Positive;
 

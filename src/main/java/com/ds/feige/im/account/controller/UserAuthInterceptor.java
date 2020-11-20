@@ -31,10 +31,12 @@ public class UserAuthInterceptor extends HandlerInterceptorAdapter {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (handler instanceof HandlerMethod) {
-            // TODO 引入Spring Security解决
-            if (request.getServletPath().startsWith("/api/")) {
+            String path = request.getServletPath();
+            // App调用接口
+            if (path.startsWith("/api/")) {
                 return super.preHandle(request, response, handler);
             }
+            // 普通用户调用接口
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             NodAuthorizedRequest annotation = handlerMethod.getMethodAnnotation(NodAuthorizedRequest.class);
             if (annotation == null) {

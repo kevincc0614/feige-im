@@ -1,18 +1,19 @@
 package com.ds.feige.im.app.service;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.ds.feige.im.app.dto.AppInfo;
+import com.ds.feige.im.enterprise.dto.CreateAppRequest;
 
 /**
  * @author DC App应用管理
  */
 public interface AppService {
-    /**
-     * @param enterpriseId
-     * @param appName
-     * @param avatar
-     * @return secret
-     */
-    AppInfo createApp(long enterpriseId, String appName, String avatar);
+
+    List<AppInfo> getApps(Collection<Long> appIds);
+
+    AppInfo createApp(CreateAppRequest request);
 
     /**
      * @param enterpriseId
