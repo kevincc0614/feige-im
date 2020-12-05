@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
                 loginName);
         }
         if (needUpdate) {
-            userCacheProvider.putUser(user);
+            userCacheProvider.deleteUser(user.getId());
             userMapper.updateById(user);
         }
 
@@ -171,6 +171,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean deleteUser(long userId) {
         userCacheProvider.deleteUser(userId);
+        log.info("Delete user:usrId={}", userId);
         return userMapper.deleteById(userId) == 1;
     }
 

@@ -2,10 +2,9 @@ package com.ds.feige.im.chat.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import com.ds.feige.im.chat.dto.ChatMessageAckResult;
 import com.ds.feige.im.chat.dto.MessageOfUser;
-import com.ds.feige.im.chat.po.UnreadMessagePreview;
 
 public interface UserMessageService {
     /**
@@ -15,7 +14,7 @@ public interface UserMessageService {
      *            会话消息
      * @return msgId
      */
-    long store(MessageOfUser message);
+    void store(MessageOfUser message);
 
     /**
      * 批量存储消息到用户收件箱s
@@ -26,28 +25,32 @@ public interface UserMessageService {
     void store(List<MessageOfUser> messages);
 
     /**
-     * 客户端确认消息到达
-     *
-     * @param userId
-     * @param msgIds
-     * @return ack 结果
-     */
-    ChatMessageAckResult ackMsg(long userId, List<Long> msgIds);
-
-    /**
      * 用户读取消息
      *
      * @param userId
+     *            用户ID
+     * @param conversationId
+     *            会话ID
      * @param msgIds
-     * @return 返回的是已读消息的聚合结果, key是userId, value是对应userId发送的消息ID集合
+     *            消息ID集合
+     * @return 返回的是已读消息的聚合结果, key是senderId, value是对应userId发送的消息ID集合
      */
-    Map<Long, List<Long>> readMsg(long userId, List<Long> msgIds);
+    Map<Long, List<Long>> readMessages(long userId, long conversationId, Set<Long> msgIds);
 
     /**
-     * 用户聊天概览,
-     *
+     * 获取用户会话未读数
+     * 
      * @param userId
-     * @return 主要包括会话未读消息数, 最新一条消息msgId
+     * @param conversationId
      */
-    List<UnreadMessagePreview> getConversationUnreadPreview(long userId);
+    int getUserConversationUnread(long userId, long conversationId);
+
+    Map<Long, Integer> getUserConversationsUnread(long userId, Set<Long> conversationIds);
+
+    /**
+     * 获取用户总未读数
+     * 
+     * @param userId
+     */
+    int getUserTotalUnread(long userId);
 }

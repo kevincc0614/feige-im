@@ -13,4 +13,6 @@ import lombok.Data;
 public class ReadReceiptNotice {
     private long readerId;
     private List<Long> msgIds;
+    private long readTime;
+    private Long conversationId;
 }

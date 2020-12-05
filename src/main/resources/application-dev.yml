@@ -26,8 +26,11 @@ spring.rabbitmq.template.exchange: feige.im
 spring.rabbitmq.requested-heartbeat: 0
 spring.rabbitmq.listener.simple.acknowledge-mode: auto
 spring.rabbitmq.listener.simple.retry.enabled: true
-spring.rabbitmq.listener.simple.retry.max-attempts: 5
-spring.rabbitmq.listener.simple.retry.initial-interval: 5000
+spring.rabbitmq.listener.simple.retry.max-attempts: 3
+spring.rabbitmq.listener.simple.retry.initial-interval: 2000
+#  设置为false，会丢弃消息或者重新发布到死信队列
+spring.rabbitmq.listener.simple.default-requeue-rejected: false
+spring.rabbitmq.template.mandatory: true
 spring.rabbitmq.host: 127.0.0.1
 spring.rabbitmq.port: 5672
 spring.rabbitmq.username: guest
@@ -52,3 +55,4 @@ oss.token-secret: OAaLBf1Ho87nDxGd
 oss.token-expire-seconds: 3600
 oss.max-file-size: 524288000
 user.security.tokenSignSecret: AayLgXaWNoWS
+

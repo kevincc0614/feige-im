@@ -1,10 +1,13 @@
 package com.ds.feige.im.chat.service;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import com.ds.feige.im.chat.dto.CreateGroupConversations;
+import com.ds.feige.im.chat.dto.MessageOfUser;
 import com.ds.feige.im.chat.dto.UserConversationInfo;
+import com.ds.feige.im.chat.dto.event.ConversationMessageEvent;
 
 public interface ConversationService {
     /**
@@ -21,10 +24,19 @@ public interface ConversationService {
     UserConversationInfo getUserConversation(long userId, long targetId, int conversationType);
 
     /**
+     * 获取用户会话列表
+     * 
+     */
+    List<UserConversationInfo> getUserConversations(long userId, long lastUpdateTime);
+
+    List<MessageOfUser> handleNewMessage(ConversationMessageEvent message);
+    /**
      * @param userId
      * @param conversationId
      */
     UserConversationInfo getUserConversation(long userId, long conversationId);
+
+    List<UserConversationInfo> getUserConversations(long userId, Collection<Long> conversationIds);
 
     /**
      * @param conversationId
@@ -75,14 +87,4 @@ public interface ConversationService {
      * @return 用户ID列表
      */
     long deleteConversations(long groupId);
-
-    void updateGroupConversationName(long conversationId, String name);
-
-    void updateGroupConversationAvatar(long conversationId, String avatar);
-
-    void updateConversationName(long userId, long conversationId, String name);
-
-    void updateConversationAvatar(long userId, long conversationId, String avatar);
-
-    void updateConversationExtra(long userId, long conversationId, String option);
 }

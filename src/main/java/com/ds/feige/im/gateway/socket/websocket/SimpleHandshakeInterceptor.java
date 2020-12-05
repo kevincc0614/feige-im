@@ -18,6 +18,7 @@ import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.constants.DeviceType;
 import com.ds.feige.im.constants.SessionAttributeKeys;
+import com.google.common.base.Strings;
 @Component
 public class SimpleHandshakeInterceptor extends HttpSessionHandshakeInterceptor {
     private UserService userService;
@@ -29,25 +30,26 @@ public class SimpleHandshakeInterceptor extends HttpSessionHandshakeInterceptor 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
         //获取登录token
-        String token = getParamFromRequest(request, SessionAttributeKeys.IM_AUTH_TOKEN);
+        String token = getParamFromRequest(request, SessionAttributeKeys.IM_AUTH_TOKEN, false);
         if (token == null) {
             response.setStatusCode(HttpStatus.FORBIDDEN);
             return false;
         }
-        //获取设备号,设备类型信息
-        String deviceId = getParamFromRequest(request, SessionAttributeKeys.DEVICE_ID);
-        String deviceTypeStr = getParamFromRequest(request, SessionAttributeKeys.DEVICE_TYPE);
-        String deviceName = getParamFromRequest(request, SessionAttributeKeys.DEVICE_NAME);
         try {
+            // 获取设备号,设备类型信息
+            String deviceId = getParamFromRequest(request, SessionAttributeKeys.DEVICE_ID, true);
+            String deviceTypeStr = getParamFromRequest(request, SessionAttributeKeys.DEVICE_TYPE, true);
+            String deviceName = getParamFromRequest(request, SessionAttributeKeys.DEVICE_NAME, true);
             DeviceType deviceType = DeviceType.valueOf(deviceTypeStr);
             attributes.put(SessionAttributeKeys.DEVICE_TYPE, deviceType);
+            attributes.put(SessionAttributeKeys.DEVICE_ID, deviceId);
+            attributes.put(SessionAttributeKeys.DEVICE_NAME, deviceName);
         } catch (Exception e) {
-            LOGGER.error("Device type value error:{}", deviceTypeStr);
+            LOGGER.error("Params error", e);
             response.setStatusCode(HttpStatus.BAD_REQUEST);
             return false;
         }
-        attributes.put(SessionAttributeKeys.DEVICE_ID, deviceId);
-        attributes.put(SessionAttributeKeys.DEVICE_NAME, deviceName);
+
         //验证token是否合法
         try {
             UserInfo userInfo = userService.verifyToken(token);
@@ -60,7 +62,8 @@ public class SimpleHandshakeInterceptor extends HttpSessionHandshakeInterceptor 
         }
         return super.beforeHandshake(request, response, wsHandler, attributes);
     }
-    public String getParamFromRequest(ServerHttpRequest request,String key){
+
+    public String getParamFromRequest(ServerHttpRequest request, String key, boolean required) {
         String result=null;
         List<String> header=request.getHeaders().get(key);
         if(header==null||header.isEmpty()){
@@ -71,6 +74,9 @@ public class SimpleHandshakeInterceptor extends HttpSessionHandshakeInterceptor 
 
         }else{
             result=header.get(0);
+        }
+        if (required && Strings.isNullOrEmpty(result)) {
+            throw new NullPointerException("Parameter named '" + key + "' required");
         }
         return result;
     }

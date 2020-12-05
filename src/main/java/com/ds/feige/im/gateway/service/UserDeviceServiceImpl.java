@@ -48,7 +48,7 @@ public class UserDeviceServiceImpl extends ServiceImpl<UserDeviceMapper, UserDev
             throw new WarnMessageException(FeigeWarn.DEVICE_NOT_EXISTS, deviceId);
         }
         device.setStatus(-1);
-        saveOrUpdate(device);
+        updateById(device);
         log.info("User device logout:userId={},deviceId={},deviceType={}", userId, deviceId, device.getDeviceType());
     }
 

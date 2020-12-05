@@ -16,19 +16,17 @@ import lombok.Data;
 @Data
 public class UserDevice extends BaseEntity {
     private Long userId;
+    /** 设备ID */
     private String deviceId;
-    /**
-     * 设备类型 @see DeviceType
-     */
+    /** 设备类型 @see DeviceType */
     private String deviceType;
     private String deviceName;
-    /**
-     * 推送token
-     */
+    /** 推送token */
     private String deviceToken;
-    /**
-     * 设备状态
-     */
+    /** 设备状态 */
     private Integer status;
+    /** 最后登录时间 */
     private Date lastLoginTime;
+    /** 事件检查点序列号ID */
+    private Long eventCheckpoint;
 }

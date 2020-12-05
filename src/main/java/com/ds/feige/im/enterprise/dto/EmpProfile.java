@@ -11,6 +11,6 @@ import lombok.Data;
  */
 @Data
 public class EmpProfile {
-    private EmployeeInfo employee;
+    private EmpDetails employee;
     private List<AppInfo> apps;
 }

@@ -9,6 +9,6 @@ import com.ds.feige.im.mark.entity.MarkMessage;
  * @author DC
  */
 public interface MarkMessageMapper extends BaseMapper<MarkMessage> {
-    @Select("SELECT * FROM t_mark_message WHERE msg_id=#{msgId}")
-    MarkMessage getByMsgId(long msgId);
+    @Select("SELECT * FROM t_mark_message WHERE user_id=#{userId} AND msg_id=#{msgId}")
+    MarkMessage getByUserAndMsgId(long userId, long msgId);
 }

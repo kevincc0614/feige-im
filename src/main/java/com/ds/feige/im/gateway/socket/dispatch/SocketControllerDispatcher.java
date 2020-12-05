@@ -47,6 +47,7 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
     }
 
     public void doService(WebSocketSession session, SocketPacket socketPacket) {
+
         String path = socketPacket.getPath();
         if (Strings.isNullOrEmpty(path)) {
             log.warn("The path of websocket message is empty:session={}", session);
@@ -62,6 +63,7 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
         });
         Throwable dispatchEx = null;
         Object result = null;
+        long startTime = System.currentTimeMillis();
         try {
             try {
                 result = invoker.invokeForRequest(session, socketPacket);
@@ -77,6 +79,9 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
             for (SocketMethodHandlerInterceptor interceptor : interceptors) {
                 interceptor.postHandle(session, socketPacket, result, invoker);
             }
+        } finally {
+            long endTime = System.currentTimeMillis();
+            log.info("Dispatch socket request duration:path={},duration={}ms", path, (endTime - startTime));
         }
 
     }

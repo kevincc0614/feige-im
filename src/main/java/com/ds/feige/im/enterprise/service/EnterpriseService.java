@@ -1,5 +1,6 @@
 package com.ds.feige.im.enterprise.service;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.ds.feige.im.enterprise.dto.*;
@@ -11,6 +12,7 @@ public interface EnterpriseService {
      * @param name
      * @param description
      * @param createUserId
+     * @return enterpriseId
      */
     long createEnterprise(String name, String description, long createUserId);
 
@@ -18,6 +20,7 @@ public interface EnterpriseService {
      * 获取用户所属企业列表
      * 
      * @param userId
+     * @return 企业信息
      */
     List<EnterpriseInfo> getEnterprises(long userId);
 
@@ -35,7 +38,7 @@ public interface EnterpriseService {
      * @param request
      * @return 部门基本信息
      */
-    DepartmentBaseInfo deleteDepartment(DeleteDepRequest request);
+    DepartmentOverview deleteDepartment(DeleteDepRequest request);
 
     /**
      * 编辑部门信息
@@ -81,13 +84,20 @@ public interface EnterpriseService {
     DepartmentDetails getDepartment(long enterpriseId, long departmentId, boolean queryChild);
 
     /**
+     * 更新部门群聊ID
+     * 
      * @param enterpriseId
      * @param departmentId
      * @param groupId
      */
     void updateDepartmentGroup(long enterpriseId, long departmentId, long groupId);
 
-    List<DepartmentBaseInfo> getDepartments(long enterpriseId);
+    /**
+     * 获取部门列表
+     * 
+     * @param enterpriseId
+     */
+    List<DepartmentOverview> getDepartments(long enterpriseId);
 
     /**
      * 根据用户ID查询员工信息
@@ -96,15 +106,15 @@ public interface EnterpriseService {
      * @param enterpriseId
      * @return 员工信息
      */
-    EmployeeInfo getEmp(long enterpriseId, long userId);
+    EmpDetails getEmpDetails(long enterpriseId, long userId);
 
     /**
-     * 获取企业全体员工列表
-     *
+     * 获取企业全体员工列表 不包括部门信息
+     * 
      * @param enterpriseId
      * @return 企业所有员工列表
      */
-    List<EmployeeInfo> getEmpsByEnt(long enterpriseId);
+    List<EmpDetails> getAllEmpDetailList(long enterpriseId, Collection<Long> excludeUsers);
 
     /**
      * 判断用户是否为管理员

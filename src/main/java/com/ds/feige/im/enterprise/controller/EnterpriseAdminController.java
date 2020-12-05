@@ -63,17 +63,17 @@ public class EnterpriseAdminController {
     @RequestMapping("/department/delete")
     public Response deleteDepartment(HttpServletRequest request, @RequestBody DeleteDepRequest body) {
         body.setOperatorId(WebUtils.getUserId(request));
-        DepartmentBaseInfo departmentInfo = enterpriseService.deleteDepartment(body);
-        if (departmentInfo.getCreateGroup() && departmentInfo.getGroupId() != null) {
-            groupUserService.disbandGroup(departmentInfo.getGroupId());
+        DepartmentOverview departmentOverview = enterpriseService.deleteDepartment(body);
+        if (departmentOverview.getCreateGroup() && departmentOverview.getGroupId() != null) {
+            groupUserService.disbandGroup(departmentOverview.getGroupId());
         }
         return Response.EMPTY_SUCCESS;
     }
 
     @RequestMapping("/employee/list")
-    public Response<List<EmployeeInfo>> employeeList(long enterpriseId) {
-        List<EmployeeInfo> employeeInfoList = enterpriseService.getEmpsByEnt(enterpriseId);
-        return new Response(employeeInfoList);
+    public Response<List<EmpDetails>> employeeList(long enterpriseId) {
+        List<EmpDetails> overviews = enterpriseService.getAllEmpDetailList(enterpriseId, null);
+        return new Response(overviews);
     }
 
     @RequestMapping("/employee/create")
@@ -160,6 +160,8 @@ public class EnterpriseAdminController {
         body.setOperatorId(WebUtils.getUserId(request));
         enterpriseService.deleteEmp(body);
         enterpriseSecurityService.deleteEmpAllRoles(body.getEnterpriseId(), body.getUserId());
+        // 删除账号
+        userService.deleteUser(body.getUserId());
         return Response.EMPTY_SUCCESS;
     }
     // @RequestMapping("/department/add-employee")

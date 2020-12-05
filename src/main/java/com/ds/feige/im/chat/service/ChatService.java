@@ -14,14 +14,6 @@ public interface ChatService {
      */
     MessageToUser sendToConversation(MessageToConversation request);
 
-    /**
-     * 客户端收到消息存到本地后Ack,但Ack不代表着已读
-     *
-     * @param msgIds
-     *            列表不能太大,否则影响性能
-     * @param userId
-     */
-    ChatMessageAckResult ackMessages(long userId, List<Long> msgIds);
 
     /**
      * 拉取指定会话的消息列表,筛选userId
@@ -38,9 +30,11 @@ public interface ChatService {
      * @param userId
      * @return 会话预览
      */
-    Collection<ConversationPreview> getConversationPreviews(long userId);
+    Collection<UserConversationDetails> getRecentConversations(long userId, long lastEventTime);
 
-    void readMessage(ReadMessageRequest request);
+    UserConversationDetails getConversationDetails(long userId, long conversationId);
+
+    void userReadMessages(ReadMessageRequest request);
 
     /**
      * 消息已读人列表

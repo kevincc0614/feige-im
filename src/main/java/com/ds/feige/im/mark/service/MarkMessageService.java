@@ -11,23 +11,22 @@ import com.ds.feige.im.mark.dto.*;
  */
 public interface MarkMessageService {
     /**
-     * 标记消息
+     * 收藏消息
      */
-    long mark(MarkRequest request);
+    long favorites(FavoritesRequest request);
 
     /**
-     * 删除标记
-     * 
-     * @param request
+     * 取消收藏
      */
-    boolean cancelMark(CancelMarkRequest request);
-
+    boolean cancelFavorites(CancelFavoritesRequest cancelFavoritesRequest);
     /**
      * 更新备注
      * 
      * @param request
      */
-    void updateRemark(UpdateRemarkRequest request);
+    long remark(RemarkRequest request);
+
+    boolean cancelRemark(CancelRemarkRequest request);
 
     /**
      * 查询

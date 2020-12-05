@@ -8,8 +8,6 @@ import lombok.Data;
  * @author DC
  */
 @Data
-public class UpdateRemarkRequest extends UserRequest {
-    private long markId;
-    private String title;
-    private String remark;
+public class FavoritesRequest extends UserRequest {
+    private long msgId;
 }

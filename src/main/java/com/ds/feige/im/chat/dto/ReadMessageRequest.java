@@ -1,6 +1,6 @@
 package com.ds.feige.im.chat.dto;
 
-import java.util.List;
+import java.util.Set;
 
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
@@ -17,7 +17,8 @@ import lombok.Data;
 @Data
 public class ReadMessageRequest extends UserRequest {
     @Size(min = 1, max = 100)
-    private List<Long> msgIds;
+    private Set<Long> msgIds;
     @Positive
     private long conversationId;
+    private String readerConnectionId;
 }

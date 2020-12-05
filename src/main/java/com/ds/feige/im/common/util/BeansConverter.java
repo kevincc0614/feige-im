@@ -11,16 +11,16 @@ import com.ds.feige.im.account.entity.User;
 import com.ds.feige.im.app.dto.AppInfo;
 import com.ds.feige.im.app.entity.App;
 import com.ds.feige.im.chat.dto.MessageToUser;
-import com.ds.feige.im.chat.dto.UserConversationInfo;
 import com.ds.feige.im.chat.dto.event.ConversationMessageEvent;
 import com.ds.feige.im.chat.dto.group.GroupInfo;
 import com.ds.feige.im.chat.entity.Group;
-import com.ds.feige.im.chat.entity.UserConversation;
 import com.ds.feige.im.enterprise.dto.*;
 import com.ds.feige.im.enterprise.entity.Department;
 import com.ds.feige.im.enterprise.entity.EmpRole;
 import com.ds.feige.im.enterprise.entity.Employee;
 import com.ds.feige.im.enterprise.entity.Enterprise;
+import com.ds.feige.im.event.dto.UserEventInfo;
+import com.ds.feige.im.event.entity.UserEvent;
 import com.ds.feige.im.mark.dto.MarkMessageInfo;
 import com.ds.feige.im.mark.entity.MarkMessage;
 import com.ds.feige.im.oss.dto.UploadCompleteRequest;
@@ -79,41 +79,42 @@ public class BeansConverter {
         return result;
     }
 
-    public static EmployeeInfo employeeToEmployeeInfo(Employee employee) {
-        EmployeeInfo employeeInfo = new EmployeeInfo();
-        BeanUtils.copyProperties(employee, employeeInfo);
-        return employeeInfo;
+    public static EmpDetails convertToDetails(Employee employee) {
+        EmpDetails empDetails = new EmpDetails();
+        BeanUtils.copyProperties(employee, empDetails);
+        return empDetails;
     }
 
-    public static List<EmployeeInfo> empsToEmpInfos(List<Employee> employees) {
-        List<EmployeeInfo> result = new ArrayList<>(employees.size());
-        employees.forEach(e -> result.add(employeeToEmployeeInfo(e)));
+    public static List<EmpDetails> empsToEmpInfos(List<Employee> employees) {
+        List<EmpDetails> result = new ArrayList<>(employees.size());
+        employees.forEach(e -> result.add(convertToDetails(e)));
         return result;
     }
 
-    public static DepartmentBaseInfo departmentToSimpleDepartmentInfo(Department department) {
-        DepartmentDetails departmentDetails = new DepartmentDetails();
+    public static List<EmpOverview> convertToEmpOverviews(List<Employee> employees) {
+        List<EmpOverview> result = new ArrayList<>(employees.size());
+        employees.forEach(e -> result.add(convertToEmpOverview(e)));
+        return result;
+    }
+
+    public static EmpOverview convertToEmpOverview(Employee employee) {
+        EmpOverview overview = new EmpOverview();
+        BeanUtils.copyProperties(employee, overview);
+        return overview;
+    }
+
+    public static DepartmentOverview convertToDepOverview(Department department) {
+        DepartmentOverview departmentDetails = new DepartmentOverview();
         BeanUtils.copyProperties(department, departmentDetails);
         return departmentDetails;
     }
 
-    public static List<DepartmentBaseInfo> departmentsToSimpleDepartmentInfos(List<Department> departments) {
-        List<DepartmentBaseInfo> result = new ArrayList<>(departments.size());
-        departments.forEach(department -> result.add(departmentToSimpleDepartmentInfo(department)));
+    public static List<DepartmentOverview> convertToDepOverviews(List<Department> departments) {
+        List<DepartmentOverview> result = new ArrayList<>(departments.size());
+        departments.forEach(department -> result.add(convertToDepOverview(department)));
         return result;
     }
 
-    public static UserConversationInfo conversationToConversationInfo(UserConversation conversation) {
-        UserConversationInfo info = new UserConversationInfo();
-        BeanUtils.copyProperties(conversation, info);
-        return info;
-    }
-
-    public static List<UserConversationInfo> conversationToConversationInfo(List<UserConversation> conversations) {
-        List<UserConversationInfo> result = new ArrayList<>(conversations.size());
-        conversations.forEach(c -> result.add(conversationToConversationInfo(c)));
-        return result;
-    }
 
     public static MarkMessageInfo markMessageToMarkMessageInfo(MarkMessage markMessage) {
         MarkMessageInfo result = new MarkMessageInfo();
@@ -127,25 +128,42 @@ public class BeansConverter {
         return result;
     }
 
-    public static AppInfo appToAppInfo(App app) {
+    public static AppInfo convertToAppInfo(App app) {
         AppInfo appInfo = new AppInfo();
         BeanUtils.copyProperties(app, appInfo);
         return appInfo;
     }
 
 
-    public static EmpRoleInfo empRoleToEmpRoleInfo(EmpRole empRole) {
+    public static EmpRoleInfo convertToEmpRoleInfo(EmpRole empRole) {
         EmpRoleInfo info = new EmpRoleInfo();
         BeanUtils.copyProperties(empRole, info);
         return info;
     }
 
-    public static List<EmpRoleInfo> empRoleTosEmpRoleInfos(List<EmpRole> sources) {
+    public static List<EmpRoleInfo> convertToEmpRoleInfos(List<EmpRole> sources) {
         if (sources == null) {
             return null;
         }
         List<EmpRoleInfo> result = new ArrayList<>(sources.size());
-        sources.forEach(source -> result.add(empRoleToEmpRoleInfo(source)));
+        sources.forEach(source -> result.add(convertToEmpRoleInfo(source)));
+        return result;
+    }
+
+    public static UserEventInfo convertToUserEventInfo(UserEvent userEvent) {
+        UserEventInfo userEventInfo = new UserEventInfo();
+        BeanUtils.copyProperties(userEvent, userEventInfo);
+        return userEventInfo;
+    }
+
+    public static List<UserEventInfo> convertToUserEventInfos(Collection<UserEvent> events) {
+        if (events == null) {
+            return null;
+        }
+        List<UserEventInfo> result = new ArrayList<>();
+        events.forEach(e -> {
+            result.add(convertToUserEventInfo(e));
+        });
         return result;
     }
 }

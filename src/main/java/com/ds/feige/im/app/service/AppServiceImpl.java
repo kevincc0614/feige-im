@@ -72,7 +72,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         String secret = RandomStringUtils.randomAlphabetic(32);
         app.setSecret(secret);
         save(app);
-        return BeansConverter.appToAppInfo(app);
+        return BeansConverter.convertToAppInfo(app);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         if (app == null) {
             throw new WarnMessageException(FeigeWarn.APP_SECRET_INVALID);
         }
-        LocalDateTime expireAt = LocalDateTime.now().plusHours(2);
+        LocalDateTime expireAt = LocalDateTime.now().plusHours(3);
         Date expireDate = Date.from(expireAt.atZone(ZoneId.systemDefault()).toInstant());
         String token =
             JWT.create().withClaim("appId", app.getId()).withExpiresAt(expireDate).sign(Algorithm.HMAC256(secret));
@@ -128,6 +128,6 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         if (app == null) {
             throw new WarnMessageException(FeigeWarn.APP_NOT_EXISTS);
         }
-        return BeansConverter.appToAppInfo(app);
+        return BeansConverter.convertToAppInfo(app);
     }
 }

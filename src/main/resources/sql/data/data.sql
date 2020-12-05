@@ -36,3 +36,6 @@ LIMIT 0, 1000
 -- Date: 2020-11-02 16:24
 */
 INSERT INTO `t_enterprise` (`id`,`name`,`description`,`create_time`,`update_time`) VALUES (396718136373800960,'梦幻热游','梦幻热游科技有限公司','2020-10-30 17:36:14','2020-10-30 17:36:14');
+
+INSERT INTO 't_employee' (`id`,`user_id`,`enterprise_id`,`name`,`avatar`,`role`,`title`,`employee_no`,`work_email`,`create_time`,`update_time`)
+ VALUES (397774769963678719,396717965476884480,396718136373800960,'大大大哥',NULL,'SUPER_ADMIN','首席打杂官','CD001',NULL,'2020-10-31 14:59:25','2020-10-31 14:59:25')

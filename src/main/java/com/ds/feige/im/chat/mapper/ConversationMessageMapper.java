@@ -2,6 +2,7 @@ package com.ds.feige.im.chat.mapper;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -33,10 +34,13 @@ public interface ConversationMessageMapper extends BaseMapper<ConversationMessag
     @Update({"<script> ", "UPDATE t_conversation_message SET read_count=read_count+1 WHERE msg_id IN ",
         "<foreach item='item' index='index' collection='msgIds' open='(' separator=',' close=')'>", "#{item}",
         "</foreach>", "</script>"})
-    int readMessages(@Param("msgIds") List<Long> msgIds);
+    int readMessages(@Param("msgIds") Set<Long> msgIds);
 
     @Select({"<script> ", SELECT_COLUMNS, " WHERE sender_id=#{senderId} AND msg_id IN ",
         "<foreach item='item' index='index' collection='msgIds' open='(' separator=',' close=')'>", "#{item}",
         "</foreach>", "</script>"})
     List<MessageToUser> findUsersMessages(long senderId, @Param("msgIds") List<Long> msgIds);
+
+    @Select("SELECT MAX(msg_id) FROM t_conversation_message WHERE conversation_id=#{convesationId}")
+    Long getConversationLastMsgId(long conversationId);
 }

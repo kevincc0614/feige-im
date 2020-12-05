@@ -17,6 +17,7 @@ import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,6 +32,8 @@ import com.ds.feige.im.gateway.socket.annotation.UserId;
 import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Lists;
+
+import cn.hutool.core.convert.impl.NumberConverter;
 
 public class SocketMethodHandler {
     private String path;
@@ -71,12 +74,13 @@ public class SocketMethodHandler {
     }
 
     public Object[] getMethodArgumentValues(WebSocketSession session, SocketPacket socketPacket)
-        throws JsonProcessingException {
+        throws JsonProcessingException, IllegalAccessException, InstantiationException {
         Parameter[] parameters=method.getParameters();
         Object[] parameterValues=new Object[parameters.length];
         int bodyParamCount=0;
         String payload = socketPacket.getPayload();
         Map<String, String> headers = socketPacket.getHeaders();
+        Map<String, Object> attributes = session.getAttributes();
         //payload转为map对象的引用,只json反序列化一次
         Map<String,Object> payloadMap=null;
         for(int i=0;i<parameters.length;i++){
@@ -102,6 +106,9 @@ public class SocketMethodHandler {
                 parameterValues[i]= JsonUtils.jsonToBean(payload,parameter.getType());
                 if(UserRequest.class.isAssignableFrom(parameter.getType())){
                     Long userId=getUserIdFromSession(session);
+                    if (parameterValues[i] == null) {
+                        parameterValues[i] = parameter.getType().newInstance();
+                    }
                     ((UserRequest)parameterValues[i]).setUserId(userId);
                 }
                 bodyParamCount++;
@@ -122,8 +129,18 @@ public class SocketMethodHandler {
                     parameterValues[i]=header;
                     continue;
                 }else{
-                    throw new IllegalStateException("@SocketRequestHeader 注解的参数类型必须为String");
+                    throw new IllegalStateException("@RequestHeader 注解的参数类型必须为String");
                 }
+            }
+            RequestAttribute attributeAnnotation = AnnotationUtils.getAnnotation(parameter, RequestAttribute.class);
+            if (attributeAnnotation != null) {
+                String key = attributeAnnotation.value();
+                Object attribute = null;
+                if (attributes != null) {
+                    attribute = attributes.get(key);
+                }
+                parameterValues[i] = attribute;
+                continue;
             }
             //TODO 获取方法参数名 Conventions.getVariableNameForParameter(parameter);
 //            SocketSession sessionAnnotation=AnnotationUtils.getAnnotation(parameter, SocketSession.class);
@@ -133,10 +150,6 @@ public class SocketMethodHandler {
                     parameterValues[i]=session;
                     continue;
                 }
-//                else{
-//                    throw new IllegalStateException("@SocketSession 注解的参数类型必须为NetSession");
-//                }
-//            }
             RequestParam paramAnnotation=AnnotationUtils.getAnnotation(parameter, RequestParam.class);
             if(paramAnnotation!=null){
                 String paramName=paramAnnotation.value();
@@ -145,7 +158,16 @@ public class SocketMethodHandler {
                     payloadMap=JsonUtils.jsonToBean(payload, HashMap.class);
                 }
                 //TODO required 注解配置还没开发
-                parameterValues[i]=payloadMap.getOrDefault(paramName,paramAnnotation.defaultValue());
+                Object mapValue = payloadMap.getOrDefault(paramName, paramAnnotation.defaultValue());
+                if (Number.class.isAssignableFrom(parameter.getType())) {
+                    if (parameter.getType() == Long.class || parameter.getType() == long.class) {
+                        parameterValues[i] =
+                            new NumberConverter(((Number)mapValue).getClass()).convert(mapValue, 0).longValue();
+                    }
+                } else {
+                    parameterValues[i] = mapValue;
+                }
+
                 continue;
             }
         }

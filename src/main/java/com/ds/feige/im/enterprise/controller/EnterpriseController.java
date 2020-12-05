@@ -1,6 +1,8 @@
 package com.ds.feige.im.enterprise.controller;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +20,7 @@ import com.ds.feige.im.enterprise.dto.*;
 import com.ds.feige.im.enterprise.service.EnterpriseSecurityService;
 import com.ds.feige.im.enterprise.service.EnterpriseService;
 import com.ds.feige.im.gateway.service.SessionUserService;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 /**
@@ -38,7 +41,7 @@ public class EnterpriseController {
     @RequestMapping("/employee/profile")
     public Response<EmpProfile> getEmployeeProfile(HttpServletRequest request, long enterpriseId) {
         long userId = WebUtils.getUserId(request);
-        EmployeeInfo employeeInfo = enterpriseService.getEmp(enterpriseId, userId);
+        EmpDetails empDetails = enterpriseService.getEmpDetails(enterpriseId, userId);
         List<RoleAuthorityInfo> authorities = enterpriseSecurityService.getEmpAuthorities(enterpriseId, userId);
         Set<Long> appIds = Sets.newHashSet();
         if (authorities != null && !authorities.isEmpty()) {
@@ -46,7 +49,7 @@ public class EnterpriseController {
         }
         List<AppInfo> appInfos = appService.getApps(appIds);
         EmpProfile profile = new EmpProfile();
-        profile.setEmployee(employeeInfo);
+        profile.setEmployee(empDetails);
         profile.setApps(appInfos);
         return new Response(profile);
     }
@@ -71,14 +74,24 @@ public class EnterpriseController {
         return new Response<>(departmentDetails);
     }
     @RequestMapping("/employee/info")
-    Response<EmployeeInfo> getEmployeeInfo(@RequestBody GetEmpRequest request) {
-        EmployeeInfo employeeInfo = enterpriseService.getEmp(request.getEnterpriseId(), request.getUserId());
-        return new Response<>(employeeInfo);
+    Response<EmpDetails> getEmployeeInfo(@RequestBody GetEmpRequest request) {
+        EmpDetails empDetails = enterpriseService.getEmpDetails(request.getEnterpriseId(), request.getUserId());
+        return new Response<>(empDetails);
     }
 
+    @RequestMapping("/employees")
+    public Response<List<EmpDetails>> employeeList(HttpServletRequest request, long enterpriseId) {
+        // TODO 判断是否为所属企业ID
+        Set<Long> exclude = new HashSet<>();
+        exclude.add(WebUtils.getUserId(request));
+        List<EmpDetails> overviews = enterpriseService.getAllEmpDetailList(enterpriseId, exclude);
+        return new Response(overviews);
+    }
     @RequestMapping("/departments")
-    Response<List<DepartmentBaseInfo>> getDepartments(long enterpriseId) {
-        List<DepartmentBaseInfo> infos = enterpriseService.getDepartments(enterpriseId);
-        return new Response<>(infos);
+    Response<List<DepartmentOverview>> getDepartments(long enterpriseId) {
+        List<DepartmentOverview> overviews = enterpriseService.getDepartments(enterpriseId);
+        Map<Long, DepartmentOverview> depMap = Maps.newHashMap();
+        overviews.forEach(overview -> depMap.put(overview.getId(), overview));
+        return new Response<>(overviews);
     }
 }

@@ -1,8 +1,8 @@
 package com.ds.feige.im.account.dto;
 
-import lombok.Data;
-
 import javax.validation.constraints.Positive;
+
+import lombok.Data;
 
 /**
  * @author caedmon

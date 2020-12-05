@@ -34,6 +34,8 @@ public enum FeigeWarn implements WarnMessageEntry {
     EMPLOYEE_NOT_EXISTS("Employee_100001", "员工不存在", "员工不存在"),
     EMPLOYEE_IS_EXISTS("Employee_100002", "员工已存在", "员工已存在"),
     EMPLOYEE_ROLE_NOT_ADMIN("Employee_100003", "只有管理员才能进行操作", "只有管理员才能进行操作"),
+    CAN_NOT_DELETE_SELF("Employee_100004", "不能删除自己", "不能删除自己"),
+    CAN_NOT_DELETE_SUPER_ADMIN("Employee_100005", "不能删除超级管理员", "不能删除超级管理员"),
 
     CHAT_MSG_ID_EXISTS("CHAT_100001", "消息ID已存在", "消息ID已存在"),
     CONVERSATION_NOT_EXISTS("CHAT_100002", "会话不存在", "会话不存在"),
@@ -50,7 +52,7 @@ public enum FeigeWarn implements WarnMessageEntry {
     ROLE_AUTHORITY_NAME_EXISTS("SECURITY_100006", "权限名已存在", "权限名已存在"),
     AUTHORITY_IS_EMPTY("SECURITY_100006", "权限为空", "权限为空"),
 
-    FAVORITE_MARK_MESSAGE_NOT_EXISTS("MARK_100001", "备注不存在", "备注不存在"),
+    MARK_MESSAGE_NOT_EXISTS("MARK_100001", "标记消息不存在", "标记消息不存在"),
     MESSAGE_HAS_MARKED("MARK_100002", "消息已被标记过", "消息已被标记过");
     private String code;
     private String originalMessage;

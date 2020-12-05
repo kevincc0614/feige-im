@@ -128,7 +128,6 @@ public class GroupUserListener {
             ConversationType.GROUP_CONVERSATION_TYPE);
         LOGGER.info("Group user kicked event broadcast success:{}", event);
     }
-
     public void sendGroupNotice(long senderId, long groupId, MessageContent msgContent) throws Exception {
         MessageToConversation req = new MessageToConversation();
         req.setTargetId(groupId);

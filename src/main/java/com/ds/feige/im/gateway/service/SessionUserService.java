@@ -28,6 +28,8 @@ public interface SessionUserService {
 
     Map<Long, UserState> getUserStates(Collection<? extends UserIdHolder> users);
 
+    Collection<Long> getOnlineUsers(Collection<? extends UserIdHolder> users);
+
     /**
      * 登出
      */

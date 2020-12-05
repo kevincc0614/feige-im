@@ -1,5 +1,7 @@
 package com.ds.feige.im.common.util;
 
+import java.util.Map;
+
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
@@ -41,7 +43,12 @@ public class Tracer {
     public static String setTraceId(SocketPacket request) {
         String traceId = MDC.get("traceId");
         if (Strings.isNullOrEmpty(traceId)) {
-            traceId = request.getHeaders().getOrDefault("traceId", IdUtil.fastSimpleUUID());
+            Map<String, String> headers = request.getHeaders();
+            if (headers != null && !headers.isEmpty()) {
+                traceId = headers.getOrDefault("traceId", IdUtil.fastSimpleUUID());
+            } else {
+                traceId = IdUtil.fastSimpleUUID();
+            }
             MDC.put("traceId", traceId);
         }
         return traceId;

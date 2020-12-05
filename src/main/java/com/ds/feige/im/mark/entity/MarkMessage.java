@@ -18,5 +18,5 @@ public class MarkMessage extends BaseEntity {
     private Long userId;
     private String title;
     private String remark;
-    private Integer markType;
+    private Boolean favorites;
 }

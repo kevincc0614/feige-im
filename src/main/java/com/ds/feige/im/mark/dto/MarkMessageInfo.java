@@ -15,5 +15,5 @@ public class MarkMessageInfo {
     private Long userId;
     private String title;
     private String remark;
-    private Integer markType;
+    private Boolean favorites;
 }

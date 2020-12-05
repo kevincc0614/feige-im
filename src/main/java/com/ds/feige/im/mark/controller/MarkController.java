@@ -22,26 +22,31 @@ public class MarkController {
     @Autowired
     MarkMessageService markMessageService;
 
-    @SocketRequestMapping(SocketPaths.CS_MARK_ADD)
-    public long mark(@RequestBody @Valid MarkRequest body) {
-        long markId = markMessageService.mark(body);
+    @SocketRequestMapping(SocketPaths.CS_MARK_FAVORITES)
+    public long favorites(@RequestBody @Valid FavoritesRequest body) {
+        long markId = markMessageService.favorites(body);
         return markId;
     }
 
+    @SocketRequestMapping(SocketPaths.CS_MARK_CANCEL_FAVORITES)
+    boolean cancelFavorites(@RequestBody @Valid CancelFavoritesRequest request) {
+        boolean result = markMessageService.cancelFavorites(request);
+        return result;
+    }
+
+    @SocketRequestMapping(SocketPaths.CS_MARK_REMARK)
+    long remark(@RequestBody @Valid RemarkRequest request) {
+        return markMessageService.remark(request);
+    }
+
+    @SocketRequestMapping(SocketPaths.CS_MARK_CANCEL_REMARK)
+    boolean cancelRemark(@RequestBody @Valid CancelRemarkRequest request) {
+        boolean result = markMessageService.cancelRemark(request);
+        return result;
+    }
     @SocketRequestMapping(SocketPaths.CS_MARK_GET)
     MarkMessageInfo getByMarkId(@RequestParam(value = "markId") long markId) {
         return markMessageService.getByMarkId(markId);
-    }
-
-    @SocketRequestMapping(SocketPaths.CS_MARK_DELETE)
-    boolean cancelMark(CancelMarkRequest request) {
-        boolean success = markMessageService.cancelMark(request);
-        return success;
-    }
-
-    @SocketRequestMapping(SocketPaths.CS_MARK_UPDATE)
-    void updateRemark(@RequestBody @Valid UpdateRemarkRequest request) {
-        markMessageService.updateRemark(request);
     }
 
     @SocketRequestMapping(SocketPaths.CS_MARK_QUERY)

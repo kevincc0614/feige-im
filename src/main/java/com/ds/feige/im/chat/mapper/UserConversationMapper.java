@@ -1,12 +1,14 @@
 package com.ds.feige.im.chat.mapper;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ds.feige.im.chat.entity.UserConversation;
@@ -42,6 +44,15 @@ public interface UserConversationMapper extends BaseMapper<UserConversation> {
         "</foreach>", "</script>"})
     int deleteByUsersAndTargetAndType(@Param("userIds") Collection<Long> userIds, long targetId, int conversationType);
 
-    @Select("SELECT COUNT(*) FROM t_user_conversation WHERE conversation_id=#{conversationId}")
-    int getMembersNum(long conversationId);
+    @Select({"<script> ", "SELECT * FROM t_user_conversation WHERE user_id=#{userId}  and conversation_id IN ",
+        "<foreach item='item' index='index' collection='conversationIds' open='(' separator=',' close=')'>", "#{item}",
+        "</foreach>", "</script>"})
+    List<UserConversation> findByUserAndConversationIds(long userId,
+        @Param("conversationIds") Collection<Long> conversationIds);
+
+    @Update("UPDATE t_user_conversation set last_event_time=#{lastEventTime} where conversation_id=#{conversationId}")
+    int updateLastEventTime(long conversationId, Date lastEventTime);
+
+    @Select("SELECT * FROM t_user_conversation where user_id=#{userId} and last_event_time>=#{lastEventTime}")
+    List<UserConversation> findRecentConversations(long userId, Date lastEventTime);
 }

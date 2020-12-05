@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -25,6 +26,7 @@ import com.ds.feige.im.gateway.consumer.DynamicQueueListener;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import cn.hutool.core.util.IdUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Configuration
@@ -33,12 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 public class RabbitMQConfiguration {
     @Value("${spring.rabbitmq.template.exchange}")
     private String exchange;
-    @Autowired
-    private RabbitDLXConfigProperties dlx;
 
-    private Map<String, Object> getQueueArgments() {
+    private Map<String, Object> getQueueArguments() {
         Map<String, Object> headers = Maps.newHashMap();
-        headers.put("x-message-ttl", 10000);
         headers.put("x-dead-letter-exchange", exchange);
         headers.put("x-dead-letter-routing-key", AMQPConstants.RoutingKeys.PUBLIC_DLX);
         return headers;
@@ -46,13 +45,14 @@ public class RabbitMQConfiguration {
     @Bean
     RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory, @Autowired DiscoveryService discoveryService) {
         RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
-        Map<String, Object> arguments = getQueueArgments();
+        Map<String, Object> arguments = getQueueArguments();
         // 动态队列绑定
         for (String queueName : buildDynamicQueueNames(discoveryService)) {
             // 非持久化,排他,链接断开自动删除
-            Queue dynamicQueue = new Queue(queueName, false, true, true);
+            Queue dynamicQueue =
+                QueueBuilder.nonDurable(queueName).exclusive().autoDelete().withArguments(arguments).build();
             rabbitAdmin.declareQueue(dynamicQueue);
-            Binding binding = new Binding(queueName, Binding.DestinationType.QUEUE, exchange, queueName, arguments);
+            Binding binding = new Binding(queueName, Binding.DestinationType.QUEUE, exchange, queueName, null);
             rabbitAdmin.declareBinding(binding);
             log.info("RabbitMQ binding dynamic queue:routingKey={},queue={}", queueName, queueName);
         }
@@ -60,21 +60,17 @@ public class RabbitMQConfiguration {
         Map<String, String[]> routeKeyQueues = AMQPConstants.BINDINGS;
         for (Map.Entry<String, String[]> entry : routeKeyQueues.entrySet()) {
             for (String queueName : entry.getValue()) {
-                Queue queue = new Queue(queueName);
-                rabbitAdmin.declareQueue(queue);
-                Binding binding = null;
+                // 把死信队列自己排除掉
+                QueueBuilder queueBuilder = QueueBuilder.durable(queueName);
                 if (!queueName.equals(AMQPConstants.QueueNames.PUBLIC_DLX_DEFAULT)) {
-                    binding =
-                        new Binding(queueName, Binding.DestinationType.QUEUE, this.exchange, entry.getKey(), arguments);
-
-                } else {
-                    binding =
-                        new Binding(queueName, Binding.DestinationType.QUEUE, this.exchange, entry.getKey(), null);
+                    queueBuilder.withArguments(arguments);
                 }
+                rabbitAdmin.declareQueue(queueBuilder.build());
+                Binding binding =
+                    new Binding(queueName, Binding.DestinationType.QUEUE, this.exchange, entry.getKey(), null);
                 rabbitAdmin.declareBinding(binding);
                 log.info("RabbitMQ binding static queue:routingKey={},queue={}", entry.getKey(), queueName);
             }
-
         }
         return rabbitAdmin;
     }
@@ -121,6 +117,11 @@ public class RabbitMQConfiguration {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setExchange(this.exchange);
         rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
+        rabbitTemplate.addBeforePublishPostProcessors(message -> {
+            String id = IdUtil.simpleUUID();
+            message.getMessageProperties().setMessageId(id);
+            return message;
+        });
         return rabbitTemplate;
     }
 }

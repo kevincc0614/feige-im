@@ -1,12 +1,14 @@
 package com.ds.feige.im.enterprise.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.ds.feige.im.common.domain.UserIdHolder;
 import com.ds.feige.im.common.entity.BaseEntity;
+
 import lombok.Data;
 
 @TableName("t_employee")
 @Data
-public class Employee extends BaseEntity {
+public class Employee extends BaseEntity implements UserIdHolder {
     /**
      * 用户ID
      */

@@ -15,6 +15,7 @@ import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.mark.dto.*;
 import com.ds.feige.im.mark.entity.MarkMessage;
 import com.ds.feige.im.mark.mapper.MarkMessageMapper;
+import com.google.common.base.Strings;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,64 +29,97 @@ public class MarkMessageServiceImpl extends ServiceImpl<MarkMessageMapper, MarkM
     ChatService chatService;
 
     @Override
-    public long mark(MarkRequest request) {
-        log.info("Mark message start:request={}", request);
+    public long favorites(FavoritesRequest request) {
+        log.info("Favorites message start:request={}", request);
         long msgId = request.getMsgId();
+        long userId = request.getUserId();
+        // 判断消息是否存在
+        MarkMessage markMessage = baseMapper.getByUserAndMsgId(userId, msgId);
+        if (markMessage == null) {
+            markMessage = createByMsgId(msgId, userId);
+        }
+        markMessage.setFavorites(true);
+        saveOrUpdate(markMessage);
+        log.info("Favorites message success:markId={}", markMessage.getId());
+        return markMessage.getId();
+    }
+
+    @Override
+    public boolean cancelFavorites(CancelFavoritesRequest request) {
+        long markId = request.getMarkId();
+        MarkMessage markMessage = getAndCheckAccess(request.getUserId(), markId);
+        // 如果没有备注信息,删除记录
+        if (Strings.isNullOrEmpty(markMessage.getRemark())) {
+            log.info("Cancel favorites message success:markId={}", markMessage.getId());
+            return removeById(markId);
+
+        } else {
+            // 如果有备注信息,则该条数据还不能删除
+            markMessage.setFavorites(false);
+            log.info("Cancel favorites message success:markId={}", markMessage.getId());
+            return updateById(markMessage);
+
+        }
+
+    }
+
+    public MarkMessage createByMsgId(long msgId, long userId) {
         MessageToUser chatMessage = chatService.getMessage(msgId);
         if (chatMessage == null) {
             throw new WarnMessageException(FeigeWarn.CHAT_MSG_NOT_EXISTS);
         }
-        // 判断是否存在相同的标记
-        MarkMessage markMessage = baseMapper.getByMsgId(request.getMsgId());
-        if (markMessage != null && markMessage.getMarkType() == request.getMarkType()) {
-            throw new WarnMessageException(FeigeWarn.MESSAGE_HAS_MARKED);
-        }
-        String msgContent = chatMessage.getMsgContent();
-        int msgType = chatMessage.getMsgType();
-        long conversationId = chatMessage.getConversationId();
+        MarkMessage markMessage = new MarkMessage();
+        markMessage.setFavorites(true);
+        markMessage.setUserId(userId);
+        markMessage.setConversationId(chatMessage.getConversationId());
+        markMessage.setMsgType(chatMessage.getMsgType());
+        markMessage.setMsgContent(chatMessage.getMsgContent());
+        markMessage.setMsgId(msgId);
+        return markMessage;
+    }
+
+    @Override
+    public long remark(RemarkRequest request) {
         long userId = request.getUserId();
-        String title = request.getTitle();
+        long msgId = request.getMsgId();
         String remark = request.getRemark();
-        MarkMessage message = new MarkMessage();
-        message.setMarkType(request.getMarkType());
-        message.setUserId(userId);
-        message.setConversationId(conversationId);
-        message.setMsgType(msgType);
-        message.setMsgContent(msgContent);
-        message.setMsgId(msgId);
-        message.setTitle(title);
+        String title = request.getTitle();
+        MarkMessage message = baseMapper.getByUserAndMsgId(userId, msgId);
+        // 如果不存在,则需要创建一条记录
+        if (message == null) {
+            message = createByMsgId(msgId, userId);
+        }
+        // TODO 判断长度
         message.setRemark(remark);
-        baseMapper.insert(message);
-        log.info("Mark message success:markMessage={}", message);
+        message.setTitle(title);
+        saveOrUpdate(message);
         return message.getId();
     }
 
-    @Override
-    public boolean cancelMark(CancelMarkRequest request) {
-        final long userId = request.getUserId();
-        final long markId = request.getMarkId();
-        MarkMessage message = super.getById(markId);
-        if (message == null) {
-            log.error("Mark message not exists:markId={}", markId);
-            return false;
+    public MarkMessage getAndCheckAccess(long userId, long markId) {
+        MarkMessage markMessage = getById(markId);
+        if (markMessage == null) {
+            throw new WarnMessageException(FeigeWarn.MARK_MESSAGE_NOT_EXISTS);
         }
-        if (message.getUserId() != userId) {
+        // 只能取消收藏自己标记的消息
+        if (userId != markMessage.getUserId()) {
             throw new WarnMessageException(FeigeWarn.PERMISSION_DIED);
         }
-        boolean result = super.removeById(markId);
-        log.info("Cancel mark:markId={}", markId);
-        return result;
+        return markMessage;
     }
 
     @Override
-    public void updateRemark(UpdateRemarkRequest request) {
-        MarkMessage message = super.getById(request.getMarkId());
-        if (message == null) {
-            throw new WarnMessageException(FeigeWarn.FAVORITE_MARK_MESSAGE_NOT_EXISTS);
+    public boolean cancelRemark(CancelRemarkRequest request) {
+        long userId = request.getUserId();
+        long markId = request.getMarkId();
+        MarkMessage markMessage = getAndCheckAccess(userId, markId);
+        // 如果没有收藏,可以删除
+        if (markMessage.getFavorites() == null || !markMessage.getFavorites()) {
+            return removeById(markId);
+        } else {
+            markMessage.setRemark(null);
+            return updateById(markMessage);
         }
-        message.setRemark(request.getRemark());
-        message.setTitle(request.getTitle());
-        save(message);
     }
 
     @Override
@@ -101,8 +135,16 @@ public class MarkMessageServiceImpl extends ServiceImpl<MarkMessageMapper, MarkM
         if (request.getEnd() != null) {
             wrapper.lt("update_time", request.getEnd());
         }
-        if (request.getMarkType() != null) {
-            wrapper.eq("mark_type", request.getMarkType());
+        if (request.getFavorites() != null) {
+            wrapper.eq("favorites", request.getFavorites());
+        }
+        if (request.getRemarked() != null) {
+            // 有备注的
+            if (request.getRemarked()) {
+                wrapper.isNotNull("remark");
+            } else {
+                wrapper.isNull("remark");
+            }
         }
         if (request.getMsgIds() != null && !request.getMsgIds().isEmpty()) {
             wrapper.in("msg_id", request.getMsgIds());

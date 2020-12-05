@@ -125,7 +125,7 @@ public class EnterpriseSecurityServiceImpl extends ServiceImpl<EmpRoleBindingMap
     @Override
     public List<EmpRoleInfo> getEnterpriseRoles(EnterpriseOpRequest request) {
         List<EmpRole> empRoles = empRoleMapper.findByEnterpriseId(request.getEnterpriseId());
-        return BeansConverter.empRoleTosEmpRoleInfos(empRoles);
+        return BeansConverter.convertToEmpRoleInfos(empRoles);
     }
 
     @Override

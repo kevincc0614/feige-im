@@ -11,7 +11,7 @@ import lombok.Data;
  */
 @JsonIgnoreProperties
 @Data
-public class DepartmentDetails extends DepartmentBaseInfo {
+public class DepartmentDetails extends DepartmentOverview {
     private List<DepartmentDetails> departments;
-    private List<EmployeeInfo> employees;
+    private List<EmpDetails> employees;
 }

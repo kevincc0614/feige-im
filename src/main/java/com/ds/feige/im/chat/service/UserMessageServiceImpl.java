@@ -3,89 +3,106 @@ package com.ds.feige.im.chat.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.redisson.api.RAtomicLong;
+import org.redisson.api.RMap;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.ds.feige.im.chat.dto.ChatMessageAckResult;
 import com.ds.feige.im.chat.dto.MessageOfUser;
 import com.ds.feige.im.chat.entity.UserMessage;
 import com.ds.feige.im.chat.mapper.UserMessageMapper;
-import com.ds.feige.im.chat.po.SenderAndMsg;
-import com.ds.feige.im.chat.po.UnreadMessagePreview;
+import com.ds.feige.im.constants.CacheKeys;
 import com.google.common.collect.Maps;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author DC
  */
 @Service
+@Slf4j
 public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserMessage> implements UserMessageService {
-    static final Logger LOGGER = LoggerFactory.getLogger(UserMessageServiceImpl.class);
-
-    public UserMessageServiceImpl() {
-
-    }
+    @Autowired
+    RedissonClient redissonClient;
 
     @Override
-    public long store(MessageOfUser message) {
-        // TODO 缓存优化
-        UserMessage entity = buildUserMessageEntity(message);
-        save(entity);
-        return entity.getMsgId();
+    public void store(MessageOfUser message) {
+        List<MessageOfUser> messageOfUsers = new ArrayList<>();
+        messageOfUsers.add(message);
+        store(messageOfUsers);
     }
 
     @Override
     public void store(List<MessageOfUser> messages) {
-        // TODO 缓存优化
-        List<UserMessage> entities =
-            messages.stream().map(msg -> buildUserMessageEntity(msg)).collect(Collectors.toList());
-        saveBatch(entities);
-    }
+        messages.forEach(messageOfUser -> {
+            long msgId = messageOfUser.getMsgId();
+            long receiver = messageOfUser.getUserId();
+            long conversationId = messageOfUser.getConversationId();
+            long sender = messageOfUser.getSenderId();
+            // 只有不是自己发送的消息才加未读
+            if (receiver != sender) {
+                // 用户会话未读消息Map
+                RMap<Long, MessageOfUser> unReadMap = redissonClient
+                    .getMap(CacheKeys.USER_CONVERSATION_UNREAD_MESSAGES + receiver + "." + conversationId);
+                MessageOfUser putResult = unReadMap.put(msgId, messageOfUser);
+                // 如果添加成功
+                if (putResult == null) {
+                    // 总未读+1
+                    RAtomicLong totalUnread = redissonClient.getAtomicLong(CacheKeys.USER_UNREAD_TOTAL + receiver);
+                    totalUnread.incrementAndGet();
+                }
+            }
 
-    UserMessage buildUserMessageEntity(MessageOfUser message) {
-        UserMessage entity = new UserMessage();
-        entity.setUserId(message.getUserId());
-        entity.setMsgId(message.getMsgId());
-        entity.setConversationId(message.getConversationId());
-        entity.setSenderId(message.getSenderId());
-        entity.setState(0);
-        entity.setMsgType(message.getMsgType());
-        return entity;
+        });
     }
 
     @Override
-    public ChatMessageAckResult ackMsg(long userId, List<Long> msgIds) {
-        // TODO msgIds不能过大,要设定上限
-        int ackCount = baseMapper.batchUpdateState(userId, msgIds, 1);
-        ChatMessageAckResult result = new ChatMessageAckResult();
-        result.setAckCount(ackCount);
+    public Map<Long, List<Long>> readMessages(long userId, long conversationId, Set<Long> msgIds) {
+        RMap<Long, MessageOfUser> unreadMap =
+            redissonClient.getMap(CacheKeys.USER_CONVERSATION_UNREAD_MESSAGES + userId + "." + conversationId);
+        log.info("Read msg:userId={},conversationId={},msgIds={}", userId, conversationId, msgIds);
+        // TODO 是否要加分布式锁
+        Map<Long, MessageOfUser> readyRemoved = unreadMap.getAll(msgIds);
+        Long[] msgIdArray = new Long[msgIds.size()];
+        msgIds.toArray(msgIdArray);
+        long readCount = unreadMap.fastRemove(msgIdArray);
+        // 总未读减去读取的条数
+        RAtomicLong totalUnread = redissonClient.getAtomicLong(CacheKeys.USER_UNREAD_TOTAL + userId);
+        totalUnread.addAndGet(-readCount);
+        Map<Long, List<Long>> result = Maps.newHashMap();
+        readyRemoved.values().forEach(m -> {
+            List<Long> sendMsgIds = result.getOrDefault(m.getSenderId(), new ArrayList<>());
+            sendMsgIds.add(m.getMsgId());
+            result.put(m.getSenderId(), sendMsgIds);
+        });
         return result;
     }
 
     @Override
-    public Map<Long, List<Long>> readMsg(long userId, List<Long> msgIds) {
-        int readCount = baseMapper.batchUpdateState(userId, msgIds, 2);
-        LOGGER.info("Read msg:userId={},count={},msgIds={}", userId, readCount, msgIds);
-        List<SenderAndMsg> senderAndMsgList = baseMapper.findSenderAndMsgList(userId, msgIds);
-        Map<Long, List<Long>> senderAndMsgIdMap = Maps.newHashMap();
-        senderAndMsgList.forEach(senderAndMsg -> {
-            List<Long> value = senderAndMsgIdMap.getOrDefault(senderAndMsg.getSenderId(), new ArrayList<>());
-            value.add(senderAndMsg.getMsgId());
-            senderAndMsgIdMap.putIfAbsent(senderAndMsg.getSenderId(), value);
-        });
-        return senderAndMsgIdMap;
+    public int getUserConversationUnread(long userId, long conversationId) {
+        RMap<Long, MessageOfUser> unreadMap =
+            redissonClient.getMap(CacheKeys.USER_CONVERSATION_UNREAD_MESSAGES + userId + "." + conversationId);
+        return unreadMap.size();
     }
 
     @Override
-    public List<UnreadMessagePreview> getConversationUnreadPreview(long userId) {
-        Long minUnAckMsgId = baseMapper.getMinUnAckMsgId(userId);
-        if (minUnAckMsgId == null) {
-            minUnAckMsgId = 0L;
+    public Map<Long, Integer> getUserConversationsUnread(long userId, Set<Long> conversationIds) {
+        Map<Long, Integer> result = Maps.newHashMap();
+        for (Long conversationId : conversationIds) {
+            RMap<Long, MessageOfUser> unreadMap =
+                redissonClient.getMap(CacheKeys.USER_CONVERSATION_UNREAD_MESSAGES + userId + "." + conversationId);
+            result.put(conversationId, unreadMap.size());
         }
-        List<UnreadMessagePreview> previews = baseMapper.getUnreadMessagePreview(userId, minUnAckMsgId);
-        return previews;
+        return result;
+    }
+
+    @Override
+    public int getUserTotalUnread(long userId) {
+        RAtomicLong totalUnread = redissonClient.getAtomicLong(CacheKeys.USER_UNREAD_TOTAL + userId);
+        return Math.toIntExact(totalUnread.get());
     }
 }

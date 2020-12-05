@@ -11,4 +11,5 @@ public class MessageForwardEvent {
     private String sourceInstanceId;
     private SocketPacket request;
     private ConnectionMeta meta;
+
 }

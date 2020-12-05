@@ -1,13 +1,14 @@
 package com.ds.feige.im.test.chat;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ds.feige.im.chat.dto.*;
+import com.ds.feige.im.chat.dto.ConversationMessageQueryRequest;
+import com.ds.feige.im.chat.dto.MessageToConversation;
+import com.ds.feige.im.chat.dto.MessageToUser;
 import com.ds.feige.im.chat.service.ChatService;
 import com.ds.feige.im.common.util.JsonUtils;
 import com.ds.feige.im.constants.ConversationType;
@@ -70,12 +71,8 @@ public class ChatServiceTest extends BaseTest {
             System.out.println("消息内容:" + msg.getMsgContent());
             msgIds.add(msg.getMsgId());
         }
-        ChatMessageAckResult result = chatService.ackMessages(USER_ID_1, msgIds);
-        System.out.println(result);
     }
     @Test
     public void testChatPreview() throws Exception{
-        Collection<ConversationPreview> previews = chatService.getConversationPreviews(377665490283353088L);
-        System.out.println(JsonUtils.toJson(previews));
     }
 }

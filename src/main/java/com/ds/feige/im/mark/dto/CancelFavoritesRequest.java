@@ -10,7 +10,7 @@ import lombok.Data;
  * @author DC
  */
 @Data
-public class CancelMarkRequest extends UserRequest {
+public class CancelFavoritesRequest extends UserRequest {
     @Positive
     private long markId;
 }

@@ -15,6 +15,7 @@ public class MarkMessageQueryRequest extends UserRequest {
     private Long conversationId;
     private Date start;
     private Date end;
-    private Integer markType;
+    private Boolean favorites;
+    private Boolean remarked;
     private Set<Long> msgIds;
 }

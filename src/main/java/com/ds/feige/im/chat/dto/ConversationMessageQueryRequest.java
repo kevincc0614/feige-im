@@ -20,6 +20,6 @@ public class ConversationMessageQueryRequest extends UserRequest {
     private long maxMsgId;
     @Min(1)
     @Max(100)
-    private int pageSize;
+    private int pageSize = 100;
 
 }

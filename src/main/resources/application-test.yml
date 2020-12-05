@@ -1,4 +1,4 @@
-server.port: 8080
+server.port: 8090
 server.servlet.context-path: /feige-im
 spring.application.name: feige-im
 spring.application.admin.enabled: true
@@ -20,14 +20,16 @@ spring.redis.database: 0
 spring.redis.host: localhost
 spring.redis.port: 6379
 spring.redis.password: PB5qeHWFAoI5Ut93
-spring.redis.redisson.config: classpath:redisson-dev.yml
+spring.redis.redisson.config: classpath:redisson-test.yml
 #RabbitMQ配置
 spring.rabbitmq.template.exchange: feige.im
 spring.rabbitmq.requested-heartbeat: 0
 spring.rabbitmq.listener.simple.acknowledge-mode: auto
 spring.rabbitmq.listener.simple.retry.enabled: true
-spring.rabbitmq.listener.simple.retry.max-attempts: 5
-spring.rabbitmq.listener.simple.retry.initial-interval: 5000
+spring.rabbitmq.listener.simple.retry.max-attempts: 3
+spring.rabbitmq.listener.simple.retry.initial-interval: 2000
+#  设置为false，会丢弃消息或者重新发布到死信队列
+spring.rabbitmq.listener.simple.default-requeue-rejected: false
 spring.rabbitmq.host: 127.0.0.1
 spring.rabbitmq.port: 5672
 spring.rabbitmq.username: feige-admin

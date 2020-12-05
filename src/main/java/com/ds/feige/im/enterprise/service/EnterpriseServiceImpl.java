@@ -1,8 +1,8 @@
 package com.ds.feige.im.enterprise.service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +26,9 @@ import com.ds.feige.im.enterprise.mapper.DepartmentEmployeeMapper;
 import com.ds.feige.im.enterprise.mapper.DepartmentMapper;
 import com.ds.feige.im.enterprise.mapper.EmployeeMapper;
 import com.ds.feige.im.enterprise.mapper.EnterpriseMapper;
+import com.ds.feige.im.gateway.domain.UserState;
+import com.ds.feige.im.gateway.service.SessionUserService;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -44,6 +47,8 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     EnterpriseMapper enterpriseMapper;
     @Autowired
     UserService userService;
+    @Autowired
+    SessionUserService sessionUserService;
     @Autowired
     private GroupUserService groupUserService;
     @Autowired
@@ -105,8 +110,9 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         log.info("Create department success:department={}", department);
         return department.getId();
     }
+
     @Override
-    public DepartmentBaseInfo deleteDepartment(DeleteDepRequest request) {
+    public DepartmentOverview deleteDepartment(DeleteDepRequest request) {
         long departmentId = request.getDepartmentId();
         long enterpriseId = request.getEnterpriseId();
         // 验证权限
@@ -130,7 +136,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         // 解除员工和部门的关系
         departmentEmployeeMapper.deleteByDepartmentId(departmentId);
         log.info("Delete department success:departmentId={}", departmentId);
-        return BeansConverter.departmentToSimpleDepartmentInfo(department);
+        return BeansConverter.convertToDepOverview(department);
     }
 
     @Override
@@ -204,7 +210,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         // 处理新增和更新
         for (Map.Entry<Long, Boolean> entry : newDepartments.entrySet()) {
             long departmentId = entry.getKey();
-            boolean leader = entry.getValue();
+            boolean leader = entry.getValue() == null ? false : entry.getValue();
             DepartmentEmployee de =
                 departmentEmployeeMapper.getByDepartmentIdAndUserId(enterpriseId, departmentId, userId);
             // 如果不存在,则新增
@@ -260,30 +266,51 @@ public class EnterpriseServiceImpl implements EnterpriseService {
 
     @Override
     public DepartmentDetails getDepartment(long enterpriseId, long departmentId, boolean queryChild) {
-        DepartmentDetails info = new DepartmentDetails();
+        DepartmentDetails departmentDetails = new DepartmentDetails();
         Department department = departmentMapper.selectById(departmentId);
         if (department == null) {
             return null;
         }
-        BeanUtils.copyProperties(department, info);
+        BeanUtils.copyProperties(department, departmentDetails);
         if (queryChild) {
             // 查询子部门
             List<DepartmentDetails> child = departmentMapper.findByParentId(enterpriseId, departmentId);
-            info.setDepartments(child);
+            departmentDetails.setDepartments(child);
         }
-        List<EmployeeInfo> employeeInfos = employeeMapper.findByDepartmentId(enterpriseId, departmentId);
-        info.setEmployees(employeeInfos);
-        return info;
+        List<EmpDetails> empDetails = employeeMapper.findByDepartmentId(enterpriseId, departmentId);
+        departmentDetails.setEmployees(empDetails);
+        Collection<Long> onlineUsers = sessionUserService.getOnlineUsers(empDetails);
+        departmentDetails.setOnline(onlineUsers.size());
+        departmentDetails.setTotal(empDetails.size());
+        return departmentDetails;
     }
 
     @Override
-    public List<DepartmentBaseInfo> getDepartments(long enterpriseId) {
+    public List<DepartmentOverview> getDepartments(long enterpriseId) {
         List<Department> departments = departmentMapper.findByEnterpriseId(enterpriseId);
-        return BeansConverter.departmentsToSimpleDepartmentInfos(departments);
+        // TODO 遍历所有部门和员工聚合统计出来的数据,可能存在性能问题
+        Map<Long, Department> depMap =
+            departments.stream().collect(Collectors.toMap(Department::getId, Function.identity()));
+        List<DepartmentEmployee> des = departmentEmployeeMapper.findByEntId(enterpriseId);
+        Map<Long, List<DepartmentEmployee>> groupByDep =
+            des.stream().collect(Collectors.groupingBy(DepartmentEmployee::getDepartmentId));
+        List<DepartmentOverview> overviews = Lists.newArrayListWithCapacity(departments.size());
+        groupByDep.forEach((depId, employees) -> {
+            Department department = depMap.get(depId);
+            if (department != null) {
+                DepartmentOverview overview = BeansConverter.convertToDepOverview(department);
+                overview.setTotal(employees.size());
+                Collection<Long> onlineUsers = sessionUserService.getOnlineUsers(employees);
+                overview.setOnline(onlineUsers.size());
+                overviews.add(overview);
+            }
+        });
+        return overviews;
     }
 
     @Override
     public long createEmp(AddEmpRequest request) {
+        log.info("Create employee start:request={}", request);
         checkAdmin(request.getEnterpriseId(), request.getOperatorId());
         // 判断用户是否存在
         UserInfo userInfo = userService.getUserById(request.getUserId());
@@ -306,6 +333,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         employee.setRole(request.getRole());
         employee.setWorkEmail(request.getWorkEmail());
         employeeMapper.insert(employee);
+        log.info("Create employee success:employee={}", employee);
         return employee.getId();
     }
 
@@ -313,18 +341,27 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     public void deleteEmp(DeleteEmpRequest request) {
         long enterpriseId = request.getEnterpriseId();
         long userId = request.getUserId();
-        // TODO 不能删除自己
-        // TODO 超级管理员不能删除,只能转移超级管理员或解散企业
-        checkAdmin(request.getEnterpriseId(), request.getOperatorId());
+        long operatorId = request.getOperatorId();
+        Employee employee = employeeMapper.getByUserId(enterpriseId, userId);
+        if (employee == null) {
+            log.warn("Employee not exists:enterpriseId={},userId={}", enterpriseId, userId);
+            return;
+        }
+        // 超级管理员不能删除,只能转移超级管理员或解散企业
+        String role = employee.getRole();
+        if (EnterpriseRole.SUPER_ADMIN.equals(role)) {
+            throw new WarnMessageException(FeigeWarn.CAN_NOT_DELETE_SUPER_ADMIN);
+        }
+        checkAdmin(enterpriseId, operatorId);
         // 删除员工表数据
-        employeeMapper.deleteEmployee(enterpriseId, userId);
+        employeeMapper.deleteById(employee.getId());
         // 删除部门关联数据
         departmentEmployeeMapper.deleteByUserId(enterpriseId, userId);
         log.info("Delete employee success:enterpriseId={},userId={}", enterpriseId, userId);
     }
 
     @Override
-    public EmployeeInfo getEmp(long enterpriseId, long userId) {
+    public EmpDetails getEmpDetails(long enterpriseId, long userId) {
         // 员工基本信息
         Employee employee = employeeMapper.getByUserId(enterpriseId, userId);
         if (employee == null) {
@@ -332,19 +369,35 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         }
         List<DepartmentEmployee> departmentBindings =
             departmentEmployeeMapper.findUserDepartments(enterpriseId, userId);
-        EmployeeInfo employeeInfo = new EmployeeInfo();
-        BeanUtils.copyProperties(employee, employeeInfo);
+        EmpDetails empDetails = new EmpDetails();
+        BeanUtils.copyProperties(employee, empDetails);
         // 部门信息
         Map<Long, Boolean> departments = Maps.newHashMap();
         departmentBindings.forEach(e -> departments.put(e.getDepartmentId(), e.getLeader()));
-        employeeInfo.setDepartments(departments);
-        return employeeInfo;
+        empDetails.setDepartments(departments);
+        return empDetails;
     }
 
     @Override
-    public List<EmployeeInfo> getEmpsByEnt(long enterpriseId) {
+    public List<EmpDetails> getAllEmpDetailList(long enterpriseId, Collection<Long> excludeUsers) {
         List<Employee> employees = employeeMapper.findByEnterpriseId(enterpriseId);
-        return BeansConverter.empsToEmpInfos(employees);
+        List<EmpDetails> list = new ArrayList<>();
+        Map<Long, UserState> entUserStates = sessionUserService.getUserStates(employees);
+        employees.forEach(e -> {
+            if (excludeUsers != null && !excludeUsers.isEmpty() && excludeUsers.contains(e.getUserId())) {
+                return;
+            }
+            EmpDetails empDetails = BeansConverter.convertToDetails(e);
+            empDetails.setState(entUserStates.get(e.getUserId()));
+            list.add(empDetails);
+        });
+        return list;
+    }
+
+    private boolean isAdmin(Employee employee) {
+        String role = employee.getRole();
+        // 角色权限校验
+        return EnterpriseRole.ADMIN.equals(role) || EnterpriseRole.SUPER_ADMIN.equals(role);
     }
 
     @Override
@@ -353,9 +406,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         if (employee == null) {
             return false;
         }
-        String role = employee.getRole();
-        // 角色权限校验
-        return EnterpriseRole.ADMIN.equals(role) || EnterpriseRole.SUPER_ADMIN.equals(role);
+        return isAdmin(employee);
     }
 
     @Override

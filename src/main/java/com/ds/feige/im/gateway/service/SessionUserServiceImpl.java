@@ -35,6 +35,7 @@ import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.ds.feige.im.gateway.socket.connection.UserConnection;
 import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -78,6 +79,15 @@ public class SessionUserServiceImpl implements SessionUserService {
 
     @Override
     public Map<Long, UserState> getUserStates(Collection<? extends UserIdHolder> users) {
+        Map<String, UserState> bucketResults = getUserStateFromCache(users);
+        Map<Long, UserState> stateMap = Maps.newHashMap();
+        bucketResults.forEach((k, v) -> {
+            stateMap.put(Long.valueOf(k.replace(CacheKeys.SESSION_USER_STATE, "")), v);
+        });
+        return stateMap;
+    }
+
+    Map<String, UserState> getUserStateFromCache(Collection<? extends UserIdHolder> users) {
         RBuckets buckets = this.redissonClient.getBuckets();
         String[] keys = new String[users.size()];
         int i = 0;
@@ -86,11 +96,17 @@ public class SessionUserServiceImpl implements SessionUserService {
             i++;
         }
         Map<String, UserState> bucketResults = buckets.get(keys);
-        Map<Long, UserState> stateMap = Maps.newHashMap();
+        return bucketResults;
+    }
+
+    @Override
+    public Collection<Long> getOnlineUsers(Collection<? extends UserIdHolder> users) {
+        Map<String, UserState> bucketResults = getUserStateFromCache(users);
+        Set<Long> onlineUsers = Sets.newHashSet();
         bucketResults.forEach((k, v) -> {
-            stateMap.put(Long.valueOf(k.replace(CacheKeys.SESSION_USER_STATE, "")), v);
+            onlineUsers.add(Long.valueOf(k.replace(CacheKeys.SESSION_USER_STATE, "")));
         });
-        return stateMap;
+        return onlineUsers;
     }
 
     @Override

@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.socket.WebSocketSession;
@@ -26,13 +27,13 @@ import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.ds.feige.im.mark.dto.MarkMessageInfo;
 import com.ds.feige.im.mark.dto.MarkMessageQueryRequest;
 import com.ds.feige.im.mark.service.MarkMessageService;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
 /**
  * @author DC
  */
 @SocketController
-@SocketRequestMapping
 public class ChatController {
     @Autowired
     ChatService chatService;
@@ -44,6 +45,7 @@ public class ChatController {
     ConversationService conversationService;
     @Autowired
     MarkMessageService markMessageService;
+
     /**
      * 发送聊天消息
      */
@@ -55,15 +57,6 @@ public class ChatController {
         ConnectionMeta connectionMeta = sessionUser.getConnectionMetaByDeviceId(deviceId);
         request.setSenderConnectionId(connectionMeta.getSessionId());
         return this.chatService.sendToConversation(request);
-    }
-
-    /**
-     * 客户端确认收到聊天消息
-     */
-    @SocketRequestMapping(SocketPaths.CS_ACK_CHAT_MESSAGE)
-    public ChatMessageAckResult ack(@RequestBody @Valid MessageAckRequest request) {
-        ChatMessageAckResult result = chatService.ackMessages(request.getUserId(), request.getMsgIds());
-        return result;
     }
 
     @SocketRequestMapping(SocketPaths.CS_PULL_CHAT_MESSAGE)
@@ -80,16 +73,25 @@ public class ChatController {
             markMessageInfos.forEach(markMessageInfo -> {
                 MessageToUser entity = map.get(markMessageInfo.getMsgId());
                 if (entity != null) {
-                    entity.setMarkType(markMessageInfo.getMarkType());
+                    boolean favorites = markMessageInfo.getFavorites() != null && markMessageInfo.getFavorites();
+                    boolean remarked = !Strings.isNullOrEmpty(markMessageInfo.getRemark());
+                    if (favorites && remarked) {
+                        entity.setMarkType(3);
+                    } else if (favorites) {
+                        entity.setMarkType(1);
+                    } else if (remarked) {
+                        entity.setMarkType(2);
+                    }
                 }
             });
         }
         return messages;
     }
 
-    @SocketRequestMapping(SocketPaths.CS_CONVERSATION_PREVIEWS)
-    public Map<String, Object> getConversationPreviews(@RequestBody ConversationPreviewRequest request) {
-        Collection<ConversationPreview> previews = chatService.getConversationPreviews(request.getUserId());
+    @SocketRequestMapping(SocketPaths.CS_RECENT_CONVERSATION_LIST)
+    public Map<String, Object> getRecentConversations(@RequestBody @Valid RecentConversationsRequest request) {
+        Collection<UserConversationDetails> previews =
+            chatService.getRecentConversations(request.getUserId(), request.getLastEventTime());
         Map<String, Object> result = Maps.newHashMap();
         result.put("previews", previews);
         if (request.getLastSendMsgIds() != null && request.getLastSendMsgIds().size() > 0) {
@@ -101,14 +103,21 @@ public class ChatController {
         return result;
     }
 
-    @SocketRequestMapping(value = SocketPaths.CS_READ_CHAT_MESSAGE, response = false)
-    public void readMessage(@RequestBody ReadMessageRequest req) {
-        chatService.readMessage(req);
+    @SocketRequestMapping(value = SocketPaths.CS_READ_CHAT_MESSAGE)
+    public long readMessage(@RequestBody ReadMessageRequest req,
+        @RequestAttribute(SessionAttributeKeys.DEVICE_ID) String deviceId) {
+        SessionUser sessionUser = sessionUserService.getSessionUser(req.getUserId());
+        // TODO 这部分代码有待优化,代码结构和层次需要更加清晰
+        ConnectionMeta connectionMeta = sessionUser.getConnectionMetaByDeviceId(deviceId);
+        // 把发送已读请求的链接排除,避免重复推送
+        req.setReaderConnectionId(connectionMeta.getSessionId());
+        chatService.userReadMessages(req);
+        return System.currentTimeMillis();
     }
 
     @SocketRequestMapping(SocketPaths.CS_CONVERSATION_INFO)
-    public UserConversationInfo getConversation(@UserId long userId,
+    public UserConversationDetails getConversationDetails(@UserId long userId,
         @RequestParam("conversationId") long conversationId) {
-        return conversationService.getUserConversation(userId, conversationId);
+        return chatService.getConversationDetails(userId, conversationId);
     }
 }
