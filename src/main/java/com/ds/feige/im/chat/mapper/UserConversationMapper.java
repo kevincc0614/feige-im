@@ -50,6 +50,9 @@ public interface UserConversationMapper extends BaseMapper<UserConversation> {
     List<UserConversation> findByUserAndConversationIds(long userId,
         @Param("conversationIds") Collection<Long> conversationIds);
 
+    @Select("SELECT * FROM t_user_conversation where conversation_id=#{conversationId}")
+    List<UserConversation> findByConversationId(long conversationId);
+
     @Update("UPDATE t_user_conversation set last_event_time=#{lastEventTime} where conversation_id=#{conversationId}")
     int updateLastEventTime(long conversationId, Date lastEventTime);
 

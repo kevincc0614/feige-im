@@ -22,10 +22,7 @@ import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
 import com.ds.feige.im.account.dto.LoginRequest;
 import com.ds.feige.im.common.domain.UserIdHolder;
 import com.ds.feige.im.common.util.JsonUtils;
-import com.ds.feige.im.constants.CacheKeys;
-import com.ds.feige.im.constants.DeviceType;
-import com.ds.feige.im.constants.FeigeWarn;
-import com.ds.feige.im.constants.SessionAttributeKeys;
+import com.ds.feige.im.constants.*;
 import com.ds.feige.im.gateway.DiscoveryService;
 import com.ds.feige.im.gateway.domain.SessionUser;
 import com.ds.feige.im.gateway.domain.SessionUserFactory;
@@ -34,6 +31,7 @@ import com.ds.feige.im.gateway.dto.RemoteLoginPayload;
 import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.ds.feige.im.gateway.socket.connection.UserConnection;
 import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
+import com.ds.feige.im.push.service.PushService;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -56,12 +54,15 @@ public class SessionUserServiceImpl implements SessionUserService {
     SessionUserFactory sessionUserFactory;
     @Autowired
     UserDeviceService userDeviceService;
+    @Autowired
+    PushService pushService;
+
     public void remoteLoginDisconnect(ConnectionMeta oldConnMeta, ConnectionMeta newConnMeta) throws IOException {
         // 通知用户其他链接,在其他设备登录
         long userId = oldConnMeta.getUserId();
         log.info("The user was remote login:userId={},oldConnMeta={},newConnMeta={}", userId, oldConnMeta, newConnMeta);
         SocketPacket sendToClientRequest = new SocketPacket();
-        sendToClientRequest.setPath("/user/remote-login");
+        sendToClientRequest.setPath(SocketPaths.SC_REMOTE_LOGIN);
         sendToClientRequest.setRequestId(longIdKeyGenerator.generateId());
         RemoteLoginPayload msg = new RemoteLoginPayload();
         msg.setDeviceId(newConnMeta.getDeviceId());
@@ -167,7 +168,24 @@ public class SessionUserServiceImpl implements SessionUserService {
     @Override
     public void logout(WebSocketSession session) {
         // TODO token作废
-        // TODO 设备状态更新
+        // 设备登出
+        Map<String, Object> sessionAttributes = session.getAttributes();
+        Boolean isLogin = (Boolean)sessionAttributes.get(SessionAttributeKeys.LOGIN);
+        if (isLogin) {
+            Long userId = (Long)sessionAttributes.get(SessionAttributeKeys.USER_ID);
+            String deviceId = (String)sessionAttributes.get(SessionAttributeKeys.DEVICE_ID);
+            if (userId != null && deviceId != null) {
+                userDeviceService.deviceLogout(userId, deviceId);
+                disconnect(session);
+                log.info("User logout success:userId={},deviceId={}", userId, deviceId);
+            } else {
+                log.error("User logout fail,something is null:userId={},deviceId={}", userId, deviceId);
+            }
+
+        } else {
+            log.warn("User logout fail,session is not login:sessionId={}", session.getId());
+        }
+
     }
 
     @Override
@@ -200,29 +218,30 @@ public class SessionUserServiceImpl implements SessionUserService {
     @Override
     public void sendToUser(Long userId, String path, Object payload, Set<String> excludeConnectionIds) {
         SessionUser user = sessionUserFactory.getSessionUser(userId);
-        if (!user.isOnline()) {
-            // 用户不在线
-            log.info("User has no online connection,can not send message:userId={}", userId);
-        } else {
-            for (Map.Entry<String, ConnectionMeta> entry : user.getConnectionMetas().entrySet()) {
-                try {
-                    UserConnection connection = sessionUserFactory.getConnection(entry.getValue());
-                    if (excludeConnectionIds != null && !excludeConnectionIds.isEmpty()) {
-                        if (excludeConnectionIds.contains(connection.getId())) {
-                            continue;
-                        }
+        Set<Map.Entry<String, ConnectionMeta>> connections = user.getConnectionMetas().entrySet();
+        log.info("Ready to send message to user:connections={}", connections);
+        // 在线推送
+        for (Map.Entry<String, ConnectionMeta> entry : connections) {
+            try {
+                UserConnection connection = sessionUserFactory.getConnection(entry.getValue());
+                if (excludeConnectionIds != null && !excludeConnectionIds.isEmpty()) {
+                    if (excludeConnectionIds.contains(connection.getId())) {
+                        continue;
                     }
-                    SocketPacket request = new SocketPacket();
-                    request.setRequestId(longIdKeyGenerator.generateId());
-                    request.setPayload(JsonUtils.toJson(payload));
-                    request.setPath(path);
-                    connection.send(request);
-                } catch (IOException e) {
-                    log.error("Send message to connection error:userId={},path={},payload={}", userId, path, payload);
                 }
-
+                SocketPacket request = new SocketPacket();
+                request.setRequestId(longIdKeyGenerator.generateId());
+                request.setPayload(JsonUtils.toJson(payload));
+                request.setPath(path);
+                connection.send(request);
+                log.info("Send message to connection:userId={},path={},payload={}", userId, path, payload);
+            } catch (IOException e) {
+                log.error("Send message to connection error:userId={},path={},payload={}", userId, path, payload);
             }
+
         }
+        // 离线推送
+
     }
 
     @Override

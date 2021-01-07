@@ -2,8 +2,8 @@ package com.ds.feige.im.common.web;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -14,14 +14,21 @@ import com.ds.base.nodepencies.api.Response;
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.constants.FeigeWarn;
 
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * @author DC
+ */
 @ControllerAdvice
+@Slf4j
 public class ExceptionControllerAdvice {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionControllerAdvice.class);
 
     @ExceptionHandler(Exception.class)
     @ResponseBody
-    public Response handleException(Exception exception) {
-        LOGGER.warn("Http controller advice exception ", exception);
+    public Response handleException(HttpServletRequest request, Exception exception) {
+        if (request != null) {
+            log.warn("HTTP request advice exception:uri={} ", request.getRequestURI(), exception);
+        }
         Response response = new Response();
         if (exception instanceof WarnMessageException) {
             WarnMessageException warnMessageException = (WarnMessageException)exception;

@@ -54,3 +54,6 @@ oss.token-secret: OAaLBf1Ho87nDxGd
 oss.token-expire-seconds: 3600
 oss.max-file-size: 524288000
 user.security.tokenSignSecret: AayLgXaWNoWS
+##推送相关
+push.mode: dev
+push.google-credentials: credentials/firebase-credentials.json

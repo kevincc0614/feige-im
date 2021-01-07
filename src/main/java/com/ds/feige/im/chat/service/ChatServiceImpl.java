@@ -1,9 +1,6 @@
 package com.ds.feige.im.chat.service;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -12,6 +9,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ds.base.nodepencies.exception.WarnMessageException;
@@ -51,11 +49,13 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
     RedissonClient redissonClient;
 
     @Override
+    @Transactional
     public MessageToUser sendToConversation(MessageToConversation request) {
         final int conversationType = request.getConversationType();
         final long senderId = request.getUserId();
         final long targetId = request.getTargetId();
         log.info("Send conversation message start:request={}", request);
+        long start = System.currentTimeMillis();
         // 判断消息类型
         UserConversationInfo userConversation =
             conversationService.getUserConversation(senderId, targetId, conversationType);
@@ -127,6 +127,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         // 已读未读
         event.setReceiverCount(message.getReceiverCount());
         event.setCreateTime(message.getCreateTime());
+        message.setTargetId(message.getTargetId());
         return event;
     }
 
@@ -147,6 +148,9 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
     @Override
     public Collection<UserConversationDetails> getRecentConversations(long userId, long lastEventTime) {
         List<UserConversationInfo> infos = conversationService.getUserConversations(userId, lastEventTime);
+        if (infos == null || infos.isEmpty()) {
+            return new ArrayList<>();
+        }
         Set<Long> msgIds = Sets.newHashSet();
         Map<Long, UserConversationDetails> details = Maps.newHashMap();
         infos.forEach(info -> {
@@ -197,38 +201,55 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         if (conversation == null) {
             throw new WarnMessageException(FeigeWarn.CONVERSATION_NOT_EXISTS);
         }
-        addMessageReadReceipts(request.getUserId(), request.getMsgIds());
+        Set<Long> successReadMsgSet = addMessageReadReceipts(request.getUserId(), request.getMsgIds());
         // 用户收件箱处理已读
         Map<Long, List<Long>> readMsgResult =
             userMessageService.readMessages(request.getUserId(), conversationId, request.getMsgIds());
         // 存储库处理已读,将未读数-1
-        baseMapper.readMessages(request.getMsgIds());
-        // TODO 所有人已读之后,考虑要清除数据
-        ReadMessageEvent event = new ReadMessageEvent();
-        event.setReaderId(request.getUserId());
-        event.setSenderAndMsgIds(readMsgResult);
-        event.setReadTime(System.currentTimeMillis());
-        event.setConversationId(request.getConversationId());
-        Set<String> conversationIds = Sets.newHashSet();
-        conversationIds.add(request.getReaderConnectionId());
-        event.setExcludeConnectionIds(conversationIds);
-        template.convertAndSend(AMQPConstants.RoutingKeys.CONVERSATION_READ_MESSAGE, event);
+        if (successReadMsgSet != null && successReadMsgSet.size() > 0) {
+            baseMapper.readMessages(successReadMsgSet);
+            // TODO 所有人已读之后,考虑要清除数据
+            ReadMessageEvent event = new ReadMessageEvent();
+            event.setReaderId(request.getUserId());
+            event.setSenderAndMsgIds(readMsgResult);
+            event.setReadTime(System.currentTimeMillis());
+            event.setConversationId(request.getConversationId());
+            Set<String> connectionIds = Sets.newHashSet();
+            connectionIds.add(request.getReaderConnectionId());
+            event.setExcludeConnectionIds(connectionIds);
+            template.convertAndSend(AMQPConstants.RoutingKeys.CONVERSATION_READ_MESSAGE, event);
+        }
+
     }
 
     /**
      * 给对应消息添加已读回执
      */
-    private void addMessageReadReceipts(long userId, Set<Long> msgIds) {
+    private Set<Long> addMessageReadReceipts(long userId, Set<Long> msgIds) {
+        log.info("Ready to add message read receipts:userId={},msgIds={}", userId, msgIds);
         // 更新已读回执缓存
         RBatch readMessageBatch = redissonClient.createBatch();
+        Set<Long> result = Sets.newHashSet();
+        Map<Long, RFuture<Boolean>> futureMap = Maps.newHashMap();
         for (Long msgId : msgIds) {
             RMapAsync<Long, Long> receipts = readMessageBatch.getMap(CacheKeys.CHAT_MESSAGE_READ_RECEIPTS + msgId);
             // <Key,Value> -> <用户ID,读取时间戳>
-            receipts.fastPutIfAbsentAsync(userId, System.currentTimeMillis());
+            RFuture<Boolean> future = receipts.fastPutIfAbsentAsync(userId, System.currentTimeMillis());
+            futureMap.put(msgId, future);
         }
-        BatchResult result = readMessageBatch.execute();
-        List list = result.getResponses();
-        log.info("Update read receipts cache:{}", list);
+        BatchResult batchResult = readMessageBatch.execute();
+        futureMap.forEach((k, v) -> {
+            try {
+                // 只有更新返回true的才是第一次读
+                if (v.get()) {
+                    result.add(k);
+                }
+            } catch (Exception e) {
+                log.error("Get message read receipt update result error:msgId={}", k, e);
+            }
+        });
+        log.info("Update read receipts cache success:{}", result);
+        return result;
     }
 
     @Override

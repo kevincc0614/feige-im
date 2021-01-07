@@ -2,8 +2,11 @@ package com.ds.feige.im.test.user;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.redisson.api.RAtomicLong;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.account.dto.GetTokenRequest;
@@ -13,7 +16,8 @@ import com.ds.feige.im.test.BaseTest;
 
 public class UserServiceTest extends BaseTest {
     static final Logger LOGGER= LoggerFactory.getLogger(UserServiceTest.class);
-
+    @Autowired
+    RedissonClient redisClient;
     @Test
     public void testRegister() {
         UserRegisterRequest userRegisterRequest = new UserRegisterRequest();
@@ -34,7 +38,11 @@ public class UserServiceTest extends BaseTest {
 
     @Test
     public void testUnregister() {
-        userService.unregisterUser(2009032107297914880L, 1L);
+        // userService.unregisterUser(2009032107297914880L, 1L);
+        RAtomicLong value = redisClient.getAtomicLong("test_atomic");
+        System.out.println(value.isExists());
+        System.out.println(value.compareAndSet(0, 1));
+        value.delete();
     }
 
     @Test

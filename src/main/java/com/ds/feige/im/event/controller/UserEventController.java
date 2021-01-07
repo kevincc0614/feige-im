@@ -39,8 +39,8 @@ public class UserEventController {
     }
 
     @SocketRequestMapping(SocketPaths.CS_UPDATE_EVENT_CHECKPOINT)
-    public boolean updateCheckpoint(@RequestParam("maxSeqId") Long maxSeqId,
+    public boolean updateCheckpoint(@RequestParam("checkpoint") Long checkpoint,
         @RequestAttribute(SessionAttributeKeys.DEVICE_ID) String deviceId, @UserId Long userId) {
-        return userEventService.updateCheckpoint(userId, deviceId, maxSeqId);
+        return userEventService.updateCheckpoint(userId, deviceId, checkpoint);
     }
 }

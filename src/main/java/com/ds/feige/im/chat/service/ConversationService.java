@@ -43,6 +43,8 @@ public interface ConversationService {
      */
     Set<Long> getUserIdsByConversation(long conversationId);
 
+    List<UserConversationInfo> getConversationsById(long conversationId);
+
     /**
      * 创建单聊会话
      *

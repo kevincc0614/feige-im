@@ -51,11 +51,7 @@ public class ChatController {
      */
     @SocketRequestMapping(SocketPaths.CS_SEND_CHAT_MESSAGE)
     public MessageToUser send(WebSocketSession session, @RequestBody @Valid MessageToConversation request) {
-        SessionUser sessionUser = sessionUserService.getSessionUser(request.getUserId());
-        // TODO 这部分代码有待优化,代码结构和层次需要更加清晰
-        String deviceId = (String)session.getAttributes().get(SessionAttributeKeys.DEVICE_ID);
-        ConnectionMeta connectionMeta = sessionUser.getConnectionMetaByDeviceId(deviceId);
-        request.setSenderConnectionId(connectionMeta.getSessionId());
+        request.setSenderConnectionId(session.getId());
         return this.chatService.sendToConversation(request);
     }
 

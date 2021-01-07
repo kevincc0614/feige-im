@@ -63,12 +63,16 @@ public class SessionUser {
         String deviceConnectionKey = getDeviceConnectionKey(deviceId);
         RBucket<ConnectionMeta> bucket = redissonClient.getBucket(deviceConnectionKey);
         ConnectionMeta meta = bucket.get();
+        boolean result;
         if (meta == null) {
-            return false;
+            result = false;
+        } else {
+            meta.setLastActiveTime(new Date());
+            bucket.set(meta, 6, TimeUnit.MINUTES);
+            result = true;
         }
-        meta.setLastActiveTime(new Date());
-        bucket.set(meta, 6, TimeUnit.MINUTES);
-        return true;
+        log.info("Keep alive:deviceConnectionKey={}", deviceConnectionKey);
+        return result;
     }
 
     public Long getUserId() {

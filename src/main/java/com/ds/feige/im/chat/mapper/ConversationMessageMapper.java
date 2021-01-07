@@ -22,8 +22,8 @@ public interface ConversationMessageMapper extends BaseMapper<ConversationMessag
     @Select({SELECT_COLUMNS, "  WHERE msg_id=#{msgId}"})
     MessageToUser getMessageById(long msgId);
 
-    @Select({SELECT_COLUMNS,
-        " WHERE conversation_id=#{conversationId}" + " AND msg_id<=#{maxMsgId} ORDER BY msg_id ASC LIMIT #{pageSize} "})
+    @Select({SELECT_COLUMNS, " WHERE conversation_id=#{conversationId}"
+        + " AND msg_id<=#{maxMsgId} ORDER BY msg_id DESC   LIMIT #{pageSize} "})
     List<MessageToUser> findMessages(long userId, long conversationId, long maxMsgId, long pageSize);
 
     @Select({"<script> ", SELECT_COLUMNS,

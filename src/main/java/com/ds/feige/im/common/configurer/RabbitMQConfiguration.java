@@ -7,6 +7,7 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -15,11 +16,14 @@ import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.ErrorHandler;
 
+import com.ds.feige.im.common.util.Tracer;
 import com.ds.feige.im.constants.AMQPConstants;
 import com.ds.feige.im.gateway.DiscoveryService;
 import com.ds.feige.im.gateway.consumer.DynamicQueueListener;
@@ -35,7 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 public class RabbitMQConfiguration {
     @Value("${spring.rabbitmq.template.exchange}")
     private String exchange;
-
     private Map<String, Object> getQueueArguments() {
         Map<String, Object> headers = Maps.newHashMap();
         headers.put("x-dead-letter-exchange", exchange);
@@ -90,6 +93,25 @@ public class RabbitMQConfiguration {
         return new Jackson2JsonMessageConverter();
     }
 
+    @Bean(name = "rabbitListenerContainerFactory")
+    // @ConditionalOnMissingBean(name = "rabbitListenerContainerFactory")
+    @ConditionalOnProperty(prefix = "spring.rabbitmq.listener", name = "type", havingValue = "simple",
+        matchIfMissing = true)
+    SimpleRabbitListenerContainerFactory simpleRabbitListenerContainerFactory(
+        SimpleRabbitListenerContainerFactoryConfigurer configurer, ConnectionFactory connectionFactory) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        configurer.configure(factory, connectionFactory);
+        factory.setBeforeSendReplyPostProcessors(message -> {
+            Tracer.removeTraceId();
+            return message;
+        });
+        factory.setAfterReceivePostProcessors(message -> {
+            Tracer.removeTraceId();
+            Tracer.getTraceId(message);
+            return message;
+        });
+        return factory;
+    }
     @Bean
     @ConditionalOnBean(DiscoveryService.class)
     SimpleMessageListenerContainer dynamicMessageListenerContainer(ConnectionFactory connectionFactory,
@@ -103,6 +125,11 @@ public class RabbitMQConfiguration {
         MessageListenerAdapter adapter = new MessageListenerAdapter(listener);
         adapter.setMessageConverter(jackson2JsonMessageConverter());
         container.setMessageListener(adapter);
+        container.setAfterReceivePostProcessors(message -> {
+            Tracer.removeTraceId();
+            Tracer.getTraceId(message);
+            return message;
+        });
         container.setErrorHandler(new ErrorHandler() {
             @Override
             public void handleError(Throwable t) {
@@ -120,6 +147,9 @@ public class RabbitMQConfiguration {
         rabbitTemplate.addBeforePublishPostProcessors(message -> {
             String id = IdUtil.simpleUUID();
             message.getMessageProperties().setMessageId(id);
+            String traceId = Tracer.getOrGenerateTraceId();
+            Map<String, Object> headers = message.getMessageProperties().getHeaders();
+            headers.put("traceId", traceId);
             return message;
         });
         return rabbitTemplate;

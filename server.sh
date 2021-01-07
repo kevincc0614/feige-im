@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 ### 第一个参数
 JAR_NAME=feige-im-1.0.0-SNAPSHOT.jar
-PROFILE=$1
+PROFILE=$2
+JVM_OPTS=""
+LOG_PATH="server.log"
+VM_OPTIONS_FILE="vm-$PROFILE.options"
 ##检查该对象是否存在
 checkPid(){
     pid=`ps -ef |grep ${JAR_NAME} |grep -v grep |awk '{print $2}'`
@@ -17,13 +20,19 @@ status(){
    fi
 }
 
-
+loadVMOptions(){
+for line in `cat $VM_OPTIONS_FILE`
+do
+    echo $line
+    JVM_OPTS="$JVM_OPTS $line"
+done
+}
 # 启动脚本
 start(){
   checkPid
   if [[ ! -n "$pid" ]]; then
-#    nohup java -server -jar $JVM_OPTS ${JAR_NAME} > ${LOG_PATH} 2>&1 &
-    nohup java -server -jar  ${JAR_NAME} > /dev/null 2>&1 &
+    loadVMOptions
+    nohup java -server ${JVM_OPTS} -jar  ${JAR_NAME} > /dev/null 2>&1 &
     echo "---------------------------------"
     echo "启动完成，按CTRL+C退出日志界面即可>>>>>"
     echo "---------------------------------"
@@ -65,8 +74,8 @@ case "$1" in
         ;;
     *)
     echo "Usage: $0 {start|stop|restart|status} + serviceName"
-    echo "例子:启动服务 ./start-demo.sh  start $0"
-    echo "例子:停止服务 ./start-demo.sh  stop $0"
-    echo "例子:重启服务 ./start-demo.sh  restart $0"
+    echo "例子:启动服务 ./server.sh  start $0"
+    echo "例子:停止服务 ./server.sh  stop $0"
+    echo "例子:重启服务 ./server.sh  restart $0"
     exit 2
 esac

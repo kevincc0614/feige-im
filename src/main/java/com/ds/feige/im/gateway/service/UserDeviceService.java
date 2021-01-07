@@ -1,9 +1,10 @@
 package com.ds.feige.im.gateway.service;
 
+import java.util.List;
+
 import com.ds.feige.im.account.dto.LoginRequest;
 import com.ds.feige.im.gateway.entity.UserDevice;
-
-import java.util.List;
+import com.ds.feige.im.push.dto.RegisterTokenRequest;
 
 /**
  * 用户设备管理
@@ -31,5 +32,10 @@ public interface UserDeviceService {
      *
      * @param userId
      */
-    List<UserDevice> getDevices(long userId, int status);
+    List<UserDevice> getPushableDevices(long userId);
+
+    /**
+     * 更新设备token,调用此方法之前,用户必须已经登陆
+     */
+    void registerToken(RegisterTokenRequest request);
 }

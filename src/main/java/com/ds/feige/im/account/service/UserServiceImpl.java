@@ -211,6 +211,6 @@ public class UserServiceImpl implements UserService {
         if (!deleted) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
-        log.info("Cancel user success:userId={},operatorId={}", userId, operatorId);
+        log.info("Unregister user success:userId={},operatorId={}", userId, operatorId);
     }
 }

@@ -12,6 +12,7 @@ import lombok.Data;
 public class ConversationMessageEvent {
     private long conversationId;
     private long senderId;
+    private long targetId;
     private Set<String> excludeConnectionIds;
     private long msgId;
     private String msgContent;

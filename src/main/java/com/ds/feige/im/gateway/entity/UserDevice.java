@@ -24,9 +24,10 @@ public class UserDevice extends BaseEntity {
     /** 推送token */
     private String deviceToken;
     /** 设备状态 */
-    private Integer status;
+    private Integer status = 1;
     /** 最后登录时间 */
     private Date lastLoginTime;
     /** 事件检查点序列号ID */
     private Long eventCheckpoint;
+    public static final int LOGIN_STATUS = 1, LOGOUT_STATUS = -1;
 }

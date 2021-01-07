@@ -6,6 +6,8 @@ package com.ds.feige.im.constants;
  * @author DC
  */
 public class SocketPaths {
+    public static final String CS_USER_LOGOUT = "/user/logout";
+    public static final String CS_PING_PONG = "/ping-pong";
     public static final String CS_SEND_CHAT_MESSAGE = "/chat/message/send";
     // public static final String CS_ACK_CHAT_MESSAGE = "/chat/message/ack";
     public static final String CS_PULL_CHAT_MESSAGE = "/chat/message/pull";
@@ -16,6 +18,7 @@ public class SocketPaths {
     public static final String CS_PULL_EVENTS = "/event/pull";
     public static final String CS_UPDATE_EVENT_CHECKPOINT = "/event/checkpoint/update";
     public static final String SC_PUSH_EVENT = "/event/receive";
+    public static final String SC_REMOTE_LOGIN = "/user/remote-login";
 
     // public static final String SC_PUSH_CHAT_MESSAGE = "/chat/message/receive";
     public static final String SC_CHAT_MESSAGE_READ_RECEIPT = "/chat/message/read-receipt";

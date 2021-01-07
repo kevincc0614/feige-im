@@ -8,7 +8,6 @@ public interface UserConnection {
 
     boolean send(SocketPacket request) throws IOException;
 
-
     boolean disconnect(SocketPacket reason) throws IOException;
 
     boolean disconnect() throws IOException;

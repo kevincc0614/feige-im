@@ -198,6 +198,17 @@ public class ConversationServiceImpl extends ServiceImpl<UserConversationMapper,
     }
 
     @Override
+    public List<UserConversationInfo> getConversationsById(long conversationId) {
+        List<UserConversationInfo> result = Lists.newArrayList();
+        List<UserConversation> conversations = baseMapper.findByConversationId(conversationId);
+        for (UserConversation conversation : conversations) {
+            UserConversationInfo info = convertToConversationInfo(conversation);
+            result.add(info);
+        }
+        return result;
+    }
+
+    @Override
     public UserConversationInfo createSingleConversation(long userId, long targetId) {
         // 判断会话是否已经存在
         UserConversation conversation =

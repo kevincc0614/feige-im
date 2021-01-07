@@ -15,4 +15,5 @@ public class MessageOfUser {
     private long senderId;
     private int msgType;
     private String msgContent;
+
 }

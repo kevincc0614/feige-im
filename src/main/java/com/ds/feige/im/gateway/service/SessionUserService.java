@@ -43,12 +43,13 @@ public interface SessionUserService {
     void disconnect(WebSocketSession session);
 
     /**
-     * 服务器主动发消息给客户端 如果客户端连接的是非本机服务器,则会通过其他服务器进行转发推送
-     *
+     * 服务器主动发消息给客户端 如果客户端连接的是非本机服务器,则会通过其他服务器进行转发推送 在线推送
+     * 
      * @param userId
      *            用户ID
      * @param path
      * @param payload
+     * @param excludeConnectionIds
      */
     void sendToUser(Long userId, String path, Object payload, Set<String> excludeConnectionIds);
 
