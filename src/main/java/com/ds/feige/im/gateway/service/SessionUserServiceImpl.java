@@ -20,18 +20,18 @@ import org.springframework.web.socket.WebSocketSession;
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
 import com.ds.feige.im.account.dto.LoginRequest;
+import com.ds.feige.im.account.dto.LogoutRequest;
 import com.ds.feige.im.common.domain.UserIdHolder;
 import com.ds.feige.im.common.util.JsonUtils;
 import com.ds.feige.im.constants.*;
+import com.ds.feige.im.event.service.UserEventService;
 import com.ds.feige.im.gateway.DiscoveryService;
 import com.ds.feige.im.gateway.domain.SessionUser;
 import com.ds.feige.im.gateway.domain.SessionUserFactory;
 import com.ds.feige.im.gateway.domain.UserState;
-import com.ds.feige.im.gateway.dto.RemoteLoginPayload;
 import com.ds.feige.im.gateway.socket.connection.ConnectionMeta;
 import com.ds.feige.im.gateway.socket.connection.UserConnection;
 import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
-import com.ds.feige.im.push.service.PushService;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -54,24 +54,9 @@ public class SessionUserServiceImpl implements SessionUserService {
     SessionUserFactory sessionUserFactory;
     @Autowired
     UserDeviceService userDeviceService;
+
     @Autowired
-    PushService pushService;
-
-    public void remoteLoginDisconnect(ConnectionMeta oldConnMeta, ConnectionMeta newConnMeta) throws IOException {
-        // 通知用户其他链接,在其他设备登录
-        long userId = oldConnMeta.getUserId();
-        log.info("The user was remote login:userId={},oldConnMeta={},newConnMeta={}", userId, oldConnMeta, newConnMeta);
-        SocketPacket sendToClientRequest = new SocketPacket();
-        sendToClientRequest.setPath(SocketPaths.SC_REMOTE_LOGIN);
-        sendToClientRequest.setRequestId(longIdKeyGenerator.generateId());
-        RemoteLoginPayload msg = new RemoteLoginPayload();
-        msg.setDeviceId(newConnMeta.getDeviceId());
-        msg.setIpAddress(newConnMeta.getIpAddress());
-        sendToClientRequest.setPayload(JsonUtils.toJson(msg));
-        UserConnection connection = sessionUserFactory.getConnection(oldConnMeta);
-        connection.disconnect(sendToClientRequest);
-    }
-
+    UserEventService userEventService;
     @Override
     public SessionUser getSessionUser(long userId) {
         SessionUser sessionUser = this.sessionUserFactory.getSessionUser(userId);
@@ -136,14 +121,13 @@ public class SessionUserServiceImpl implements SessionUserService {
                 // 同设备号设备在线
                 ConnectionMeta sameDeviceIdConnMeta = sessionUser.getConnectionMetaByDeviceId(request.getDeviceId());
                 if (sameDeviceIdConnMeta != null) {
-                    remoteLoginDisconnect(sameDeviceIdConnMeta, newConnMeta);
-                }
-                // 同类型设备在线
-                ConnectionMeta sameDeviceTypeConnMeta =
-                    sessionUser.getConnectionMetaByType(request.getDeviceType().type);
-                // 强制断线
-                if (sameDeviceTypeConnMeta != null) {
-                    remoteLoginDisconnect(sameDeviceTypeConnMeta, newConnMeta);
+                    LogoutRequest logoutRequest = new LogoutRequest();
+                    logoutRequest.setUserId(userId);
+                    logoutRequest.setDeviceId(sameDeviceIdConnMeta.getDeviceId());
+                    logoutRequest.addProperty("deviceId", newConnMeta.getDeviceId());
+                    logoutRequest.addProperty("ipAddress", newConnMeta.getIpAddress());
+                    logoutRequest.addProperty("type", 1);
+                    logout(logoutRequest);
                 }
                 // 添加新的链接
                 sessionUser.connectionEstablished(newConnMeta);
@@ -156,9 +140,9 @@ public class SessionUserServiceImpl implements SessionUserService {
                 log.error("Get session user lock timeout:userId={}", userId);
                 throw new WarnMessageException(FeigeWarn.USER_LOCK_TIMEOUT);
             }
-        } catch (InterruptedException | IOException e) {
-            log.error("Get the session lock error:userId={}", userId, e);
-            throw new WarnMessageException(FeigeWarn.USER_LOCK_INTERRUPT);
+        } catch (Exception e) {
+            log.error("User login error:userId={}", userId, e);
+            throw new WarnMessageException(FeigeWarn.SYSTEM_ERROR);
         } finally {
             userLock.unlock();
         }
@@ -166,26 +150,31 @@ public class SessionUserServiceImpl implements SessionUserService {
     }
 
     @Override
-    public void logout(WebSocketSession session) {
+    public void logout(LogoutRequest logoutRequest) throws Exception {
         // TODO token作废
         // 设备登出
-        Map<String, Object> sessionAttributes = session.getAttributes();
-        Boolean isLogin = (Boolean)sessionAttributes.get(SessionAttributeKeys.LOGIN);
-        if (isLogin) {
-            Long userId = (Long)sessionAttributes.get(SessionAttributeKeys.USER_ID);
-            String deviceId = (String)sessionAttributes.get(SessionAttributeKeys.DEVICE_ID);
-            if (userId != null && deviceId != null) {
-                userDeviceService.deviceLogout(userId, deviceId);
-                disconnect(session);
-                log.info("User logout success:userId={},deviceId={}", userId, deviceId);
-            } else {
-                log.error("User logout fail,something is null:userId={},deviceId={}", userId, deviceId);
-            }
-
-        } else {
-            log.warn("User logout fail,session is not login:sessionId={}", session.getId());
+        long userId = logoutRequest.getUserId();
+        String deviceId = logoutRequest.getDeviceId();
+        SessionUser sessionUser = getSessionUser(userId);
+        if (sessionUser == null) {
+            log.warn("Session user not exists:userId={}", userId);
+            return;
+        }
+        ConnectionMeta connectionMeta = sessionUser.getConnectionMetaByDeviceId(deviceId);
+        if (connectionMeta == null) {
+            log.error("Device connection meta not exists:deviceId={}", deviceId);
+            return;
         }
 
+        UserConnection connection = sessionUserFactory.getConnection(connectionMeta);
+        // 主动登出
+        SocketPacket packet = new SocketPacket();
+        packet.setPath(SocketPaths.SC_LOGOUT_NOTICE);
+        packet.setRequestId(longIdKeyGenerator.generateId());
+        packet.setPayload(JsonUtils.toJson(logoutRequest.getProperties()));
+        connection.disconnect(packet);
+        userDeviceService.deviceLogout(userId, deviceId);
+        log.info("User logout success:{}", logoutRequest);
     }
 
     @Override

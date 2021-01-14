@@ -17,7 +17,7 @@ public interface UserDeviceMapper extends BaseMapper<UserDevice> {
     @Select("SELECT * FROM t_user_device where user_id=#{userId} and device_id=#{deviceId}")
     UserDevice getByUserIdAndDeviceId(long userId, String deviceId);
 
-    @Select("SELECT * FROM t_user_device where user_id=#{userId} AND status=#{status} AND ISNULL(device_token)=0 and LENGTH(trim(device_token))>0;")
+    @Select("SELECT * FROM t_user_device where user_id=#{userId} AND status=#{status} AND ISNULL(device_token)=0 and LENGTH(trim(device_token))>0")
     List<UserDevice> getUserPushableDevices(long userId, int status);
 
     @Update("UPDATE t_user_device SET event_checkpoint=#{seqId} where user_id=#{userId} and  device_id=#{deviceId} AND (event_checkpoint<#{seqId} OR event_checkpoint IS NULL)")

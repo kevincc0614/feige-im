@@ -8,11 +8,11 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @SpringBootApplication
 @EnableTransactionManagement
-public class FeigeIMBootstrap {
-    static final Logger LOGGER = LoggerFactory.getLogger(FeigeIMBootstrap.class);
+public class IMBootstrap {
+    static final Logger LOGGER = LoggerFactory.getLogger(IMBootstrap.class);
     public static void main(String[] args) {
         LOGGER.info("IM Server starting....");
-        SpringApplication.run(FeigeIMBootstrap.class, args);
+        SpringApplication.run(IMBootstrap.class, args);
         LOGGER.info("IM Server started");
     }
 }

@@ -13,14 +13,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.ds.feige.im.FeigeIMBootstrap;
+import com.ds.feige.im.IMBootstrap;
 import com.ds.feige.im.account.dto.UserRegisterRequest;
 import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.chat.dto.group.GroupInfo;
 import com.ds.feige.im.chat.service.GroupUserService;
 import com.ds.feige.im.enterprise.service.EnterpriseService;
 
-@SpringBootTest(classes = FeigeIMBootstrap.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@SpringBootTest(classes = IMBootstrap.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @RunWith(SpringJUnit4ClassRunner.class)
 @ActiveProfiles("dev")
 public class BaseTest {

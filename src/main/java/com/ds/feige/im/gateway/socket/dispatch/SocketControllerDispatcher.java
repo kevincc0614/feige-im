@@ -1,8 +1,7 @@
 package com.ds.feige.im.gateway.socket.dispatch;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import javax.validation.Validator;
@@ -34,16 +33,11 @@ import lombok.extern.slf4j.Slf4j;
 public class SocketControllerDispatcher implements BeanPostProcessor {
     private Map<String, SocketMethodHandler> invokeMethods = Maps.newHashMap();
     static final ObjectMapper jsonMapper = new ObjectMapper();
-    private List<SocketMethodHandlerInterceptor> interceptors = new ArrayList<>();
     private ValidatorFactory validatorFactory;
 
     @Autowired
     public SocketControllerDispatcher(ValidatorFactory validatorFactory) {
         this.validatorFactory = validatorFactory;
-    }
-
-    public void addMethodInterceptor(SocketMethodHandlerInterceptor interceptor) {
-        this.interceptors.add(interceptor);
     }
 
     public void doService(WebSocketSession session, SocketPacket socketPacket) {
@@ -58,28 +52,16 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
             log.warn("No suitable method mapping was found:path={}", path);
             return;
         }
-        this.interceptors.forEach(interceptor -> {
-            interceptor.preHandle(session, socketPacket, invoker);
-        });
         Throwable dispatchEx = null;
         Object result = null;
         long startTime = System.currentTimeMillis();
         try {
-            try {
-                result = invoker.invokeForRequest(session, socketPacket);
-                for (SocketMethodHandlerInterceptor interceptor : interceptors) {
-                    interceptor.postHandle(session, socketPacket, result, invoker);
-                }
-            } catch (Throwable e) {
-                dispatchEx = e;
-                log.error("Dispatch exception:request={}", socketPacket, dispatchEx);
-            }
-            processServiceResult(session, socketPacket, result, invoker, dispatchEx);
+            result = invoker.invokeForRequest(session, socketPacket);
         } catch (Throwable e) {
-            for (SocketMethodHandlerInterceptor interceptor : interceptors) {
-                interceptor.postHandle(session, socketPacket, result, invoker);
-            }
+            dispatchEx = e;
+            log.error("Dispatch exception:request={}", socketPacket, dispatchEx);
         } finally {
+            processServiceResult(session, socketPacket, result, invoker, dispatchEx);
             long endTime = System.currentTimeMillis();
             log.info("Dispatch socket request duration:path={},duration={}ms", path, (endTime - startTime));
         }
@@ -87,7 +69,8 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
     }
 
     public void processServiceResult(WebSocketSession session, SocketPacket request, Object result,
-        SocketMethodHandler handler, Throwable e) throws Exception {
+        SocketMethodHandler handler, Throwable e) {
+        log.info("Ready to process service result to session:result={}", result);
         if (handler.isNeedResponse()) {
             SocketResponse response = new SocketResponse();
             response.setResponseId(request.getRequestId());
@@ -111,12 +94,16 @@ public class SocketControllerDispatcher implements BeanPostProcessor {
                 response.setData(result);
             }
             if (session.isOpen()) {
-                String responseText = jsonMapper.writeValueAsString(response);
-                log.info("Response to client:responseText={}", responseText);
-                TextMessage responseMessage = new TextMessage(responseText);
-                session.sendMessage(responseMessage);
+                try {
+                    String responseText = jsonMapper.writeValueAsString(response);
+                    log.info("Response to client:responseText={}", responseText);
+                    TextMessage responseMessage = new TextMessage(responseText);
+                    session.sendMessage(responseMessage);
+                } catch (IOException ioException) {
+                    log.error("Send dispatch result to session error", e);
+                }
             } else {
-                log.debug("Need send response to session,but it is closed:session={}", session);
+                log.warn("Need send response to session,but it is closed:session={}", session);
             }
         }
     }

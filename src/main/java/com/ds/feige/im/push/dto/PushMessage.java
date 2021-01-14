@@ -26,4 +26,12 @@ public class PushMessage {
         }
         properties.put(key, value);
     }
+
+    public Map<String, String> getAllStringProperties() {
+        Map<String, String> result = new HashMap<>();
+        if (this.properties != null) {
+            this.properties.forEach((k, v) -> result.put(k, String.valueOf(v)));
+        }
+        return result;
+    }
 }

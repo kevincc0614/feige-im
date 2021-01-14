@@ -8,6 +8,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.ds.feige.im.account.dto.LoginRequest;
+import com.ds.feige.im.account.dto.LogoutRequest;
 import com.ds.feige.im.common.domain.UserIdHolder;
 import com.ds.feige.im.gateway.domain.SessionUser;
 import com.ds.feige.im.gateway.domain.UserState;
@@ -32,8 +33,10 @@ public interface SessionUserService {
 
     /**
      * 登出
+     * 
+     * @param request
      */
-    void logout(WebSocketSession session);
+    void logout(LogoutRequest request) throws Exception;
 
     /**
      * 网络连接断开时要主动调用此接口

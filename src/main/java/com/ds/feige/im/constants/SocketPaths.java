@@ -18,7 +18,7 @@ public class SocketPaths {
     public static final String CS_PULL_EVENTS = "/event/pull";
     public static final String CS_UPDATE_EVENT_CHECKPOINT = "/event/checkpoint/update";
     public static final String SC_PUSH_EVENT = "/event/receive";
-    public static final String SC_REMOTE_LOGIN = "/user/remote-login";
+    public static final String SC_LOGOUT_NOTICE = "/user/logout-notice";
 
     // public static final String SC_PUSH_CHAT_MESSAGE = "/chat/message/receive";
     public static final String SC_CHAT_MESSAGE_READ_RECEIPT = "/chat/message/read-receipt";

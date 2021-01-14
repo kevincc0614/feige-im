@@ -223,7 +223,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.ds.feige.im.FeigeIMBootstrap</mainClass>
+                    <mainClass>com.ds.feige.im.IMBootstrap</mainClass>
                     <layout>ZIP</layout>
                 </configuration>
             </plugin>

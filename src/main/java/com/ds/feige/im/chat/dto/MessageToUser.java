@@ -15,8 +15,6 @@ import lombok.Data;
 public class MessageToUser {
     /** 会话ID */
     private long conversationId;
-    /** 消息目标ID */
-    private long targetId;
     /** 消息发送者ID */
     private long senderId;
     /** 消息ID */

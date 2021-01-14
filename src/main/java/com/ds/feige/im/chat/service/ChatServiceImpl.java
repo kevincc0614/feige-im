@@ -203,7 +203,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         }
         Set<Long> successReadMsgSet = addMessageReadReceipts(request.getUserId(), request.getMsgIds());
         // 用户收件箱处理已读
-        Map<Long, List<Long>> readMsgResult =
+        Map<Long, List<Long>> msgSenders =
             userMessageService.readMessages(request.getUserId(), conversationId, request.getMsgIds());
         // 存储库处理已读,将未读数-1
         if (successReadMsgSet != null && successReadMsgSet.size() > 0) {
@@ -211,7 +211,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
             // TODO 所有人已读之后,考虑要清除数据
             ReadMessageEvent event = new ReadMessageEvent();
             event.setReaderId(request.getUserId());
-            event.setSenderAndMsgIds(readMsgResult);
+            event.setSenderAndMsgIds(msgSenders);
             event.setReadTime(System.currentTimeMillis());
             event.setConversationId(request.getConversationId());
             Set<String> connectionIds = Sets.newHashSet();

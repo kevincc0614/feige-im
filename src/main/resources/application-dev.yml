@@ -12,6 +12,7 @@ spring.datasource.username: root
 #spring.datasource.password: oim_root
 #spring.datasource.url: jdbc:mysql://35.220.161.103:3306/oim
 spring.datasource.url: jdbc:mysql://127.0.0.1:3306/im
+#spring.datasource.password: oim_root
 spring.datasource.password:
 #druid配置
 spring.datasource.druid.stat-view-servlet.enabled: true

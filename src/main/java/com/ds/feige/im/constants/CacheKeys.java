@@ -20,4 +20,5 @@ public class CacheKeys {
     public static final String USER_CONVERSATION_UNREAD_MESSAGES = "D.feige-im.user.conversation.unread.";
     /** 用户总未读 */
     public static final String USER_UNREAD_TOTAL = "D.feige-im.user.unread.total.";
+    public static final String USER_EVENT_CONTENT = "feige-im.user.event.content.";
 }

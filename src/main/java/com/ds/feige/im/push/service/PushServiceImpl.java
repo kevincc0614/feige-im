@@ -11,7 +11,6 @@ import com.ds.feige.im.gateway.entity.UserDevice;
 import com.ds.feige.im.gateway.service.UserDeviceService;
 import com.ds.feige.im.push.configure.PushConfigProperties;
 import com.ds.feige.im.push.dto.PushMessage;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.firebase.messaging.*;
 
@@ -43,22 +42,21 @@ public class PushServiceImpl implements PushService {
         if (devices != null && !devices.isEmpty()) {
             List<Message> messages = new ArrayList<>();
             devices.forEach(d -> {
-                if (Strings.isNullOrEmpty(d.getDeviceToken())) {
-                    try {
-                        Message message = buildFirebaseMessage(request, d);
-                        messages.add(message);
-                    } catch (Exception e) {
-                        log.error("Build firebase message error:device={},request={}", d, request, e);
-                    }
-
+                try {
+                    Message message = buildFirebaseMessage(request, d);
+                    messages.add(message);
+                } catch (Exception e) {
+                    log.error("Build firebase message error:device={},request={}", d, request, e);
                 }
             });
             if (!messages.isEmpty()) {
                 sendMessages(messages);
+            } else {
+                log.error("Firebase messages is empty");
             }
 
         } else {
-            log.error("User has no pushable device:userId={}", request.getUserId());
+            log.warn("User has no pushable device:userId={}", request.getUserId());
         }
     }
 
@@ -86,6 +84,7 @@ public class PushServiceImpl implements PushService {
 
     @Override
     public void push(List<PushMessage> messages) {
+        log.info("Ready to push messages:{}", messages);
         messages.forEach(message -> pushToUser(message));
     }
 
@@ -100,10 +99,14 @@ public class PushServiceImpl implements PushService {
             ApnsConfig apnsConfig = ApnsConfig.builder().setAps(aps).build();
             message.setApnsConfig(apnsConfig);
         } else if (deviceType == DeviceType.ANDROID) {
-
+            AndroidConfig androidConfig = AndroidConfig.builder().putAllData(pushRequest.getAllStringProperties())
+                .setPriority(AndroidConfig.Priority.HIGH).build();
+            message.setAndroidConfig(androidConfig);
         }
         message.setNotification(notification);
         message.setToken(device.getDeviceToken());
+        log.info("Build firebase message:userId={},deviceId={},request={}", device.getUserId(), device.getDeviceId(),
+            pushRequest);
         return message.build();
     }
 }

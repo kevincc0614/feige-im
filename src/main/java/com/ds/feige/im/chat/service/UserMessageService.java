@@ -37,6 +37,8 @@ public interface UserMessageService {
      */
     Map<Long, List<Long>> readMessages(long userId, long conversationId, Set<Long> msgIds);
 
+    Set<Long> readAndGetSenders(long userId, long conversationId, Set<Long> msgIds);
+
     /**
      * 获取用户会话未读数
      * 

@@ -36,6 +36,7 @@ import com.ds.feige.im.gateway.service.SessionUserService;
 import com.ds.feige.im.push.dto.PushMessage;
 import com.ds.feige.im.push.service.PushService;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -73,23 +74,18 @@ public class ChatMessageListener {
         // 用户收件箱处理
         userMessageService.store(userMessages);
         List<PushMessage> pushMessages = Lists.newArrayListWithCapacity(userMessages.size());
-        List<UserEventData> eventDataList = Lists.newArrayListWithCapacity(userMessages.size());
         long conversationId = event.getConversationId();
         List<UserConversationInfo> conversationsById = conversationService.getConversationsById(conversationId);
         Map<Long, UserConversationInfo> conversationsByIdMap =
             conversationsById.stream().collect(Collectors.toMap(UserConversationInfo::getUserId, Function.identity()));
         long senderId = event.getSenderId();
         UserInfo senderInfo = userService.getUserById(senderId);
+        MessageToUser messageToUser = buildMessageToUser(event);
         // 事件处理
+        Set<Long> subcribeUsers = Sets.newHashSet();
         userMessages.forEach(m -> {
-            UserEventData data = new UserEventData();
             long userId = m.getUserId();
-            data.setUserId(userId);
-            data.setTopic(Topics.CHAT_CONVERSATION_MESSAGE);
-            data.setSourceId(String.valueOf(event.getMsgId()));
-            MessageToUser messageToUser = buildMessageToUser(m, event);
-            data.setContent(messageToUser);
-            eventDataList.add(data);
+            subcribeUsers.add(userId);
             // 如果接受人是自己，不需要发离线推送
             if (userId != senderId) {
                 UserConversationInfo userConversationInfo = conversationsByIdMap.get(userId);
@@ -98,12 +94,15 @@ public class ChatMessageListener {
             }
         });
         // 发布事件
-        userEventService.publishEvents(eventDataList, excludeConnectionIds);
+        UserEventData data = new UserEventData();
+        data.setTopic(Topics.CHAT_CONVERSATION_MESSAGE);
+        data.setContent(messageToUser);
+        userEventService.publishEvents(subcribeUsers, data, excludeConnectionIds);
         // 离线推送
         pushService.push(pushMessages);
     }
 
-    MessageToUser buildMessageToUser(MessageOfUser messageOfUser, ConversationMessageEvent event) {
+    MessageToUser buildMessageToUser(ConversationMessageEvent event) {
         MessageToUser dataContent = new MessageToUser();
         dataContent.setMsgId(event.getMsgId());
         dataContent.setMsgType(event.getMsgType());
@@ -112,7 +111,6 @@ public class ChatMessageListener {
         dataContent.setCreateTime(event.getCreateTime());
         dataContent.setConversationId(event.getConversationId());
         dataContent.setSenderId(event.getSenderId());
-        dataContent.setTargetId(event.getTargetId());
         return dataContent;
     }
 
@@ -144,9 +142,9 @@ public class ChatMessageListener {
             pushMessage.setBadgeNumber(userMessageService.getUserTotalUnread(userId));
             pushMessage.setTitle("新消息通知");
             pushMessage.setSubTitle(userConversationInfo.getConversationName());
-            pushMessage.setBody(senderInfo.getNickName() + ":" + body);
+            pushMessage.setBody(senderInfo.getNickName() + ":" + body == null ? "" : body);
             pushMessage.setUserId(userId);
-            pushMessage.addProperty("conversationId", event.getConversationId());
+            pushMessage.addProperty("conversationId", String.valueOf(event.getConversationId()));
             pushMessage.addProperty("eventTopic", Topics.CHAT_CONVERSATION_MESSAGE);
             return pushMessage;
         } else {
@@ -157,7 +155,6 @@ public class ChatMessageListener {
     @RabbitListener(queues = AMQPConstants.QueueNames.CONVERSATION_READ_MESSAGE_RECEIPT)
     public void readMessageFeedback(@Payload ReadMessageEvent event) {
         Map<Long, List<Long>> senderAndMsgIds = event.getSenderAndMsgIds();
-        List<UserEventData> dataList = Lists.newArrayList();
         senderAndMsgIds.entrySet().forEach(entry -> {
             try {
                 long senderId = entry.getKey();
@@ -170,14 +167,13 @@ public class ChatMessageListener {
                 notice.setConversationId(event.getConversationId());
                 UserEventData eventData = new UserEventData();
                 eventData.setTopic(Topics.CHAT_CONVERSATION_READ_MESSAGE);
-                eventData.setUserId(senderId);
                 eventData.setContent(notice);
-                dataList.add(eventData);
+                userEventService.publishEvent(senderId, eventData, event.getExcludeConnectionIds());
             } catch (Exception e) {
                 log.error("Send read receipt notice to user error:value={}", entry, e);
             }
         });
-        userEventService.publishEvents(dataList, event.getExcludeConnectionIds());
+
     }
 
 }

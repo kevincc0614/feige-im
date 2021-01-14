@@ -83,7 +83,7 @@ public class UserDeviceServiceImpl extends ServiceImpl<UserDeviceMapper, UserDev
             throw new WarnMessageException(FeigeWarn.DEVICE_NOT_EXISTS);
         }
         userDevice.setDeviceToken(request.getDeviceToken());
-        save(userDevice);
+        updateById(userDevice);
         log.info("Register device token success:userId={},deviceId={},token={}", userDevice, deviceId,
             request.getDeviceToken());
     }

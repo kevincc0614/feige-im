@@ -13,9 +13,9 @@ import com.ds.feige.im.event.dto.UserEventQuery;
  */
 public interface UserEventService {
 
-    void publishEvent(UserEventData request, Set<String> excludeConnections);
+    void publishEvent(long userId, UserEventData request, Set<String> excludeConnections);
 
-    void publishEvents(Collection<UserEventData> events, Set<String> excludeConnections);
+    void publishEvents(Collection<Long> userIds, UserEventData eventContent, Set<String> excludeConnections);
 
     List<UserEventInfo> getUserEvents(UserEventQuery query);
 

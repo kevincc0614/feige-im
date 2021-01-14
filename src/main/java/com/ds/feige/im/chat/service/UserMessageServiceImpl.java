@@ -11,10 +11,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ds.feige.im.chat.dto.MessageOfUser;
-import com.ds.feige.im.chat.entity.UserMessage;
-import com.ds.feige.im.chat.mapper.UserMessageMapper;
 import com.ds.feige.im.constants.CacheKeys;
 import com.google.common.collect.Maps;
 
@@ -25,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Service
 @Slf4j
-public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserMessage> implements UserMessageService {
+public class UserMessageServiceImpl implements UserMessageService {
     @Autowired
     RedissonClient redissonClient;
 
@@ -62,10 +59,12 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
 
     @Override
     public Map<Long, List<Long>> readMessages(long userId, long conversationId, Set<Long> msgIds) {
+        // 用户会话未读消息的Map
         RMap<Long, MessageOfUser> unreadMap =
             redissonClient.getMap(CacheKeys.USER_CONVERSATION_UNREAD_MESSAGES + userId + "." + conversationId);
         log.info("Read msg:userId={},conversationId={},msgIds={}", userId, conversationId, msgIds);
         // TODO 是否要加分布式锁
+        // 从未读Map中移除的消息
         Map<Long, MessageOfUser> readyRemoved = unreadMap.getAll(msgIds);
         Long[] msgIdArray = new Long[msgIds.size()];
         msgIds.toArray(msgIdArray);
@@ -74,12 +73,18 @@ public class UserMessageServiceImpl extends ServiceImpl<UserMessageMapper, UserM
         RAtomicLong totalUnread = redissonClient.getAtomicLong(CacheKeys.USER_UNREAD_TOTAL + userId);
         totalUnread.addAndGet(-readCount);
         Map<Long, List<Long>> result = Maps.newHashMap();
+        // 构建用户ID和消息ID列表的Map,准备发送已读回执通知
         readyRemoved.values().forEach(m -> {
             List<Long> sendMsgIds = result.getOrDefault(m.getSenderId(), new ArrayList<>());
             sendMsgIds.add(m.getMsgId());
             result.put(m.getSenderId(), sendMsgIds);
         });
         return result;
+    }
+
+    @Override
+    public Set<Long> readAndGetSenders(long userId, long conversationId, Set<Long> msgIds) {
+        return readMessages(userId, conversationId, msgIds).keySet();
     }
 
     @Override
