@@ -32,7 +32,7 @@ public class WebSocketDispatcherHandler extends TextWebSocketHandler {
         Long userId = (Long) session.getAttributes().get(SessionAttributeKeys.USER_ID);
         SocketPacket socketPacket = JsonUtils.jsonToBean(payload, SocketPacket.class);
         Tracer.getTraceId(socketPacket);
-        log.info("Received client text message:userId={},payload={}", userId, payload);
+        log.info("Received client text message:sessionId={},userId={},payload={}", session.getId(), userId, payload);
         try {
             controllerDispatcher.doService(session, socketPacket);
         } finally {
@@ -42,6 +42,7 @@ public class WebSocketDispatcherHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         Tracer.getOrGenerateTraceId();
+        log.info("Websocket connection closed:sessionId={},status={}", session.getId(), status);
         super.afterConnectionClosed(session,status);
         this.sessionUserService.afterConnectionClosed(session,status);
         Tracer.removeTraceId();
@@ -57,6 +58,6 @@ public class WebSocketDispatcherHandler extends TextWebSocketHandler {
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        super.handleTransportError(session, exception);
+        log.error("Websocket transport error:sessionId={}", session.getId(), exception);
     }
 }

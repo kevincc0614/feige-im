@@ -28,8 +28,4 @@ public class UserConversation extends BaseEntity {
     private String extra;
     /** 最后会话事件事件 */
     private Date lastEventTime;
-    // /** 未读数 */
-    // private Integer unreadCount;
-    // /** 最后一条消息ID */
-    // private Long lastMsgId;
 }

@@ -1,20 +1,14 @@
 package com.ds.feige.im.account.service;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
 import com.ds.feige.im.account.cache.UserCacheProvider;
@@ -81,6 +75,7 @@ public class UserServiceImpl implements UserService {
                 loginName);
         }
         if (needUpdate) {
+            // 删除旧的token
             userCacheProvider.deleteUser(user.getId());
             userMapper.updateById(user);
         }
@@ -104,14 +99,11 @@ public class UserServiceImpl implements UserService {
             throw new WarnMessageException(FeigeWarn.PWD_ERROR);
         }
         userCacheProvider.putUser(user);
-        LocalDateTime expireAt = LocalDateTime.now().plusDays(90);
-        Date expireDate = Date.from(expireAt.atZone(ZoneId.systemDefault()).toInstant());
+
         // 生成token
         long userId = user.getId();
-        String token =
-            JWT.create().withClaim("userId", userId).withExpiresAt(expireDate).sign(Algorithm.HMAC256(password));
+        String token = userCacheProvider.createUserToken(userId, password);
         // 放入缓存
-
         log.info("User get token success:userId={},token={}", user.getId(), token);
         return token;
     }
@@ -119,23 +111,27 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserInfo verifyToken(String token) {
         // 获取 token 中的 user id
-        Long userId = JWT.decode(token).getClaim("userId").asLong();
+        Map<String, Object> tokenProperties = userCacheProvider.getUserIdByToken(token);
+        if (tokenProperties == null || tokenProperties.isEmpty()) {
+            throw new WarnMessageException(FeigeWarn.TOKEN_IS_INVALID);
+        }
+        Long userId = (Long)tokenProperties.get("userId");
+        String tokenPassword = (String)tokenProperties.get("password");
         UserInfo user = getUserById(userId);
         if (user == null) {
             throw new WarnMessageException(FeigeWarn.USER_NOT_EXISTS);
         }
-        // 验证token合法性和签名,密码变更之后,旧token无法验证通过
-        JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256(user.getPassword())).build();
-        try {
-            jwtVerifier.verify(token);
-        } catch (Exception e) {// 签名算法不匹配
-            log.warn("User verify token fail:token={}", token);
-            if (e instanceof TokenExpiredException) {
-                throw new WarnMessageException(e, FeigeWarn.TOKEN_EXPIRED);
-            }
-            throw new WarnMessageException(e, FeigeWarn.TOKEN_VERIFY_ERROR);
+        if (!user.getPassword().equals(tokenPassword) && tokenPassword != null) {
+            throw new WarnMessageException(FeigeWarn.PWD_HAS_MODIFIED);
         }
         return user;
+    }
+
+    @Override
+    public Long logout(String token) {
+        Long userId = userCacheProvider.deleteToken(token);
+        log.info("User logout:userId={},token={}", userId, token);
+        return userId;
     }
 
     static String passwordHash(String salt, String password) {

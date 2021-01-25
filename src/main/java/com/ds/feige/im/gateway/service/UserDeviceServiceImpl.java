@@ -1,5 +1,7 @@
 package com.ds.feige.im.gateway.service;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Date;
 import java.util.List;
 
@@ -7,9 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.account.dto.LoginRequest;
-import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.gateway.dto.UserDeviceQuery;
 import com.ds.feige.im.gateway.entity.UserDevice;
 import com.ds.feige.im.gateway.mapper.UserDeviceMapper;
@@ -36,7 +36,12 @@ public class UserDeviceServiceImpl extends ServiceImpl<UserDeviceMapper, UserDev
             device.setDeviceId(loginRequest.getDeviceId());
         }
         device.setDeviceType(loginRequest.getDeviceType().name());
-        device.setDeviceName(loginRequest.getDeviceName());
+        try {
+            String encodeDeviceName = URLDecoder.decode(loginRequest.getDeviceName(), "UTF-8");
+            device.setDeviceName(encodeDeviceName);
+        } catch (UnsupportedEncodingException e) {
+            log.error("Decode device name error:{}", loginRequest.getDeviceName(), e);
+        }
         device.setLastLoginTime(new Date());
         device.setStatus(UserDevice.LOGIN_STATUS);
         saveOrUpdate(device);
@@ -80,10 +85,12 @@ public class UserDeviceServiceImpl extends ServiceImpl<UserDeviceMapper, UserDev
         String deviceId = request.getDeviceId();
         UserDevice userDevice = baseMapper.getByUserIdAndDeviceId(userId, deviceId);
         if (userDevice == null) {
-            throw new WarnMessageException(FeigeWarn.DEVICE_NOT_EXISTS);
+            userDevice = new UserDevice();
         }
+        userDevice.setUserId(userId);
+        userDevice.setDeviceId(deviceId);
         userDevice.setDeviceToken(request.getDeviceToken());
-        updateById(userDevice);
+        saveOrUpdate(userDevice);
         log.info("Register device token success:userId={},deviceId={},token={}", userDevice, deviceId,
             request.getDeviceToken());
     }

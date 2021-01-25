@@ -19,6 +19,7 @@ import com.ds.feige.im.enterprise.entity.Department;
 import com.ds.feige.im.enterprise.entity.EmpRole;
 import com.ds.feige.im.enterprise.entity.Employee;
 import com.ds.feige.im.enterprise.entity.Enterprise;
+import com.ds.feige.im.enterprise.po.DepEmpPo;
 import com.ds.feige.im.event.dto.UserEventInfo;
 import com.ds.feige.im.event.entity.UserEvent;
 import com.ds.feige.im.mark.dto.MarkMessageInfo;
@@ -79,16 +80,10 @@ public class BeansConverter {
         return result;
     }
 
-    public static EmpDetails convertToDetails(Employee employee) {
+    public static EmpDetails convertToDetails(DepEmpPo employee) {
         EmpDetails empDetails = new EmpDetails();
         BeanUtils.copyProperties(employee, empDetails);
         return empDetails;
-    }
-
-    public static List<EmpDetails> empsToEmpInfos(List<Employee> employees) {
-        List<EmpDetails> result = new ArrayList<>(employees.size());
-        employees.forEach(e -> result.add(convertToDetails(e)));
-        return result;
     }
 
     public static List<EmpOverview> convertToEmpOverviews(List<Employee> employees) {

@@ -11,4 +11,5 @@ public class SessionAttributeKeys {
     public static final String DEVICE_NAME = "deviceName";
     public static final String LOGIN="login";
     public static final String CLOSED="closed";
+    public static final String LAST_ACTIVE_TIME = "lastActiveTime";
 }

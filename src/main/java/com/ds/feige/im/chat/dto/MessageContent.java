@@ -21,10 +21,11 @@ public class MessageContent {
     }
 
     public static class GroupCreatedMessage extends MessageContent {
-        public GroupCreatedMessage(long groupId, long operatorId, long conversationId) {
+        public GroupCreatedMessage(long groupId, long operatorId, String operatorName, long conversationId) {
             super.put("event", "group.created");
             super.put("groupId", groupId);
             super.put("operatorId", operatorId);
+            super.put("operatorName", operatorName);
             super.put("conversationId", conversationId);
         }
     }

@@ -1,6 +1,7 @@
 package com.ds.feige.im.enterprise.dto;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.ds.feige.im.common.domain.UserIdHolder;
 import com.ds.feige.im.gateway.domain.UserState;
@@ -14,6 +15,13 @@ public class EmpDetails implements UserIdHolder {
     private String avatar;
     private String title;
     private String workEmail;
-    private Map<Long, Boolean> departments;
+    private List<DepKeyInfo> departments = new ArrayList<>();
     private UserState state;
+
+    @Data
+    public static class DepKeyInfo {
+        private Long departmentId;
+        private String departmentName;
+        private Boolean leader;
+    }
 }

@@ -31,6 +31,12 @@ public interface UserService {
     UserInfo verifyToken(String token);
 
     /**
+     * 登出
+     * 
+     * @param token
+     */
+    Long logout(String token);
+    /**
      * 注册用户
      * 
      * @param registerRequest

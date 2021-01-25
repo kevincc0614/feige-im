@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ds.base.nodepencies.api.Response;
@@ -80,7 +81,8 @@ public class EnterpriseController {
     }
 
     @RequestMapping("/employees")
-    public Response<List<EmpDetails>> employeeList(HttpServletRequest request, long enterpriseId) {
+    public Response<List<EmpDetails>> employeeList(HttpServletRequest request,
+        @RequestParam("enterpriseId") long enterpriseId) {
         // TODO 判断是否为所属企业ID
         Set<Long> exclude = new HashSet<>();
         exclude.add(WebUtils.getUserId(request));
@@ -94,4 +96,5 @@ public class EnterpriseController {
         overviews.forEach(overview -> depMap.put(overview.getId(), overview));
         return new Response<>(overviews);
     }
+
 }

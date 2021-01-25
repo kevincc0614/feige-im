@@ -26,6 +26,8 @@ import com.ds.feige.im.enterprise.mapper.DepartmentEmployeeMapper;
 import com.ds.feige.im.enterprise.mapper.DepartmentMapper;
 import com.ds.feige.im.enterprise.mapper.EmployeeMapper;
 import com.ds.feige.im.enterprise.mapper.EnterpriseMapper;
+import com.ds.feige.im.enterprise.po.DepEmpPo;
+import com.ds.feige.im.enterprise.po.EmpDepBindingPo;
 import com.ds.feige.im.gateway.domain.UserState;
 import com.ds.feige.im.gateway.service.SessionUserService;
 import com.google.common.collect.Lists;
@@ -367,29 +369,46 @@ public class EnterpriseServiceImpl implements EnterpriseService {
         if (employee == null) {
             return null;
         }
-        List<DepartmentEmployee> departmentBindings =
-            departmentEmployeeMapper.findUserDepartments(enterpriseId, userId);
+        List<EmpDepBindingPo> departmentBindings = departmentEmployeeMapper.findEmpDepBindings(enterpriseId, userId);
         EmpDetails empDetails = new EmpDetails();
         BeanUtils.copyProperties(employee, empDetails);
         // 部门信息
-        Map<Long, Boolean> departments = Maps.newHashMap();
-        departmentBindings.forEach(e -> departments.put(e.getDepartmentId(), e.getLeader()));
+        List<EmpDetails.DepKeyInfo> departments = Lists.newArrayList();
+        departmentBindings.forEach(e -> {
+            EmpDetails.DepKeyInfo keyInfo = new EmpDetails.DepKeyInfo();
+            keyInfo.setDepartmentId(e.getDepartmentId());
+            keyInfo.setDepartmentName(e.getDepartmentName());
+            keyInfo.setLeader(e.getLeader());
+            departments.add(keyInfo);
+        });
         empDetails.setDepartments(departments);
+        UserState userState = sessionUserService.getSessionUser(userId).getState();
+        empDetails.setState(userState);
         return empDetails;
     }
 
     @Override
     public List<EmpDetails> getAllEmpDetailList(long enterpriseId, Collection<Long> excludeUsers) {
-        List<Employee> employees = employeeMapper.findByEnterpriseId(enterpriseId);
+        List<DepEmpPo> employees = employeeMapper.findyEntId(enterpriseId);
         List<EmpDetails> list = new ArrayList<>();
         Map<Long, UserState> entUserStates = sessionUserService.getUserStates(employees);
+        Map<Long, EmpDetails> detailsMap = Maps.newHashMap();
         employees.forEach(e -> {
             if (excludeUsers != null && !excludeUsers.isEmpty() && excludeUsers.contains(e.getUserId())) {
                 return;
             }
-            EmpDetails empDetails = BeansConverter.convertToDetails(e);
-            empDetails.setState(entUserStates.get(e.getUserId()));
-            list.add(empDetails);
+            EmpDetails details = detailsMap.get(e.getUserId());
+            if (details == null) {
+                details = BeansConverter.convertToDetails(e);
+                detailsMap.put(e.getUserId(), details);
+            }
+            EmpDetails.DepKeyInfo depKeyInfo = new EmpDetails.DepKeyInfo();
+            depKeyInfo.setDepartmentName(e.getDepartmentName());
+            depKeyInfo.setDepartmentId(e.getDepartmentId());
+            depKeyInfo.setLeader(e.getLeader());
+            details.getDepartments().add(depKeyInfo);
+            details.setState(entUserStates.get(e.getUserId()));
+            list.add(details);
         });
         return list;
     }

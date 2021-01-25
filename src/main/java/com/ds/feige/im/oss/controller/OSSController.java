@@ -10,14 +10,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import com.ds.base.nodepencies.api.Response;
 import com.ds.feige.im.account.controller.NodAuthorizedRequest;
@@ -38,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author DC
  */
-@Controller
+@RestController
 @RequestMapping("/oss")
 @Slf4j
 public class OSSController {
@@ -46,7 +40,6 @@ public class OSSController {
     OSSConfigProperties configProperties;
     @Autowired
     OSSService ossService;
-    private static final Logger LOGGER = LoggerFactory.getLogger(OSSController.class);
 
     /**
      * TODO 可以考虑更加严格的校验,比对文件名之类的相关信息
@@ -54,7 +47,7 @@ public class OSSController {
     @RequestMapping("/upload/verify-token")
     @NodAuthorizedRequest
     @ResponseBody
-    public String verifyToken(HttpServletRequest request, @RequestParam(value = "auth_token") String token)
+    public String verifyToken(@RequestParam("auth_token") String token)
         throws Exception {
         log.info("Verify upload token:token={}", token);
         if (Strings.isNullOrEmpty(token)) {
@@ -66,7 +59,7 @@ public class OSSController {
         String exceptSign = Hashing.hmacSha1(configProperties.getTokenSecret().getBytes()).newHasher()
             .putString(uploadPolicy, Charsets.UTF_8).hash().toString();
         if (!exceptSign.equals(sign)) {
-            LOGGER.error("sign is invalid:token={}", token);
+            log.error("sign is invalid:token={}", token);
             return "sign is invalid";
         }
         // 检查过期时间
@@ -75,11 +68,11 @@ public class OSSController {
         HashMap map = JsonUtils.jsonToBean(uploadPolicyURLDecode, HashMap.class);
         Long expiredAt = (Long)map.get("expiredAt");
         if (expiredAt == null) {
-            LOGGER.error("token is invalid,has no expiredAt property:token={}", token);
+            log.error("token is invalid,has no expiredAt property:token={}", token);
             return "token is invalid,has no expiredAt property";
         }
         if (expiredAt <= System.currentTimeMillis()) {
-            LOGGER.error("token is expired:token={}", token);
+            log.error("token is expired:token={}", token);
             return "expired";
         }
         return "ok";

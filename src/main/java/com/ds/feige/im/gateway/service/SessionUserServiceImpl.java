@@ -4,8 +4,12 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.redisson.api.RBuckets;
 import org.redisson.api.RLock;
@@ -35,6 +39,7 @@ import com.ds.feige.im.gateway.socket.protocol.SocketPacket;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -57,6 +62,18 @@ public class SessionUserServiceImpl implements SessionUserService {
 
     @Autowired
     UserEventService userEventService;
+
+    private static final ScheduledExecutorService scheduler =
+        Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
+            AtomicInteger value = new AtomicInteger();
+
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t = new Thread(r);
+                t.setName("Session-User-Scheduler-" + value.incrementAndGet());
+                return t;
+            }
+        });
     @Override
     public SessionUser getSessionUser(long userId) {
         SessionUser sessionUser = this.sessionUserFactory.getSessionUser(userId);
@@ -90,7 +107,9 @@ public class SessionUserServiceImpl implements SessionUserService {
         Map<String, UserState> bucketResults = getUserStateFromCache(users);
         Set<Long> onlineUsers = Sets.newHashSet();
         bucketResults.forEach((k, v) -> {
-            onlineUsers.add(Long.valueOf(k.replace(CacheKeys.SESSION_USER_STATE, "")));
+            if (v.isOnline()) {
+                onlineUsers.add(Long.valueOf(k.replace(CacheKeys.SESSION_USER_STATE, "")));
+            }
         });
         return onlineUsers;
     }
@@ -151,8 +170,6 @@ public class SessionUserServiceImpl implements SessionUserService {
 
     @Override
     public void logout(LogoutRequest logoutRequest) throws Exception {
-        // TODO token作废
-        // 设备登出
         long userId = logoutRequest.getUserId();
         String deviceId = logoutRequest.getDeviceId();
         SessionUser sessionUser = getSessionUser(userId);
@@ -165,14 +182,14 @@ public class SessionUserServiceImpl implements SessionUserService {
             log.error("Device connection meta not exists:deviceId={}", deviceId);
             return;
         }
-
+        // 断开链接
         UserConnection connection = sessionUserFactory.getConnection(connectionMeta);
-        // 主动登出
         SocketPacket packet = new SocketPacket();
         packet.setPath(SocketPaths.SC_LOGOUT_NOTICE);
         packet.setRequestId(longIdKeyGenerator.generateId());
         packet.setPayload(JsonUtils.toJson(logoutRequest.getProperties()));
         connection.disconnect(packet);
+        // 设备登出
         userDeviceService.deviceLogout(userId, deviceId);
         log.info("User logout success:{}", logoutRequest);
     }
@@ -245,7 +262,7 @@ public class SessionUserServiceImpl implements SessionUserService {
         }
     }
 
-    private void sendEstablishedOK(WebSocketSession session) throws IOException {
+    private void sendEstablishedOK(final WebSocketSession session) throws IOException {
         Map<String, Object> attributes = session.getAttributes();
         attributes.put(SessionAttributeKeys.CLOSED, new AtomicBoolean(false));
         SocketPacket request = new SocketPacket();
@@ -254,6 +271,22 @@ public class SessionUserServiceImpl implements SessionUserService {
         request.setRequestId(1L);
         TextMessage message = new TextMessage(JsonUtils.toJson(request));
         session.sendMessage(message);
+        scheduler.schedule(new Runnable() {
+            @SneakyThrows
+            @Override
+            public void run() {
+                if (session.isOpen()) {
+                    Long lastActiveTime = (Long)attributes.get(SessionAttributeKeys.LAST_ACTIVE_TIME);
+                    long now = System.currentTimeMillis();
+                    if (lastActiveTime == null || (now - lastActiveTime) > 360 * 1000) {
+                        session.close(CloseStatus.SESSION_NOT_RELIABLE.withReason("长时间未发送心跳,请重新建立链接"));
+                    } else {
+                        scheduler.schedule(this, 1, TimeUnit.MINUTES);
+                    }
+                }
+
+            }
+        }, 1, TimeUnit.MINUTES);
     }
 
     @Override
@@ -262,6 +295,7 @@ public class SessionUserServiceImpl implements SessionUserService {
         Map<String, Object> attributes = session.getAttributes();
         sendEstablishedOK(session);
         Long userId = (Long)attributes.get(SessionAttributeKeys.USER_ID);
+        attributes.put(SessionAttributeKeys.LAST_ACTIVE_TIME, System.currentTimeMillis());
         String sessionId = session.getId();
         String address = session.getRemoteAddress().toString();
         log.info("Connection established:userId={},sessionId={},clientAddress={}", userId, sessionId, address);
@@ -275,7 +309,7 @@ public class SessionUserServiceImpl implements SessionUserService {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
-        log.debug("WebSocketSession connection closed:sessionId={},closeStatus={}", session.getId(), closeStatus);
+        log.info("WebSocketSession connection closed:sessionId={},closeStatus={}", session.getId(), closeStatus);
         disconnect(session);
         this.sessionUserFactory.removeWebSocketSession(session);
     }
@@ -288,6 +322,7 @@ public class SessionUserServiceImpl implements SessionUserService {
         if (sessionUser == null) {
             disconnect(session);
         } else {
+            session.getAttributes().put(SessionAttributeKeys.LAST_ACTIVE_TIME, System.currentTimeMillis());
             sessionUser.keepAlive(deviceId);
         }
     }

@@ -57,3 +57,4 @@ user.security.tokenSignSecret: AayLgXaWNoWS
 ##推送相关
 push.mode: dev
 push.google-credentials: credentials/firebase-credentials.json
+logging.level.org.zalando.logbook: trace

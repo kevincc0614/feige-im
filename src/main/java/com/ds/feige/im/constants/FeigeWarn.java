@@ -19,6 +19,7 @@ public enum FeigeWarn implements WarnMessageEntry {
     DEVICE_NOT_EXISTS("User_100008", "设备不存在", "设备不存在{1}"),
     LOGIN_NAME_IS_EMPTY("user_100009", "登录名不能为空", "登录名不能为空"), PASSWORD_INSECURE("User_100010", "密码不安全", "密码不安全"),
     LOGIN_NAME_EXISTS("User_100011", "用户名已存在", "用户名已存在"),
+    TOKEN_IS_INVALID("User_100012", "无效token", "无效token,请重新登陆"), PWD_HAS_MODIFIED("User_100013", "密码已修改", "密码已修改请重新登陆"),
 
     GROUP_NOT_EXISTS("Group_100001", "群聊不存在{1}", "群聊不存在{1}"),
     GROUP_USER_OVER_LIMIT("Group_100002", "已超过最大人数限制", "已超过最大人数限制"),

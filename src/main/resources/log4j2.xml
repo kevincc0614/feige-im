@@ -19,12 +19,12 @@
             <!--输出日志的格式-->
             <PatternLayout pattern="${LOG_PATTERN}"/>
             <!--控制台只输出level及其以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
-            <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY"/>
         </console>
         <!-- 这个会打印出所有的info及以下级别的信息，每次大小超过size，则这size大小的日志会自动存入按年份-月份建立的文件夹下面并进行压缩，作为存档-->
         <RollingFile name="rollingFileAppender" fileName="server.log" filePattern="${FILE_PATH}/server-%d{yyyy-MM-dd}.log">
             <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
-            <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout pattern="${LOG_PATTERN}"/>
             <Policies>
                 <!--interval属性用来指定多久滚动一次，默认是1 hour-->
@@ -39,8 +39,17 @@
     <!--然后定义loggers，只有定义了logger并引入的appender，appender才会生效-->
     <loggers>
         <!--过滤掉spring和mybatis的一些无用的DEBUG信息-->
-        <logger name="org.mybatis" level="info" additivity="false">
+        <logger name="org.mybatis" level="debug" additivity="false">
             <AppenderRef ref="consoleAppender"/>
+        </logger>
+        <logger name="com.ds.feige.im" level="debug" additivity="false">
+            <AppenderRef ref="consoleAppender"/>
+            <AppenderRef ref="rollingFileAppender"/>
+        </logger>
+
+        <logger name="org.zalando.logbook" level="trace" additivity="false">
+            <AppenderRef ref="consoleAppender"/>
+            <AppenderRef ref="rollingFileAppender"/>
         </logger>
         <!--监控系统信息-->
         <!--若是additivity设为false，则 子Logger 只会在自己的appender里输出，而不会在 父Logger 的appender里输出。-->

@@ -15,7 +15,6 @@ import com.ds.feige.im.account.controller.UserAuthInterceptor;
 @Configuration
 public class WebConfiguration implements WebMvcConfigurer {
     UserAuthInterceptor userAuthInterceptor;
-
     @Autowired
     public WebConfiguration(UserAuthInterceptor userAuthInterceptor) {
         this.userAuthInterceptor = userAuthInterceptor;

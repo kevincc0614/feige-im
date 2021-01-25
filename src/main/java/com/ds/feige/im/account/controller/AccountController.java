@@ -1,18 +1,18 @@
 package com.ds.feige.im.account.controller;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import com.ds.base.nodepencies.api.Response;
+import com.ds.base.nodepencies.exception.WarnMessageException;
 import com.ds.feige.im.account.dto.GetTokenRequest;
 import com.ds.feige.im.account.dto.LogoutRequest;
 import com.ds.feige.im.account.dto.UserInfo;
 import com.ds.feige.im.account.dto.UserRegisterRequest;
 import com.ds.feige.im.account.service.UserService;
-import com.ds.feige.im.common.web.WebUtils;
+import com.ds.feige.im.constants.FeigeWarn;
 import com.ds.feige.im.gateway.service.SessionUserService;
 
 /**
@@ -49,12 +49,16 @@ public class AccountController {
     }
 
     @PostMapping("/logout")
-    public Response logout(HttpServletRequest request, @RequestHeader(value = "deviceId") String deviceId)
+    public Response logout(@RequestHeader(value = "im-auth-token") String token, @RequestParam String deviceId)
         throws Exception {
+        Long userId = userService.logout(token);
+        if (userId == null) {
+            throw new WarnMessageException(FeigeWarn.TOKEN_IS_INVALID);
+        }
         LogoutRequest logout = new LogoutRequest();
-        Long userId = WebUtils.getUserId(request);
         logout.setUserId(userId);
         logout.setDeviceId(deviceId);
+        logout.addProperty("type", 0);
         sessionUserService.logout(logout);
         return Response.EMPTY_SUCCESS;
     }

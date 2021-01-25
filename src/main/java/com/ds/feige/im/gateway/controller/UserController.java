@@ -3,9 +3,7 @@ package com.ds.feige.im.gateway.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.ds.feige.im.account.dto.LogoutRequest;
 import com.ds.feige.im.account.service.UserService;
-import com.ds.feige.im.constants.SessionAttributeKeys;
 import com.ds.feige.im.constants.SocketPaths;
 import com.ds.feige.im.gateway.service.SessionUserService;
 import com.ds.feige.im.gateway.socket.annotation.SocketController;
@@ -24,14 +22,4 @@ public class UserController {
         return System.currentTimeMillis();
     }
 
-    @SocketRequestMapping(SocketPaths.CS_USER_LOGOUT)
-    public void logout(WebSocketSession session) throws Exception {
-        LogoutRequest logoutRequest = new LogoutRequest();
-        long userId = (Long)session.getAttributes().get(SessionAttributeKeys.USER_ID);
-        String deviceId = (String)session.getAttributes().get(SessionAttributeKeys.DEVICE_ID);
-        logoutRequest.setUserId(userId);
-        logoutRequest.setDeviceId(deviceId);
-        logoutRequest.addProperty("type", 0);
-        sessionUserService.logout(logoutRequest);
-    }
 }

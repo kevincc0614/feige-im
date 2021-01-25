@@ -1,10 +1,14 @@
 package com.ds.feige.im.account.cache;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
 import org.redisson.api.RBucket;
 import org.redisson.api.RBuckets;
+import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,6 +16,7 @@ import org.springframework.stereotype.Component;
 import com.ds.feige.im.account.entity.User;
 import com.ds.feige.im.constants.CacheKeys;
 
+import cn.hutool.core.util.IdUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -61,5 +66,32 @@ public class UserCacheProvider {
             i++;
         }
         return userKeys;
+    }
+
+    public String createUserToken(long userId, String password) {
+        String token = IdUtil.simpleUUID();
+        RMap map = redissonClient.getMap(CacheKeys.USER_TOKEN + token);
+        LocalDateTime expireAt = LocalDateTime.now().plusDays(90);
+        Date expireDate = Date.from(expireAt.atZone(ZoneId.systemDefault()).toInstant());
+        map.put("userId", userId);
+        map.put("expireAt", expireDate.getTime());
+        map.put("password", password);
+        map.expireAt(expireDate);
+        return token;
+    }
+
+    public Map<String, Object> getUserIdByToken(String token) {
+        RMap<String, Object> map = redissonClient.getMap(CacheKeys.USER_TOKEN + token);
+        return map;
+    }
+
+    public Long deleteToken(String token) {
+        RMap map = redissonClient.getMap(CacheKeys.USER_TOKEN + token);
+        Long result = null;
+        if (!map.isEmpty()) {
+            result = (Long)map.get("userId");
+            map.clear();
+        }
+        return result;
     }
 }

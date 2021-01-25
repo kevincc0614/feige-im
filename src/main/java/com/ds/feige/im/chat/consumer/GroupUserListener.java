@@ -2,14 +2,14 @@ package com.ds.feige.im.chat.consumer;
 
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.ds.base.nodepencies.strategy.id.IdKeyGenerator;
+import com.ds.feige.im.account.dto.UserInfo;
+import com.ds.feige.im.account.service.UserService;
 import com.ds.feige.im.chat.dto.CreateGroupConversations;
 import com.ds.feige.im.chat.dto.MessageContent;
 import com.ds.feige.im.chat.dto.MessageToConversation;
@@ -44,16 +44,17 @@ public class GroupUserListener {
     @Autowired
     @Qualifier("longIdKeyGenerator")
     IdKeyGenerator<Long> longIdKeyGenerator;
-    static final Logger LOGGER = LoggerFactory.getLogger(GroupUserListener.class);
+    @Autowired
+    UserService userService;
 
     @RabbitListener(queues = AMQPConstants.QueueNames.GROUP_CREATED_BROADCAST)
     public void broadcastGroupCreated(GroupCreatedEvent event) throws Exception {
-        LOGGER.info("Group created event broadcast start:{}", event);
+        log.info("Group created event broadcast start:{}", event);
         long groupId = event.getGroupId();
         GroupInfo groupInfo = groupUserService.getGroupInfo(groupId);
         // 判断会话是否已创建
         if (groupInfo.getConversationId() != null) {
-            LOGGER.error("Group conversations has already created:groupId={}", groupId);
+            log.error("Group conversations has already created:groupId={}", groupId);
             return;
         }
         Set<Long> members = groupUserService.getUserIds(groupId);
@@ -64,10 +65,12 @@ public class GroupUserListener {
         createGroupConversations.setMembers(members);
         long conversationId = conversationService.createGroupConversations(createGroupConversations);
         groupUserService.groupConversationsCreated(groupId, conversationId);
+        UserInfo userInfo = userService.getUserById(event.getOperatorId());
         MessageContent.GroupCreatedMessage message =
-            new MessageContent.GroupCreatedMessage(event.getGroupId(), event.getOperatorId(), conversationId);
+            new MessageContent.GroupCreatedMessage(event.getGroupId(), event.getOperatorId(), userInfo.getNickName(),
+                conversationId);
         sendGroupNotice(event.getOperatorId(), event.getGroupId(), message);
-        LOGGER.info("Group created event broadcast success:{}", event);
+        log.info("Group created event broadcast success:{}", event);
 
     }
 
@@ -78,7 +81,7 @@ public class GroupUserListener {
             new MessageContent.GroupDisbandMessage(event.getGroupId(), event.getOperatorId());
         sendGroupNotice(event.getOperatorId(), event.getGroupId(), message);
         long conversationId = conversationService.deleteConversations(event.getGroupId());
-        LOGGER.info("Group disbanded event broadcast success:conversationId={}", conversationId);
+        log.info("Group disbanded event broadcast success:conversationId={}", conversationId);
     }
 
     @RabbitListener(queues = AMQPConstants.QueueNames.GROUP_USER_JOINED_BROADCAST)
@@ -86,11 +89,11 @@ public class GroupUserListener {
         // 创建会话
         GroupInfo groupInfo = groupUserService.getGroupInfo(event.getGroupId());
         if (groupInfo == null) {
-            LOGGER.error("Group not exists:groupId={}", event.getGroupId());
+            log.error("Group not exists:groupId={}", event.getGroupId());
             return;
         }
         if (event.getInviteUsers() == null || event.getInviteUsers().isEmpty()) {
-            LOGGER.error("InviteUsers is empty:groupId={}", event.getGroupId());
+            log.error("InviteUsers is empty:groupId={}", event.getGroupId());
             return;
         }
         CreateGroupConversations createGroupConversations = new CreateGroupConversations();
@@ -103,7 +106,7 @@ public class GroupUserListener {
         MessageContent.GroupUserJoinMessage joinMessage = new MessageContent.GroupUserJoinMessage(event.getGroupId(),
             event.getInviteUsers().keySet(), event.getOperatorId(), 0);
         sendGroupNotice(event.getOperatorId(), event.getGroupId(), joinMessage);
-        LOGGER.info("Group user join event broadcast success:{}", event);
+        log.info("Group user join event broadcast success:{}", event);
     }
 
     @RabbitListener(queues = AMQPConstants.QueueNames.GROUP_USER_EXITED_BROADCAST)
@@ -114,7 +117,7 @@ public class GroupUserListener {
         MessageContent.GroupUserExitedMessage message =
             new MessageContent.GroupUserExitedMessage(event.getGroupId(), event.getUserId());
         sendGroupNotice(event.getUserId(), event.getGroupId(), message);
-        LOGGER.info("Group user exit event broadcast success:{}", event);
+        log.info("Group user exit event broadcast success:{}", event);
     }
 
     @RabbitListener(queues = AMQPConstants.QueueNames.GROUP_USER_KICKED_BROADCAST)
@@ -126,7 +129,7 @@ public class GroupUserListener {
         // 删除会话
         conversationService.deleteConversations(event.getKickedUsers(), event.getGroupId(),
             ConversationType.GROUP_CONVERSATION_TYPE);
-        LOGGER.info("Group user kicked event broadcast success:{}", event);
+        log.info("Group user kicked event broadcast success:{}", event);
     }
     public void sendGroupNotice(long senderId, long groupId, MessageContent msgContent) throws Exception {
         MessageToConversation req = new MessageToConversation();

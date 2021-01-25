@@ -11,7 +11,6 @@ import com.ds.feige.im.gateway.entity.UserDevice;
 import com.ds.feige.im.gateway.service.UserDeviceService;
 import com.ds.feige.im.push.configure.PushConfigProperties;
 import com.ds.feige.im.push.dto.PushMessage;
-import com.google.common.collect.Lists;
 import com.google.firebase.messaging.*;
 
 import lombok.extern.slf4j.Slf4j;
@@ -65,14 +64,14 @@ public class PushServiceImpl implements PushService {
         try {
             BatchResponse response = firebaseMessaging.sendAll(messages);
             if (response.getFailureCount() > 0) {
-                List<SendResponse> failures = Lists.newArrayList();
                 response.getResponses().forEach(sendResponse -> {
                     if (!sendResponse.isSuccessful()) {
-                        failures.add(sendResponse);
+                        log.error("Push message fail:messageId={}", sendResponse.getMessageId(),
+                            sendResponse.getException());
                     }
                 });
-                log.error("Push message has failed:successCount={},failureCount={},failureList:{}",
-                    response.getSuccessCount(), response.getFailureCount(), failures);
+                log.error("Push message has failed:successCount={},failureCount={}", response.getSuccessCount(),
+                    response.getFailureCount());
             } else {
                 log.info("Push message all success:successCount={}", response.getSuccessCount());
             }

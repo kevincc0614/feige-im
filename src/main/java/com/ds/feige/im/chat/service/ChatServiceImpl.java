@@ -135,6 +135,10 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
     public List<MessageToUser> pullMessages(ConversationMessageQueryRequest request) {
         List<MessageToUser> messages = baseMapper.findMessages(request.getUserId(), request.getConversationId(),
             request.getMaxMsgId(), request.getPageSize());
+        // 将已读回执赋值
+        Set<Long> msgIds = messages.stream().map(m -> m.getMsgId()).collect(Collectors.toSet());
+        Map<Long, Map<Long, Long>> readReceiptsMap = getMessageReadReceipts(msgIds);
+        messages.forEach(messageToUser -> messageToUser.setReadReceipts(readReceiptsMap.get(messageToUser.getMsgId())));
         return messages;
     }
 
@@ -151,14 +155,14 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         if (infos == null || infos.isEmpty()) {
             return new ArrayList<>();
         }
-        Set<Long> msgIds = Sets.newHashSet();
+        Set<Long> lastMsgIds = Sets.newHashSet();
         Map<Long, UserConversationDetails> details = Maps.newHashMap();
         infos.forEach(info -> {
-            msgIds.add(info.getLastMsgId());
+            lastMsgIds.add(info.getLastMsgId());
             details.put(info.getConversationId(), convertToDetails(info));
         });
         // 数据合并
-        List<MessageToUser> messages = baseMapper.findMessagesByIds(msgIds);
+        List<MessageToUser> messages = baseMapper.findMessagesByIds(lastMsgIds);
         Map<Long, MessageToUser> messageToUserMap =
             messages.stream().collect(Collectors.toMap(MessageToUser::getConversationId, Function.identity()));
         details.forEach((cid, c) -> {
@@ -258,6 +262,28 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMessageMapper, Conv
         return result;
     }
 
+    public Map<Long, Map<Long, Long>> getMessageReadReceipts(Set<Long> msgIds) {
+        log.info("Ready to get message read read receipts:msgIds={}", msgIds);
+        RBatch batch = redissonClient.createBatch(BatchOptions.defaults());
+        Map<Long, Map<Long, Long>> result = Maps.newHashMap();
+        Map<Long, RFuture<Map<Long, Long>>> futureMap = Maps.newHashMap();
+        for (Long msgId : msgIds) {
+            RMapAsync<Long, Long> readReceipts = batch.getMap(CacheKeys.CHAT_MESSAGE_READ_RECEIPTS + msgId);
+            // 这里断点的话会导致线程阻塞
+            RFuture<Map<Long, Long>> future = readReceipts.readAllMapAsync();
+            futureMap.put(msgId, future);
+        }
+        batch.execute();
+        futureMap.forEach((k, async) -> {
+            try {
+                Map<Long, Long> cacheValue = async.getNow();
+                result.put(k, cacheValue);
+            } catch (Exception e) {
+                log.error("Get message read read receipts error:msgId={}", k);
+            }
+        });
+        return result;
+    }
     @Override
     public List<MessageToUser> getUserMessages(long userId, List<Long> msgIds) {
         if (msgIds.size() <= 0 || msgIds.size() > 500) {

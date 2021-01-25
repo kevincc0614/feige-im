@@ -29,13 +29,12 @@ public class PushController {
 
     @RequestMapping("/test")
     @NodAuthorizedRequest
-    public Response testPush(String deviceToken) throws Exception {
-        Message message = Message.builder().setToken(deviceToken)
-            .setNotification(Notification.builder().setTitle("测试标题").setBody("测试内容").build()).build();
-        String result = firebaseMessaging.send(message);
-        return new Response(result);
+    public Response testPush(String token) throws Exception {
+        Message message = Message.builder().setToken(token)
+            .setNotification(Notification.builder().setTitle("test title").setBody("test body").build()).build();
+        firebaseMessaging.send(message);
+        return Response.EMPTY_SUCCESS;
     }
-
     @RequestMapping("/device-token/register")
     public Response registerToken(HttpServletRequest request, @RequestBody RegisterTokenRequest registerToken) {
         Long userId = WebUtils.getUserId(request);
