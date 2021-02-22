@@ -1,8 +1,6 @@
 package com.ds.feige.im.enterprise.service;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -290,24 +288,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     @Override
     public List<DepartmentOverview> getDepartments(long enterpriseId) {
         List<Department> departments = departmentMapper.findByEnterpriseId(enterpriseId);
-        // TODO 遍历所有部门和员工聚合统计出来的数据,可能存在性能问题
-        Map<Long, Department> depMap =
-            departments.stream().collect(Collectors.toMap(Department::getId, Function.identity()));
-        List<DepartmentEmployee> des = departmentEmployeeMapper.findByEntId(enterpriseId);
-        Map<Long, List<DepartmentEmployee>> groupByDep =
-            des.stream().collect(Collectors.groupingBy(DepartmentEmployee::getDepartmentId));
-        List<DepartmentOverview> overviews = Lists.newArrayListWithCapacity(departments.size());
-        groupByDep.forEach((depId, employees) -> {
-            Department department = depMap.get(depId);
-            if (department != null) {
-                DepartmentOverview overview = BeansConverter.convertToDepOverview(department);
-                overview.setTotal(employees.size());
-                Collection<Long> onlineUsers = sessionUserService.getOnlineUsers(employees);
-                overview.setOnline(onlineUsers.size());
-                overviews.add(overview);
-            }
-        });
-        return overviews;
+        return BeansConverter.convertToDepOverviews(departments);
     }
 
     @Override

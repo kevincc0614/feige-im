@@ -1,6 +1,5 @@
 package com.ds.feige.im.push.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,32 +38,38 @@ public class PushServiceImpl implements PushService {
 
     private void pushToDevices(List<UserDevice> devices, PushMessage request) {
         if (devices != null && !devices.isEmpty()) {
-            List<Message> messages = new ArrayList<>();
+            // List<Message> messages = new ArrayList<>();
             devices.forEach(d -> {
                 try {
                     Message message = buildFirebaseMessage(request, d);
-                    messages.add(message);
+                    // messages.add(message);
+                    sendMessage(message);
                 } catch (Exception e) {
-                    log.error("Build firebase message error:device={},request={}", d, request, e);
+                    log.error("Build firebase message error:userId={},deviceId={},deviceToken={},request={}",
+                        d.getUserId(), d.getDeviceId(), d.getDeviceToken(), request, e);
                 }
             });
-            if (!messages.isEmpty()) {
-                sendMessages(messages);
-            } else {
-                log.error("Firebase messages is empty");
-            }
+            // if (!messages.isEmpty()) {
+            // sendMessages(messages);
+            // } else {
+            // log.error("Firebase messages is empty");
+            // }
 
         } else {
             log.warn("User has no pushable device:userId={}", request.getUserId());
         }
     }
 
+    public void sendMessage(Message message) throws Exception {
+        firebaseMessaging.send(message);
+    }
     @Override
     public void sendMessages(List<Message> messages) {
         try {
             BatchResponse response = firebaseMessaging.sendAll(messages);
             if (response.getFailureCount() > 0) {
                 response.getResponses().forEach(sendResponse -> {
+
                     if (!sendResponse.isSuccessful()) {
                         log.error("Push message fail:messageId={}", sendResponse.getMessageId(),
                             sendResponse.getException());

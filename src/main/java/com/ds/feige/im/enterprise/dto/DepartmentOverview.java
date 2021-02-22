@@ -13,8 +13,5 @@ public class DepartmentOverview {
     protected int priority;
     protected Boolean createGroup;
     protected Long groupId;
-    /** 在线人数 */
-    protected int online;
-    /** 部门人数 */
-    protected int total;
+
 }

@@ -14,4 +14,8 @@ import lombok.Data;
 public class DepartmentDetails extends DepartmentOverview {
     private List<DepartmentDetails> departments;
     private List<EmpDetails> employees;
+    /** 在线人数 */
+    protected int online;
+    /** 部门人数 */
+    protected int total;
 }

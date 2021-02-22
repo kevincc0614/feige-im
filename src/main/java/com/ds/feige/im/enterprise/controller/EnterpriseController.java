@@ -80,14 +80,18 @@ public class EnterpriseController {
         return new Response<>(empDetails);
     }
 
-    @RequestMapping("/employees")
-    public Response<List<EmpDetails>> employeeList(HttpServletRequest request,
+    @RequestMapping("/overall")
+    public Response enterpriseAllInfo(HttpServletRequest request,
         @RequestParam("enterpriseId") long enterpriseId) {
         // TODO 判断是否为所属企业ID
         Set<Long> exclude = new HashSet<>();
         exclude.add(WebUtils.getUserId(request));
-        List<EmpDetails> overviews = enterpriseService.getAllEmpDetailList(enterpriseId, exclude);
-        return new Response(overviews);
+        List<EmpDetails> employees = enterpriseService.getAllEmpDetailList(enterpriseId, exclude);
+        List<DepartmentOverview> departments = enterpriseService.getDepartments(enterpriseId);
+        Map<String, Object> result = Maps.newHashMap();
+        result.put("employees", employees);
+        result.put("departments", departments);
+        return new Response(result);
     }
     @RequestMapping("/departments")
     Response<List<DepartmentOverview>> getDepartments(long enterpriseId) {
