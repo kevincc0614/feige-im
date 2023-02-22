@@ -22,7 +22,6 @@ public class WebConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-
-        registry.addInterceptor(this.userAuthInterceptor);
+        registry.addInterceptor(this.userAuthInterceptor).addPathPatterns();
     }
 }

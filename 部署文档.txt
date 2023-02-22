@@ -1,0 +1,53 @@
+IM服务器部署
+MySQL:
+1.创建用户
+2.创建数据库oim以及nacos
+3.创建表
+4.基本数据
+①企业数据
+②App数据
+③管理员数据
+④角色和权限数据
+
+RabbitMQ:
+1.手动安装Erlang 23.1
+①下载源代码
+https://github.com/erlang/otp/releases/download/OTP-23.1.1/otp_src_23.1.1.tar.gz
+②解压缩编译安装
+
+2.手动安装RabbitMQ 3.8.9
+https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.8.9/rabbitmq-server-generic-unix-3.8.9.tar.xz
+①开启admin管理后台
+/rabbitmq-plugins enable rabbitmq_management
+②添加用户
+./rabbitmqctl add_user "feige_user"
+③添加权限
+./rabbitmqctl set_permissions -p '/' 'feige_user' '.*' '.*' '.*'
+④管理员角色
+./rabbitmqctl set_user_tags 'feige_user' administrator
+2.源代码安装
+
+
+Redis:
+1.安装编译依赖包
+
+2.相关错误
+①一堆server.c的编译错误
+需要安装新版本gcc
+sudo yum install centos-release-scl
+sudo yum install devtoolset-7-gcc*
+scl enable devtoolset-7 bash
+which gcc
+gcc --version
+②You need tcl 8.5 or newer in order to run the Redis test
+安装tcl
+Yum install tcl
+
+3.修改配置文件
+①绑定IP和端口
+②data,log,pid文件目录配置
+③密码配置
+
+4.修改透明大页配置
+/etc/rc.local 添加一行
+echo madvise > /sys/kernel/mm/transparent_hugepage/enabled
